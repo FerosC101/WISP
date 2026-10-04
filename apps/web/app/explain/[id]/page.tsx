@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import type { ReactNode } from "react";
+import { Line, LineChart, ResponsiveContainer, YAxis } from "recharts";
 import { RecordedBadge, SensingIndicator } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { TIER_NAMES, TIER_STYLE } from "@/lib/tiers";
@@ -238,7 +239,7 @@ function Timeline({ events }: { events: AuditEvent[] }) {
 
 export default function ExplainPage() {
   const { id } = useParams<{ id: string }>();
-  const { snapshot: s, error } = useSession(id);
+  const { snapshot: s, error, progress } = useSession(id);
   if (error && !s) return <p className="py-10 text-center text-ink-soft">{error}</p>;
   if (!s) return <WispLine variant="flow" className="mx-auto my-20 h-8 w-48 text-teal" />;
 
@@ -263,6 +264,25 @@ export default function ExplainPage() {
         </div>
       </div>
       <WispLine className="my-6 h-4 w-full text-sage-deep" />
+      {progress && (
+        <section className="mb-6 rounded-(--radius-card) border border-teal/40 bg-teal-bg p-5" aria-live="polite">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-teal">Sensing live · {s.sensor.mode === "live" ? "ESP32 CSI" : "recorded replay"}</h2>
+            <span className="font-mono text-sm">
+              {progress.elapsed.toFixed(1)} s · rises detected so far {Math.min(progress.rises_so_far, 5)}/5
+            </span>
+          </div>
+          <div className="mt-2 h-24">
+            <ResponsiveContainer>
+              <LineChart data={progress.energy_tail.map((e, i) => ({ i, e }))} margin={{ top: 4, right: 4, bottom: 0, left: -24 }}>
+                <YAxis tick={{ fontSize: 10, fill: "#767d8f" }} stroke="#d3ded0" width={40} />
+                <Line type="monotone" dataKey="e" stroke="#1f6f6a" strokeWidth={2} dot={false} isAnimationActive={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+          <p className="text-xs text-ink-soft">Amplitude variability over the last ~4 s. Not shown to the patient.</p>
+        </section>
+      )}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <section className="min-w-0 rounded-(--radius-card) border border-line bg-card p-4 sm:p-6">
           <Record s={s} />

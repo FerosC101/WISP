@@ -22,7 +22,8 @@ from typing import Awaitable, Callable, Literal
 import numpy as np
 
 from .. import config
-from .esp32 import SerialCSIReader, probe_port
+from .esp32 import probe_port
+from .hub import HUB
 from .pipeline import SegmentationResult, count_rises_so_far, segment_5xsts
 from .recording import CSIRecording
 
@@ -123,24 +124,27 @@ class ESP32CSIProvider(AssessmentProvider):
         self.port = port
         self.baud = baud
 
+    def describe(self) -> dict:
+        return {**super().describe(), "port": self.port, "baud": self.baud}
+
     def available(self) -> bool:
         return probe_port(self.port)
 
     async def run(self, assessment: str, *, user_id: str, on_progress: Progress) -> ProviderRun:
-        reader = SerialCSIReader(self.port, self.baud)  # type: ignore[arg-type]
-        reader.start()
+        stream = HUB.acquire(self.port, self.baud)  # shared with the Engineering-view monitor
         t0 = time.monotonic()
         try:
             rec = CSIRecording(np.zeros((0, 64), np.complex64), np.zeros(0))
             while True:
                 await asyncio.sleep(0.5)
-                if reader.error:
-                    raise RuntimeError(f"Sensor error: {reader.error}")
-                csi, t = reader.snapshot(t0)
-                rec = CSIRecording(csi, t, {"source": "wisp-local-csi", "port": self.port})
+                if stream.error:
+                    raise RuntimeError(f"Sensor error: {stream.error}")
+                csi, t = stream.snapshot(t0)
+                rec = CSIRecording(csi, t, {"source": "wisp-local-csi", "port": self.port, "start_cue_s": 3.0})
                 elapsed = time.monotonic() - t0
-                if elapsed > 5 and reader.packets < 50:
-                    raise RuntimeError("Sensor is not sending data")
+                if elapsed > 5 and csi.shape[0] < 50:
+                    hint = " The board is sending text but no CSI_DATA lines — flash CSI firmware." if stream.total_text_lines else ""
+                    raise RuntimeError(f"Sensor is not sending CSI data.{hint}")
                 rises = count_rises_so_far(rec) if rec.duration > 3 else 0
                 await on_progress({"elapsed": round(elapsed, 1), "rises_so_far": rises, "energy_tail": _energy_tail(rec)})
                 if elapsed > self.MAX_SECONDS:
@@ -148,7 +152,7 @@ class ESP32CSIProvider(AssessmentProvider):
                 if rises >= 5 and elapsed > 6 and _quiet_tail(rec, self.QUIET_END_SECONDS):
                     break
         finally:
-            reader.stop()
+            HUB.release(self.port)
         rid = None
         if config.SAVE_RAW_CSI and rec.csi.shape[0]:
             rid = f"live_{user_id}_{int(time.time())}"

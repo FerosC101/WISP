@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LiveSensor } from "@/components/LiveSensor";
 import { Button, Card } from "@/components/ui";
 import { api, post } from "@/lib/api";
 import { usePrefs } from "@/lib/prefs";
@@ -11,6 +12,7 @@ import type { AuditEvent, FunctionalAssessment, Persona, Snapshot } from "@/lib/
 
 interface SensorInfo {
   name: string;
+  port?: string;
   mode: string;
   available: boolean;
   live_counts: boolean;
@@ -127,6 +129,8 @@ export default function DevPage() {
           Demo mode (shows the DEMO bar and demo controls in the patient app)
         </label>
       </div>
+
+      <LiveSensor provider={sensor} onProviderChange={load} />
 
       <Card>
         <h2 className="font-bold">Demo setup</h2>

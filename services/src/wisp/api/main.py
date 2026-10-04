@@ -22,7 +22,8 @@ from .. import config
 from ..baseline.compare import summarise_baseline
 from ..demo import seed as demo_seed
 from ..schemas import FunctionalAssessment, utcnow
-from ..sensing.providers import ReplayCSIProvider, build_provider
+from ..sensing.hub import HUB, list_ports
+from ..sensing.providers import ESP32CSIProvider, ReplayCSIProvider, build_provider
 from ..service import CaseFacts, EventBus, ToolError, WispService
 from ..store import Store
 from ..triage.agent import LocalAgent
@@ -45,7 +46,9 @@ def init_state(store: Store | None = None, provider=None) -> None:
             demo_seed.generate_recordings()
         for p in demo_seed.PERSONAS:
             store.put_profile(p)
-    service = WispService(store, provider or build_provider(), EventBus())
+    provider = provider or build_provider()
+    state["replay"] = provider if isinstance(provider, ReplayCSIProvider) else ReplayCSIProvider()
+    service = WispService(store, provider, EventBus())
     state["svc"] = service
     state["agent"] = LocalAgent(service)
 
@@ -297,9 +300,30 @@ def dev_sensor() -> dict:
     return out
 
 
+@app.get("/api/dev/sensor/ports")
+def dev_sensor_ports() -> dict:
+    return {"ports": list_ports(), "active": HUB.active()}
+
+
+@app.post("/api/dev/sensor/reset-board")
+def dev_sensor_reset(body: dict = Body(...)) -> dict:
+    stream = HUB.get(body.get("port", ""))
+    if stream is None:
+        raise HTTPException(409, "Open the live monitor for this port first")
+    stream.reset_board()
+    return {"reset": True}
+
+
 @app.post("/api/dev/sensor")
 def dev_sensor_update(body: dict = Body(...)) -> dict:
     s = svc()
+    if body.get("provider") == "esp32":
+        port = body.get("port")
+        if not port or port not in {p["port"] for p in list_ports()}:
+            raise HTTPException(400, "Unknown serial port")
+        s.provider = ESP32CSIProvider(port, int(body.get("baud") or config.SERIAL_BAUD))
+    elif body.get("provider") == "replay":
+        s.provider = state["replay"]
     if "live_counts" in body:
         s.live_counts = bool(body["live_counts"])
     if isinstance(s.provider, ReplayCSIProvider):
@@ -455,6 +479,29 @@ async def ws_session(ws: WebSocket, session_id: str):
         await ws.close(code=4404)
         return
     await _pump(ws, session_id, {"type": "snapshot", "snapshot": snap})
+
+
+@app.websocket("/ws/sensor/live")
+async def ws_sensor_live(ws: WebSocket, port: str, baud: int = config.SERIAL_BAUD):
+    """Engineering-view live monitor. Reads the radio only while this socket is open."""
+    if port not in {p["port"] for p in list_ports()}:
+        await ws.close(code=4404)
+        return
+    await ws.accept()
+    try:
+        stream = HUB.acquire(port, baud)
+    except Exception as exc:  # noqa: BLE001
+        await ws.send_json({"type": "error", "message": f"Could not open {port}: {exc}"})
+        await ws.close()
+        return
+    try:
+        while True:
+            await ws.send_json({"type": "frame", "status": stream.status(), "frame": stream.live_frame(), "text": stream.recent_text()})
+            await asyncio.sleep(0.25)
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
+        HUB.release(port)
 
 
 @app.websocket("/ws/enrol/{user_id}")
