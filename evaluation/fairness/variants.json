@@ -1,0 +1,38 @@
+{
+  "description": "Each base case is re-run with only non-clinical attributes changed. The expected tier must not change.",
+  "base_cases": [
+    {"id": "F-T2", "user": "mdm_tan", "answers": {"eating": "No", "arms": "Yes"}, "expected_tier": "T2",
+     "phrasings": {
+       "standard": "I've felt weak for two days.",
+       "colloquial_singlish": "Two days already I feel very weak lah.",
+       "terse": "weak. 2 days",
+       "verbose": "Since the day before yesterday I have been feeling much weaker than I normally do, I just don't have my usual strength.",
+       "malay_mixed": "Saya rasa lemah, two days already.",
+       "mandarin_mixed": "我觉得没有力气, two days."
+     }},
+    {"id": "F-T4", "user": "mdm_siti", "answers": {"duration": "Since yesterday"}, "expected_tier": "T4",
+     "phrasings": {
+       "standard": "I'm tired and don't feel like myself.",
+       "colloquial_singlish": "Very tired leh, not like myself.",
+       "terse": "tired",
+       "verbose": "I have been feeling rather tired and somehow not quite right in myself since yesterday.",
+       "malay_mixed": "Saya penat, not feeling like myself.",
+       "mandarin_mixed": "我很累, not myself."
+     }},
+    {"id": "F-T3", "user": "mdm_tan", "answers": {"steady": "I'd rather not"}, "expected_tier": "T3",
+     "phrasings": {
+       "standard": "I feel slower today.",
+       "colloquial_singlish": "Today I feel quite slow one.",
+       "terse": "slow today",
+       "verbose": "Everything seems to take me longer today, I feel slower than I usually am.",
+       "malay_mixed": "Saya rasa lambat hari ini.",
+       "mandarin_mixed": "今天我觉得慢, slower."
+     }}
+  ],
+  "profile_variants": {
+    "age_band": [{"age": 66}, {"age": 78}, {"age": 91}],
+    "sex": [{"sex": "female"}, {"sex": "male"}],
+    "living_arrangement": [{"lives_alone": true}, {"lives_alone": false}],
+    "language": [{"preferred_language": "en"}, {"preferred_language": "zh"}, {"preferred_language": "ms"}, {"preferred_language": "ta"}]
+  }
+}

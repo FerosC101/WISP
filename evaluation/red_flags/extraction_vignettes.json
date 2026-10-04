@@ -1,0 +1,20 @@
+[
+  {"text": "Suddenly my left arm feels numb", "flags": ["sudden_onset", "one_sided_weakness"]},
+  {"text": "My right leg is weak and heavy", "flags": ["one_sided_weakness"]},
+  {"text": "my face is drooping on one side", "flags": ["one_sided_weakness"]},
+  {"text": "I have chest pain when I walk", "flags": ["chest_pain"]},
+  {"text": "There's a tightness in my chest", "flags": ["chest_pain"]},
+  {"text": "I can't breathe properly", "flags": ["severe_breathlessness"]},
+  {"text": "My words are coming out slurred", "flags": ["speech_difficulty"]},
+  {"text": "My daughter said I seemed confused last night", "flags": ["confusion"]},
+  {"text": "I blacked out in the kitchen", "flags": ["loss_of_consciousness"]},
+  {"text": "I fainted this morning", "flags": ["loss_of_consciousness"]},
+  {"text": "I fell and hit my head", "flags": ["recent_fall_with_injury"]},
+  {"text": "Suddenly I have double vision", "flags": ["sudden_onset", "sudden_vision_change"]},
+  {"text": "No chest pain, just tired", "flags": []},
+  {"text": "I'm not confused, only weak", "flags": []},
+  {"text": "I feel weak and tired for three days", "flags": []},
+  {"text": "Never fainted, but I feel slow", "flags": []},
+  {"text": "I feel a bit breathless climbing stairs", "flags": []},
+  {"text": "Saya keliru semalam", "flags": ["confusion"], "note": "Malay: 'I was confused yesterday' - expected miss for rules-only extraction"}
+]

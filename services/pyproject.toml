@@ -1,0 +1,29 @@
+[project]
+name = "wisp"
+version = "0.1.0"
+description = "WISP local services: triage rules, 5xSTS Wi-Fi sensing, MCP tools"
+authors = [
+    { name = "Vince", email = "vincevillar02@gmail.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "cryptography>=50.0.2",
+    "fastapi>=0.142.2",
+    "httpx>=0.28.1",
+    "mcp>=2.3.0",
+    "numpy>=2.5.3",
+    "pydantic>=2.13.5",
+    "pyserial>=3.5",
+    "scipy>=1.18.1",
+    "uvicorn[standard]>=0.54.0",
+]
+
+[build-system]
+requires = ["uv_build>=0.11.21,<0.12.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+]

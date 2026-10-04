@@ -1,0 +1,443 @@
+{
+  "triage": {
+    "n": 15,
+    "passed": 15,
+    "rows": [
+      {
+        "id": "V01",
+        "user": "mdm_tan",
+        "complaint": "I've felt weak for two days.",
+        "answers": {
+          "eating": "No",
+          "arms": "Yes"
+        },
+        "expected_tier": "T2",
+        "expect_sensing": true,
+        "note": "Scenario 1: sensing changes T3 -> T2",
+        "got_tier": "T2",
+        "got_sensing": true,
+        "pass": true
+      },
+      {
+        "id": "V02",
+        "user": "mr_lim",
+        "complaint": "This morning I suddenly felt dizzy and my left hand feels clumsy.",
+        "expected_tier": "T1",
+        "expect_sensing": false,
+        "note": "Scenario 2: emergency, sensing refused",
+        "got_tier": "T1",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V03",
+        "user": "mdm_siti",
+        "complaint": "I'm tired and don't feel like myself.",
+        "answers": {
+          "duration": "Since yesterday"
+        },
+        "expected_tier": "T4",
+        "expect_sensing": true,
+        "note": "Scenario 3 day 1",
+        "got_tier": "T4",
+        "got_sensing": true,
+        "pass": true
+      },
+      {
+        "id": "V04",
+        "user": "mdm_siti",
+        "complaint": "My daughter said I seemed confused last night.",
+        "expected_tier": "T1",
+        "expect_sensing": false,
+        "note": "Scenario 3 day 2 (as a fresh check)",
+        "got_tier": "T1",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V05",
+        "user": "mdm_tan",
+        "complaint": "I feel weak.",
+        "recording": "tan_interference",
+        "expected_tier": "ABSTAIN",
+        "expect_sensing": false,
+        "note": "Second person walks through: measurement rejected",
+        "got_tier": "ABSTAIN",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V06",
+        "user": "mdm_tan",
+        "complaint": "I feel weak.",
+        "answers": {
+          "chest_pain": "Yes"
+        },
+        "expected_tier": "T1",
+        "expect_sensing": false,
+        "got_tier": "T1",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V07",
+        "user": "mdm_tan",
+        "complaint": "I feel slower today.",
+        "answers": {
+          "steady": "No, I don't feel steady"
+        },
+        "expected_tier": "T2",
+        "expect_sensing": false,
+        "note": "Unsteadiness is information; no test",
+        "got_tier": "T2",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V08",
+        "user": "mdm_tan",
+        "complaint": "I feel tired.",
+        "answers": {
+          "steady": "I'd rather not"
+        },
+        "expected_tier": "T3",
+        "expect_sensing": false,
+        "note": "Declined: no evidence for self-care",
+        "got_tier": "T3",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V09",
+        "user": "mr_lim",
+        "complaint": "I feel tired since yesterday.",
+        "expected_tier": "T3",
+        "expect_sensing": false,
+        "note": "No baseline: sensing not useful",
+        "got_tier": "T3",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V10",
+        "user": "mdm_tan",
+        "complaint": "My tooth hurts.",
+        "answers": {
+          "scope": "No"
+        },
+        "expected_tier": "ABSTAIN",
+        "expect_sensing": false,
+        "note": "Out of scope",
+        "got_tier": "ABSTAIN",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V11",
+        "user": "mdm_tan",
+        "complaint": "I feel weak.",
+        "answers": {
+          "eating": "No",
+          "fluids": "No"
+        },
+        "expected_tier": "T2",
+        "expect_sensing": false,
+        "note": "Symptom floor T2; sensing cannot change it",
+        "got_tier": "T2",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V12",
+        "user": "mdm_tan",
+        "complaint": "I feel weak.",
+        "answers": {
+          "confusion": "Not sure"
+        },
+        "expected_tier": "ABSTAIN",
+        "expect_sensing": false,
+        "note": "Unsure about a warning sign",
+        "got_tier": "ABSTAIN",
+        "got_sensing": false,
+        "pass": true
+      },
+      {
+        "id": "V13",
+        "user": "mdm_tan",
+        "complaint": "I feel weaker than usual.",
+        "answers": {
+          "fall": "Yes",
+          "fall_injury": "No"
+        },
+        "expected_tier": "T2",
+        "expect_sensing": true,
+        "note": "Fall without injury + clear slowing",
+        "got_tier": "T2",
+        "got_sensing": true,
+        "pass": true
+      },
+      {
+        "id": "V14",
+        "user": "mdm_siti",
+        "complaint": "I'm tired.",
+        "answers": {
+          "eating": "No"
+        },
+        "expected_tier": "T3",
+        "expect_sensing": true,
+        "note": "Normal check cannot lower the T3 floor",
+        "got_tier": "T3",
+        "got_sensing": true,
+        "pass": true
+      },
+      {
+        "id": "V15",
+        "user": "mdm_tan",
+        "complaint": "I fell this morning and hit my head, now I feel weak.",
+        "expected_tier": "T1",
+        "expect_sensing": false,
+        "got_tier": "T1",
+        "got_sensing": false,
+        "pass": true
+      }
+    ]
+  },
+  "fairness": {
+    "n": 51,
+    "flips": 0,
+    "flip_rate": 0.0,
+    "by_attribute": {
+      "phrasing": {
+        "n": 18,
+        "flips": 0,
+        "flipped": []
+      },
+      "age_band": {
+        "n": 9,
+        "flips": 0,
+        "flipped": []
+      },
+      "sex": {
+        "n": 6,
+        "flips": 0,
+        "flipped": []
+      },
+      "living_arrangement": {
+        "n": 6,
+        "flips": 0,
+        "flipped": []
+      },
+      "language": {
+        "n": 12,
+        "flips": 0,
+        "flipped": []
+      }
+    }
+  },
+  "red_flags": {
+    "n": 18,
+    "expected_flags": 15,
+    "missed": 1,
+    "false_positives": 0,
+    "rows": [
+      {
+        "text": "Suddenly my left arm feels numb",
+        "flags": [
+          "sudden_onset",
+          "one_sided_weakness"
+        ],
+        "got": [
+          "one_sided_weakness",
+          "sudden_onset"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "My right leg is weak and heavy",
+        "flags": [
+          "one_sided_weakness"
+        ],
+        "got": [
+          "one_sided_weakness"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "my face is drooping on one side",
+        "flags": [
+          "one_sided_weakness"
+        ],
+        "got": [
+          "one_sided_weakness"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I have chest pain when I walk",
+        "flags": [
+          "chest_pain"
+        ],
+        "got": [
+          "chest_pain"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "There's a tightness in my chest",
+        "flags": [
+          "chest_pain"
+        ],
+        "got": [
+          "chest_pain"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I can't breathe properly",
+        "flags": [
+          "severe_breathlessness"
+        ],
+        "got": [
+          "severe_breathlessness"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "My words are coming out slurred",
+        "flags": [
+          "speech_difficulty"
+        ],
+        "got": [
+          "speech_difficulty"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "My daughter said I seemed confused last night",
+        "flags": [
+          "confusion"
+        ],
+        "got": [
+          "confusion"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I blacked out in the kitchen",
+        "flags": [
+          "loss_of_consciousness"
+        ],
+        "got": [
+          "loss_of_consciousness"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I fainted this morning",
+        "flags": [
+          "loss_of_consciousness"
+        ],
+        "got": [
+          "loss_of_consciousness"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I fell and hit my head",
+        "flags": [
+          "recent_fall_with_injury"
+        ],
+        "got": [
+          "recent_fall_with_injury"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "Suddenly I have double vision",
+        "flags": [
+          "sudden_onset",
+          "sudden_vision_change"
+        ],
+        "got": [
+          "sudden_onset",
+          "sudden_vision_change"
+        ],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "No chest pain, just tired",
+        "flags": [],
+        "got": [],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I'm not confused, only weak",
+        "flags": [],
+        "got": [],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I feel weak and tired for three days",
+        "flags": [],
+        "got": [],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "Never fainted, but I feel slow",
+        "flags": [],
+        "got": [],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "I feel a bit breathless climbing stairs",
+        "flags": [],
+        "got": [],
+        "missed": [],
+        "false_pos": []
+      },
+      {
+        "text": "Saya keliru semalam",
+        "flags": [
+          "confusion"
+        ],
+        "note": "Malay: 'I was confused yesterday' - expected miss for rules-only extraction",
+        "got": [],
+        "missed": [
+          "confusion"
+        ],
+        "false_pos": []
+      }
+    ]
+  },
+  "sensor_synthetic": {
+    "single_person_sessions": 80,
+    "accepted": 73,
+    "false_rejects": 7,
+    "mae_s": 0.206,
+    "median_abs_err_s": 0.19,
+    "bias_s": -0.206,
+    "max_abs_err_s": 0.49,
+    "interference_sessions": 60,
+    "interference_rejected": 30
+  },
+  "sensor_real": {
+    "n": 0,
+    "note": "Log real sessions in ground_truth_log.csv or via the Dev page; the API reports MAE at /api/evaluation/sensor."
+  }
+}

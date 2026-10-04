@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "wisp": {
+      "url": "http://127.0.0.1:8765/mcp"
+    },
+    "wisp-stdio": {
+      "command": "uv",
+      "args": ["run", "--directory", "/ABSOLUTE/PATH/TO/WISP/services", "python", "-m", "wisp.mcp.server"],
+      "env": {
+        "WISP_API_URL": "http://127.0.0.1:8787",
+        "WISP_MCP_TOKEN": "wisp-local-dev-token"
+      }
+    }
+  }
+}

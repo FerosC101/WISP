@@ -1,0 +1,22 @@
+# Python
+services/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+apps/web/node_modules/
+apps/web/.next/
+apps/web/next-env.d.ts
+
+# Local data: database, encryption key, live raw CSI never leave this machine
+data/wisp.sqlite3
+data/.wisp_local.key
+data/recorded_csi/live/
+
+# Generated (re-create with: uv run python -m wisp.demo.seed)
+data/recorded_csi/*.npz
+data/demo/recordings.json
+
+.DS_Store
+.env*

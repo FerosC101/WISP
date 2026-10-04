@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+/* WISP design tokens: warm, calm, high-contrast. Red is reserved for emergencies. */
+@theme {
+  --color-paper: #f8f5ef;
+  --color-card: #ffffff;
+  --color-ink: #1b2540;
+  --color-ink-soft: #4a5470;
+  --color-ink-faint: #737b90;
+  --color-line: #e3ddd2;
+  --color-navy: #22305a;
+  --color-blue: #2f6299;
+  --color-blue-bg: #e7eff8;
+  --color-teal: #23706b;
+  --color-teal-bg: #e2f1ef;
+  --color-amber: #9a5200;
+  --color-amber-bg: #fff1d9;
+  --color-red: #b3261e;
+  --color-red-bg: #fdecea;
+  --color-green: #2b6e45;
+  --color-green-bg: #e5f2e9;
+  --color-grey-bg: #efece6;
+
+  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+
+  --radius-card: 1.25rem;
+}
+
+html {
+  font-size: 19px;
+  background: var(--color-paper);
+}
+html[data-large="true"] {
+  font-size: 23px;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.5;
+}
+
+/* Strong, visible focus for keyboard users. */
+:focus-visible {
+  outline: 3px solid var(--color-blue);
+  outline-offset: 3px;
+  border-radius: 0.5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+.wisp-pulse {
+  animation: wisp-pulse 2.4s ease-in-out infinite;
+}
+@keyframes wisp-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}

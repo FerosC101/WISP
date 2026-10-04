@@ -1,0 +1,17 @@
+[
+  {"id": "V01", "user": "mdm_tan", "complaint": "I've felt weak for two days.", "answers": {"eating": "No", "arms": "Yes"}, "expected_tier": "T2", "expect_sensing": true, "note": "Scenario 1: sensing changes T3 -> T2"},
+  {"id": "V02", "user": "mr_lim", "complaint": "This morning I suddenly felt dizzy and my left hand feels clumsy.", "expected_tier": "T1", "expect_sensing": false, "note": "Scenario 2: emergency, sensing refused"},
+  {"id": "V03", "user": "mdm_siti", "complaint": "I'm tired and don't feel like myself.", "answers": {"duration": "Since yesterday"}, "expected_tier": "T4", "expect_sensing": true, "note": "Scenario 3 day 1"},
+  {"id": "V04", "user": "mdm_siti", "complaint": "My daughter said I seemed confused last night.", "expected_tier": "T1", "expect_sensing": false, "note": "Scenario 3 day 2 (as a fresh check)"},
+  {"id": "V05", "user": "mdm_tan", "complaint": "I feel weak.", "recording": "tan_interference", "expected_tier": "ABSTAIN", "expect_sensing": false, "note": "Second person walks through: measurement rejected"},
+  {"id": "V06", "user": "mdm_tan", "complaint": "I feel weak.", "answers": {"chest_pain": "Yes"}, "expected_tier": "T1", "expect_sensing": false},
+  {"id": "V07", "user": "mdm_tan", "complaint": "I feel slower today.", "answers": {"steady": "No, I don't feel steady"}, "expected_tier": "T2", "expect_sensing": false, "note": "Unsteadiness is information; no test"},
+  {"id": "V08", "user": "mdm_tan", "complaint": "I feel tired.", "answers": {"steady": "I'd rather not"}, "expected_tier": "T3", "expect_sensing": false, "note": "Declined: no evidence for self-care"},
+  {"id": "V09", "user": "mr_lim", "complaint": "I feel tired since yesterday.", "expected_tier": "T3", "expect_sensing": false, "note": "No baseline: sensing not useful"},
+  {"id": "V10", "user": "mdm_tan", "complaint": "My tooth hurts.", "answers": {"scope": "No"}, "expected_tier": "ABSTAIN", "expect_sensing": false, "note": "Out of scope"},
+  {"id": "V11", "user": "mdm_tan", "complaint": "I feel weak.", "answers": {"eating": "No", "fluids": "No"}, "expected_tier": "T2", "expect_sensing": false, "note": "Symptom floor T2; sensing cannot change it"},
+  {"id": "V12", "user": "mdm_tan", "complaint": "I feel weak.", "answers": {"confusion": "Not sure"}, "expected_tier": "ABSTAIN", "expect_sensing": false, "note": "Unsure about a warning sign"},
+  {"id": "V13", "user": "mdm_tan", "complaint": "I feel weaker than usual.", "answers": {"fall": "Yes", "fall_injury": "No"}, "expected_tier": "T2", "expect_sensing": true, "note": "Fall without injury + clear slowing"},
+  {"id": "V14", "user": "mdm_siti", "complaint": "I'm tired.", "answers": {"eating": "No"}, "expected_tier": "T3", "expect_sensing": true, "note": "Normal check cannot lower the T3 floor"},
+  {"id": "V15", "user": "mdm_tan", "complaint": "I fell this morning and hit my head, now I feel weak.", "expected_tier": "T1", "expect_sensing": false}
+]
