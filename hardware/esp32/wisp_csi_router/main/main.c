@@ -44,7 +44,7 @@
 
 #include "esp_csi_gain_ctrl.h"
 
-#define WISP_FW_VERSION   "wisp-csi-router 1.1"
+#define WISP_FW_VERSION   "wisp-csi-router 1.2"
 #define SEND_FREQUENCY_HZ 100
 #define NVS_NS            "wisp"
 #define GOT_IP_BIT        BIT0
@@ -177,6 +177,23 @@ static void on_event(void *arg, esp_event_base_t base, int32_t id, void *data)
     }
 }
 
+static void creds_save(const char *ssid, const char *pass);
+
+/* Compare network names ignoring leading/trailing spaces and letter case. */
+static bool ssid_loose_equal(const char *a, const char *b)
+{
+    while (*a == ' ') a++;
+    while (*b == ' ') b++;
+    size_t la = strlen(a), lb = strlen(b);
+    while (la && a[la - 1] == ' ') la--;
+    while (lb && b[lb - 1] == ' ') lb--;
+    if (la != lb) return false;
+    for (size_t i = 0; i < la; i++) {
+        if (tolower((unsigned char)a[i]) != tolower((unsigned char)b[i])) return false;
+    }
+    return true;
+}
+
 static void wifi_init_once(void)
 {
     if (s_wifi_started) {
@@ -233,6 +250,25 @@ static void wifi_scan_report(void)
         outf("WISP_SCAN_AP ssid_hex=%s rssi=%d channel=%d auth=%d\n", hex, recs[i].rssi, recs[i].primary, recs[i].authmode);
     }
     outf("WISP_SCAN_END\n");
+
+    /* Saved name differs from a visible network only by spaces/case (e.g. a
+     * trailing space in the router's name)? Use the router's exact name. */
+    if (s_have_creds) {
+        for (int i = 0; i < n; i++) {
+            const char *seen = (const char *)recs[i].ssid;
+            if (strcmp(seen, s_ssid) != 0 && ssid_loose_equal(seen, s_ssid)) {
+                strncpy(s_ssid, seen, sizeof(s_ssid) - 1);
+                creds_save(s_ssid, s_pass);
+                wifi_config_t cfg;
+                esp_wifi_get_config(WIFI_IF_STA, &cfg);
+                memset(cfg.sta.ssid, 0, sizeof(cfg.sta.ssid));
+                memcpy(cfg.sta.ssid, s_ssid, strlen(s_ssid));
+                esp_wifi_set_config(WIFI_IF_STA, &cfg);
+                outf("WISP_SSID_CORRECTED ssid=\"%s\"\n", s_ssid);
+                break;
+            }
+        }
+    }
     s_paused = false;
     if (s_have_creds) {
         esp_wifi_connect();

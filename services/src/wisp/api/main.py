@@ -330,8 +330,13 @@ def dev_sensor_wifi(body: SensorWifi) -> dict:
         raise HTTPException(400, "Wi-Fi passwords are 8–63 characters (or empty for an open network)")
     if len(body.ssid.encode()) > 32:
         raise HTTPException(400, "Network name is too long")
-    stream.write_line(f"WISP_WIFI {body.ssid.encode().hex()} {body.password.encode().hex()}")
-    return {"sent": True}
+    ssid = body.ssid
+    seen = [n["ssid"] for n in (stream.firmware_state().get("networks") or [])]
+    match = next((n for n in seen if n != ssid and n.strip().lower() == ssid.strip().lower()), None)
+    if match:
+        ssid = match  # the router's exact name (e.g. with a trailing space)
+    stream.write_line(f"WISP_WIFI {ssid.encode().hex()} {body.password.encode().hex()}")
+    return {"sent": True, "ssid": ssid, "corrected": match is not None}
 
 
 @app.post("/api/dev/sensor/command")
