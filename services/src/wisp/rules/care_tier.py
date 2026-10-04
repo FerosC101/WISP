@@ -63,7 +63,7 @@ ACTIONS: dict[Tier, list[CareAction]] = {
 
 ACTION_TEXT = {
     Tier.T1: ("Call 995 now, or go to the nearest A&E.", "Now"),
-    Tier.T2: ("See your regular GP or a polyclinic today.", "Today"),
+    Tier.T2: ("See your GP or a polyclinic today.", "Today"),
     Tier.T3: ("Book your regular GP or a polyclinic in the next few days.", "Within 2–3 days"),
     Tier.T4: ("Rest at home and keep an eye on how you feel.", "Re-check tomorrow"),
     Tier.ABSTAIN: ("Please speak with your family doctor or a nurse today about how you're feeling.", "Today"),
@@ -157,25 +157,25 @@ def functional_tier_from_comparison(comparison: BaselineComparison, has_concerni
         return (
             Tier.T4,
             RuleHit(rule_id="FN-1", description="5xSTS within personal usual range", effect="Functional tier T4"),
-            "Your chair-rise check was within your usual range.",
+            "Today's movement check was within your usual range.",
         )
     if s == "slower_than_usual" and comparison.severity == "mild":
         return (
             Tier.T3,
             RuleHit(rule_id="FN-2", description="5xSTS mildly slower than personal usual range", effect="Functional tier T3"),
-            "Your chair-rise check was a little slower than your usual pattern.",
+            "Today's movement check was a little slower than your usual pattern.",
         )
     if s == "slower_than_usual":
         if has_concerning:
             return (
                 Tier.T2,
                 RuleHit(rule_id="FN-3b", description="5xSTS clearly slower than usual + concerning finding", effect="Functional tier T2"),
-                "Your chair-rise check was slower than your usual pattern.",
+                "Today's movement check was slower than your usual pattern.",
             )
         return (
             Tier.T3,
             RuleHit(rule_id="FN-3a", description="5xSTS clearly slower than usual, no other concerning finding", effect="Functional tier T3"),
-            "Your chair-rise check was slower than your usual pattern.",
+            "Today's movement check was slower than your usual pattern.",
         )
     return None, None, None
 
@@ -260,14 +260,14 @@ def decide_care_tier(
     if case.functional_status == "stopped_early":
         func_tier = Tier.T2
         hits.append(RuleHit(rule_id="FN-4", description="Could not complete an otherwise safe 5xSTS", effect="Functional tier T2"))
-        reasons.append("You weren't able to finish the chair-rise check.")
+        reasons.append("You weren't able to finish the movement check.")
         confidence = "medium"
     elif comparison is not None:
         if comparison.status == "measurement_unreliable":
             unreliable = True
         elif comparison.status == "unable_to_compare":
             hits.append(RuleHit(rule_id="FN-5", description="No usable personal baseline", effect="No functional tier"))
-            reasons.append("I don't have your usual chair-rise pattern to compare with yet.")
+            reasons.append("I don't have your usual movement pattern to compare with yet.")
         else:
             func_tier, hit, reason = functional_tier_from_comparison(comparison, bool(rng.concerning))
             if hit:
@@ -275,14 +275,14 @@ def decide_care_tier(
                 sensing_used = True
                 reasons.append(reason)
                 if comparison.new_arm_use:
-                    reasons.append("You needed to use your arms when you normally don't.")
+                    reasons.append("You needed your arms to stand when you normally don't.")
                 confidence = comparison.confidence
     elif case.functional_status == "unreliable":
         unreliable = True
 
     if unreliable:
         hits.append(RuleHit(rule_id="SAFE-3", description="Measurement rejected as unreliable; not used", effect="Cannot support self-care"))
-        reasons.append("I couldn't get a reliable chair-rise reading, so I didn't use it.")
+        reasons.append("I couldn't get a reliable movement reading, so I didn't use it.")
 
     # Symptom floor at T2 or above: nothing measured can lower it.
     if URGENCY_RANK[rng.floor] <= URGENCY_RANK[Tier.T2]:
@@ -290,7 +290,7 @@ def decide_care_tier(
             hits.append(
                 RuleHit(rule_id="SAFE-1", description=f"Functional result ({func_tier.value}) less urgent than symptom floor", effect=f"Held at {rng.floor.value}")
             )
-            reasons.append("A normal chair-rise check can't rule out a serious problem, so this advice stays the same.")
+            reasons.append("A normal movement check can't rule out a serious problem, so this advice stays the same.")
         return _build(rng.floor, case=case, reasons=reasons, confidence="high", hits=hits,
                       floor=rng.floor, functional_tier=func_tier, sensing_used=sensing_used, now=now)
 
@@ -305,7 +305,7 @@ def decide_care_tier(
         if rng.floor == Tier.T4:
             hits.append(RuleHit(rule_id="SAFE-4", description="No functional evidence available", effect="Self-care not supported; T3"))
             if case.functional_status == "declined":
-                reasons.append("We didn't do the chair-rise check, so I can't confirm you're at your usual strength.")
+                reasons.append("We didn't do the movement check, so I can't confirm you're at your usual strength.")
         return _build(tier, case=case, reasons=reasons, confidence="medium", hits=hits,
                       floor=rng.floor, functional_tier=None, sensing_used=False, now=now)
 
@@ -315,6 +315,6 @@ def decide_care_tier(
     elif final != rng.floor:
         hits.append(RuleHit(rule_id="ESC-1", description=f"Functional evidence raised urgency {rng.floor.value} → {final.value}", effect=f"Tier {final.value}"))
     if final == Tier.T4:
-        reasons.append("A normal chair-rise check can't rule out every problem, so please watch for the signs below.")
+        reasons.append("A normal movement check can't rule out every problem, so please watch for the warning signs.")
     return _build(final, case=case, reasons=reasons, confidence=confidence, hits=hits,
                   floor=rng.floor, functional_tier=func_tier, sensing_used=sensing_used, now=now)

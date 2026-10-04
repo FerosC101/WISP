@@ -108,6 +108,8 @@ class StartSession(BaseModel):
     user_id: str = Field(max_length=40)
     agent: Literal["local_agent", "workbuddy"] = "local_agent"
     previous_session_id: str | None = None
+    language: Literal["en", "zh", "ms", "ta"] = "en"
+    text: str | None = Field(default=None, max_length=1000)  # the patient's first words, typed on the home screen
 
 
 @app.post("/api/sessions")
@@ -115,7 +117,10 @@ def start_session(body: StartSession) -> dict:
     s = svc()
     case = s.start_session(body.user_id, agent=body.agent, previous_session_id=body.previous_session_id)
     if body.agent == "local_agent":
-        agent().open(case.session_id)
+        first = (body.text or "").strip()
+        agent().open(case.session_id, lang=body.language, greet=not first)
+        if first:
+            agent().handle(case.session_id, first)
     else:
         s.say(case.session_id, "system", "Waiting for WorkBuddy to join this assessment…", kind="info")
     return s.snapshot(case.session_id)
@@ -127,9 +132,10 @@ def followup(session_id: str, body: dict = Body(default={})) -> dict:
     s = svc()
     prev = s.case(session_id)
     agent_kind = body.get("agent", "local_agent")
+    lang = body.get("language", "en") if body.get("language") in ("en", "zh", "ms", "ta") else "en"
     case = s.start_session(prev.user_id, agent=agent_kind, previous_session_id=session_id)
     if agent_kind == "local_agent":
-        agent().open(case.session_id)
+        agent().open(case.session_id, lang=lang)
     return s.snapshot(case.session_id)
 
 
@@ -140,6 +146,7 @@ def get_session(session_id: str) -> dict:
 
 class Message(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
+    value: str | None = Field(default=None, max_length=40)  # language-independent answer from a quick-reply button
 
 
 @app.post("/api/sessions/{session_id}/messages")
@@ -150,7 +157,7 @@ def post_message(session_id: str, body: Message) -> dict:
         raise HTTPException(404, "Unknown session")
     if meta["agent"] != "local_agent":
         raise HTTPException(409, "This assessment is being run by WorkBuddy")
-    agent().handle(session_id, body.text)
+    agent().handle(session_id, body.text, body.value)
     return s.snapshot(session_id)
 
 

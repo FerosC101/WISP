@@ -45,7 +45,7 @@ DEFAULT_ANSWERS = {
     "scope": "Yes", "onset": "Gradually", "duration": "2–3 days", "chest_pain": "No", "severe_breathlessness": "No",
     "one_sided_weakness": "No", "speech_difficulty": "No", "confusion": "No", "loss_of_consciousness": "No",
     "sudden_vision_change": "No", "fall": "No", "fall_injury": "No", "eating": "Yes", "fluids": "Yes",
-    "steady": "Yes, I feel steady", "others": "No, I'm alone", "others_clear": "The room is clear now", "arms": "No",
+    "offer": "Do the check", "steady": "Yes, I'm ready", "others": "No, I'm alone", "others_clear": "It's clear now", "arms": "No",
     "stop_reason": "No",
 }
 

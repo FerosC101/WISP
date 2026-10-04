@@ -505,7 +505,7 @@ class WispService:
         d = self.store.get_disposition(session_id)
         if d is None:
             raise ToolError("No recommendation yet", "invalid_state")
-        reasons = [r for r in d.reasons if not r.startswith("A normal chair-rise")]
+        reasons = [r for r in d.reasons if not r.startswith("A normal movement check")]
         text = (
             f"{p.display_name} completed a WISP self-triage check.\n\n"
             f"Recommendation:\n{d.title}. {d.action}\n\n"
