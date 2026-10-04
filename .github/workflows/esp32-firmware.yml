@@ -1,0 +1,35 @@
+# Builds the WISP CSI receiver firmware (ESP32-S3). No Wi-Fi credentials are
+# involved: they are provisioned at runtime over USB from the WISP app.
+name: esp32-firmware
+
+on:
+  push:
+    paths:
+      - "hardware/esp32/wisp_csi_router/**"
+      - ".github/workflows/esp32-firmware.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build with ESP-IDF
+        uses: espressif/esp-idf-ci-action@v1
+        with:
+          esp_idf_version: v5.4
+          target: esp32s3
+          path: hardware/esp32/wisp_csi_router
+          command: >-
+            idf.py build &&
+            cd build &&
+            python -m esptool --chip esp32s3 merge_bin -o wisp_csi_router_merged.bin @flash_args
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wisp_csi_router-esp32s3
+          path: |
+            hardware/esp32/wisp_csi_router/build/wisp_csi_router_merged.bin
+            hardware/esp32/wisp_csi_router/build/wisp_csi_router.bin
+            hardware/esp32/wisp_csi_router/build/bootloader/bootloader.bin
+            hardware/esp32/wisp_csi_router/build/partition_table/partition-table.bin
+            hardware/esp32/wisp_csi_router/build/flash_args
