@@ -75,6 +75,7 @@ class SerialStream:
 
     def _run(self) -> None:
         pending = b""
+        synced = False  # opening the port mid-stream yields a partial first line: drop it
         try:
             while not self._stop.is_set():
                 chunk = self._serial.read(4096)
@@ -82,6 +83,9 @@ class SerialStream:
                     continue
                 pending += chunk
                 *lines, pending = pending.split(b"\n")
+                if lines and not synced:
+                    lines = lines[1:]
+                    synced = True
                 now = time.monotonic()
                 for raw in lines:
                     line = raw.decode("utf-8", errors="replace").strip()
