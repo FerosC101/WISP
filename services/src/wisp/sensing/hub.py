@@ -84,7 +84,7 @@ class SerialStream:
                 *lines, pending = pending.split(b"\n")
                 now = time.monotonic()
                 for raw in lines:
-                    line = raw.decode("ascii", errors="replace").strip()
+                    line = raw.decode("utf-8", errors="replace").strip()
                     if not line:
                         continue
                     vec = parse_csi_line(line)
@@ -104,6 +104,27 @@ class SerialStream:
                 self._serial.close()
             except Exception:  # noqa: BLE001
                 pass
+
+    def write_line(self, text: str) -> None:
+        """Send one command line to the board (never logged: may carry Wi-Fi credentials)."""
+        self._serial.write((text.strip() + "\n").encode("utf-8"))
+        self._serial.flush()
+
+    def firmware_state(self) -> dict:
+        """Interpret WISP firmware status lines (WISP_*) if the board runs it."""
+        wisp = [(t, line) for t, line in list(self.text) if line.startswith("WISP_")]
+        if not wisp:
+            return {"firmware": "unknown"}
+        last = wisp[-1][1]
+        info: dict = {"firmware": "wisp", "last": last.split(" ")[0]}
+        for _, line in reversed(wisp):
+            if line.startswith("WISP_READY"):
+                for part in line.split(" ")[1:]:
+                    if "=" in part:
+                        k, v = part.split("=", 1)
+                        info[k] = v.strip('"')
+                break
+        return info
 
     def reset_board(self) -> None:
         """Pulse RTS (EN) to reboot the board so its boot log becomes visible."""
@@ -133,10 +154,15 @@ class SerialStream:
         recent = [t for t, _ in list(self.packets) if t >= now - window]
         recent_text = [t for t, _ in list(self.text) if t >= now - window]
         rate = len(recent) / window
+        fw = self.firmware_state()
         if self.error:
             state = "error"
         elif rate > 5:
             state = "streaming_csi"
+        elif fw.get("last") == "WISP_NEED_WIFI":
+            state = "needs_wifi"
+        elif fw.get("last") in ("WISP_CONNECTING", "WISP_WIFI_TIMEOUT", "WISP_WIFI_DISCONNECTED", "WISP_WIFI_SAVED"):
+            state = "connecting"
         elif recent_text or self.total_text_lines and not self.total_packets:
             state = "text_only"
         else:
@@ -151,6 +177,7 @@ class SerialStream:
             "rssi": round(float(np.mean(list(self.rssi)[-20:])), 1) if self.rssi else None,
             "uptime_s": round(now - self.opened_at, 1),
             "error": self.error,
+            "device": fw,
         }
 
     def live_frame(self, seconds: float = 0.25) -> dict:

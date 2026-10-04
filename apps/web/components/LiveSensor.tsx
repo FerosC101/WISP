@@ -12,7 +12,8 @@ interface Port {
 }
 interface Status {
   port: string;
-  state: "streaming_csi" | "text_only" | "silent" | "error";
+  state: "streaming_csi" | "text_only" | "silent" | "error" | "needs_wifi" | "connecting";
+  device: { firmware: string; last?: string; ssid?: string; channel?: string; ip?: string; rate_hz?: string; fw?: string };
   packets_per_second: number;
   total_packets: number;
   total_text_lines: number;
@@ -40,6 +41,12 @@ const STATE: Record<Status["state"], { label: string; cls: string; help: string 
     help: "The port is open but nothing is arriving. Press “Reset board” to see its boot log and which firmware it runs.",
   },
   error: { label: "Error", cls: "bg-red text-white", help: "The serial port reported an error." },
+  needs_wifi: {
+    label: "WISP firmware — needs Wi-Fi",
+    cls: "bg-teal text-white",
+    help: "The board runs WISP CSI firmware and is waiting for your Wi-Fi details. Enter them below; they are sent only to the board over USB.",
+  },
+  connecting: { label: "Joining Wi-Fi…", cls: "bg-teal text-white", help: "The board is connecting to your router. Use a 2.4 GHz network." },
 };
 
 function Heatmap({ columns }: { columns: number[][] }) {
@@ -127,6 +134,19 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
   }
 
   const st = frame?.status;
+  const [ssid, setSsid] = useState("");
+  const [pass, setPass] = useState("");
+  const [wifiMsg, setWifiMsg] = useState<string | null>(null);
+  async function sendWifi() {
+    setWifiMsg(null);
+    try {
+      await post("/api/dev/sensor/wifi", { port, ssid, password: pass });
+      setPass("");
+      setWifiMsg("Sent to the sensor. It will restart and join the network.");
+    } catch (e) {
+      setWifiMsg((e as Error).message);
+    }
+  }
   const usingThis = provider?.name === "esp32" && provider.port === port;
 
   return (
@@ -168,6 +188,42 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
             <span className="font-mono text-sm text-ink-faint">{st.uptime_s}s</span>
           </div>
           <p className="mt-2 text-sm text-ink-soft">{STATE[st.state].help}</p>
+          {st.device?.firmware === "wisp" && (
+            <p className="mt-1 font-mono text-xs text-ink-soft">
+              WISP firmware{st.device.fw ? ` · ${st.device.fw}` : ""}
+              {st.device.ssid && ` · network “${st.device.ssid}” · channel ${st.device.channel} · ${st.device.rate_hz} Hz pings`}
+            </p>
+          )}
+          {st.device?.firmware === "wisp" && (
+            <details className="mt-3 rounded-xl border border-line px-4 py-3" open={st.state === "needs_wifi"}>
+              <summary className="cursor-pointer font-bold">Sensor Wi-Fi</summary>
+              <p className="mt-2 text-sm text-ink-soft">
+                The sensor joins your router and measures its replies. Details go from this page to the board over USB and are stored only on the board.
+              </p>
+              <form
+                className="mt-3 flex flex-col gap-2 sm:flex-row"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  sendWifi();
+                }}
+              >
+                <input value={ssid} onChange={(e) => setSsid(e.target.value)} placeholder="Network name (2.4 GHz)" autoComplete="off" className="min-h-11 flex-1 rounded-xl border border-line px-3" aria-label="Wi-Fi network name" />
+                <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="Password" autoComplete="off" className="min-h-11 flex-1 rounded-xl border border-line px-3" aria-label="Wi-Fi password" />
+                <Button type="submit" disabled={!ssid}>
+                  Send to sensor
+                </Button>
+              </form>
+              <div className="mt-2 flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={() => post("/api/dev/sensor/command", { port, command: "WISP_STATUS" })}>
+                  Ask for status
+                </Button>
+                <Button variant="secondary" onClick={() => post("/api/dev/sensor/command", { port, command: "WISP_FORGET" })}>
+                  Forget Wi-Fi
+                </Button>
+              </div>
+              {wifiMsg && <p className="mt-2 text-sm">{wifiMsg}</p>}
+            </details>
+          )}
 
           <div className="mt-4 grid gap-4 lg:grid-cols-2">
             <figure>

@@ -314,6 +314,38 @@ def dev_sensor_reset(body: dict = Body(...)) -> dict:
     return {"reset": True}
 
 
+class SensorWifi(BaseModel):
+    port: str
+    ssid: str = Field(min_length=1, max_length=32)
+    password: str = Field(default="", max_length=63)
+
+
+@app.post("/api/dev/sensor/wifi")
+def dev_sensor_wifi(body: SensorWifi) -> dict:
+    """Provision the WISP CSI firmware's Wi-Fi over USB. Credentials go only to the board."""
+    stream = HUB.get(body.port)
+    if stream is None:
+        raise HTTPException(409, "Open the live monitor for this port first")
+    if body.password and not 8 <= len(body.password.encode()) <= 63:
+        raise HTTPException(400, "Wi-Fi passwords are 8–63 characters (or empty for an open network)")
+    if len(body.ssid.encode()) > 32:
+        raise HTTPException(400, "Network name is too long")
+    stream.write_line(f"WISP_WIFI {body.ssid.encode().hex()} {body.password.encode().hex()}")
+    return {"sent": True}
+
+
+@app.post("/api/dev/sensor/command")
+def dev_sensor_command(body: dict = Body(...)) -> dict:
+    stream = HUB.get(body.get("port", ""))
+    if stream is None:
+        raise HTTPException(409, "Open the live monitor for this port first")
+    cmd = body.get("command")
+    if cmd not in ("WISP_STATUS", "WISP_FORGET"):
+        raise HTTPException(400, "Unknown command")
+    stream.write_line(cmd)
+    return {"sent": cmd}
+
+
 @app.post("/api/dev/sensor")
 def dev_sensor_update(body: dict = Body(...)) -> dict:
     s = svc()
