@@ -162,10 +162,19 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
   const [wifiMsg, setWifiMsg] = useState<string | null>(null);
   async function sendWifi() {
     setWifiMsg(null);
+    // Network names are exact (case, trailing spaces). If the typed name matches a scanned
+    // network apart from that, use the network's real name.
+    const norm = (x: string) => x.trim().toLowerCase();
+    const match = st?.device.networks?.find((n) => n.ssid !== ssid && norm(n.ssid) === norm(ssid));
+    const exact = match?.ssid ?? ssid;
     try {
-      await post("/api/dev/sensor/wifi", { port, ssid, password: pass });
+      await post("/api/dev/sensor/wifi", { port, ssid: exact, password: pass });
       setPass("");
-      setWifiMsg("Sent to the sensor. It will restart and join the network.");
+      setWifiMsg(
+        match
+          ? `Sent using the exact network name “${exact.replace(/ /g, "␣")}” (␣ = space). The sensor will restart and join.`
+          : "Sent to the sensor. It will restart and join the network.",
+      );
     } catch (e) {
       setWifiMsg((e as Error).message);
     }
@@ -255,7 +264,7 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
               )}
               {st.device.networks && (
                 <div className="mt-3">
-                  <p className="text-sm font-bold">Networks the sensor can see (2.4 GHz) — tap to use</p>
+                  <p className="text-sm font-bold">Networks the sensor can see (2.4 GHz) — tap to use · ␣ marks a space at the start or end of a name</p>
                   {st.device.networks.length === 0 ? (
                     <p className="text-sm text-ink-soft">None found. Is the router 2.4 GHz and nearby?</p>
                   ) : (
@@ -267,7 +276,7 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
                             onClick={() => setSsid(n.ssid)}
                             className={`rounded-full border px-3 py-1.5 text-sm ${ssid === n.ssid ? "border-forest bg-sage" : "border-line"}`}
                           >
-                            {n.ssid} <span className="font-mono text-xs text-ink-faint">ch{n.channel} · {n.rssi} dBm · {AUTH[n.auth] ?? n.auth}</span>
+                            {n.ssid.replace(/^ | $/g, "␣")} <span className="font-mono text-xs text-ink-faint">ch{n.channel} · {n.rssi} dBm · {AUTH[n.auth] ?? n.auth}</span>
                           </button>
                         </li>
                       ))}
