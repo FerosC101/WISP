@@ -41,7 +41,16 @@ wisp MCP server  ──token──▶  WISP local API (FastAPI)
 | `audit/trace.py` | Decision Trace builder (structured record, not chain-of-thought) |
 | `mcp/server.py` | MCP tools for WorkBuddy |
 | `api/main.py` | REST + WebSocket; developer/evaluation endpoints |
-| `apps/web` | Patient UI, decision trace, check screen, baseline, privacy, dev diagnostics |
+| `apps/web` | Patient app (home, conversation, movement check, recommendation, history, my usual, privacy); `/explain/[id]` technical view (structured decision record); `/dev` engineering view |
+| `triage/i18n.py` | Structured safety questions in English, Mandarin, Malay, Tamil |
+
+## Three audiences, three views
+
+| View | Route | Shows |
+|---|---|---|
+| Patient (default) | `/`, `/session/[id]`, `/history`, `/baseline`, `/privacy` | Conversation, plain safety questions, movement check, recommendation, reasons, warning signs, "How WISP decided" in plain language |
+| Technical / explain | `/explain/[id]` (demo mode) | Concern, safety screen, care range, missing info, options considered, selected action + why, tool called, sensor result, baseline result, care-tier change, final disposition with rule IDs, tool-call timeline by actor |
+| Engineering | `/dev` (not linked from patient navigation) | Sensor source, replay vs live, synthetic vs real, measurement table, CSI-derived plots, features, ground truth, audit log, WorkBuddy tool calls, demo launchers |
 
 ## Sensor independence
 

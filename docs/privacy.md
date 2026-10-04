@@ -24,5 +24,5 @@
 | Caregiver summary | Only with explicit per-share consent; delivery simulated in the prototype | No sensor data |
 
 Sensing activates only inside an assessment the patient started, only after the
-deterministic gates pass, and only after the patient presses **I'm seated and ready**.
+deterministic gates pass, and only after the patient presses **I'm seated — start**.
 The UI always shows the state: **Physical sensing OFF / ACTIVE / COMPLETE / LOCKED**.

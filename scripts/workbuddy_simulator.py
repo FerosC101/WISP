@@ -101,7 +101,7 @@ async def main() -> None:
             if args.auto_ready:
                 asyncio.create_task(press_ready())
             else:
-                print("\n>>> Press “I'm seated and ready” on the WISP screen <<<")
+                print("\n>>> Press “I'm seated — start” on the WISP screen <<<")
             m = await call(client, "run_functional_assessment", session_id=sid, grant_id=el["grant_id"], type="5xSTS")
             if m.get("success"):
                 await call(client, "record_case_facts", session_id=sid, arms_used=True)

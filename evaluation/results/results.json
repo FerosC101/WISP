@@ -437,7 +437,8 @@
     "interference_rejected": 30
   },
   "sensor_real": {
-    "n": 0,
-    "note": "Log real sessions in ground_truth_log.csv or via the Dev page; the API reports MAE at /api/evaluation/sensor."
+    "file": "trials.csv",
+    "n_trials": 0,
+    "markdown": "No trials recorded in `trials.csv` yet. Collect them with `scripts/collect_trials.py`."
   }
 }

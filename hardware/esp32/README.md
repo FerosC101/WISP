@@ -49,13 +49,26 @@ for debugging only (set `WISP_SAVE_RAW_CSI=0` to disable). They never leave the 
 
 ## Capture protocol (matches the pipeline)
 
-1. Patient sits still. They press **I'm seated and ready**.
+1. Patient sits still. They press **I'm seated — start**.
 2. Screen counts down 3 s ("Sit still… 3, 2, 1"). Movement in this window is treated as interference.
 3. Five full stands, sitting back down after the fifth. Capture ends after ~2.5 s of stillness.
+
+## Collecting real trials (participants + ground truth)
+
+```bash
+cd services
+uv run python ../scripts/collect_trials.py --participant P01 --port /dev/cu.usbserial-XXXX \
+    --chair "dining chair, against wall" --distance-m 2.5 --trials 8
+uv run python ../evaluation/sensor_accuracy/real_report.py     # participants, trials, MAE, median, rejections, confidence
+```
+
+Use pseudonymous IDs only (P01, P02…), get consent, and keep raw CSI local. Aim for 3–5 participants × 5–10 trials.
+Include a few deliberate "someone walks past" trials (noted in the condition field) to measure rejection honestly.
+`--dry-run` exercises the tool with synthetic data (written to a separate `trials_dryrun.csv`).
 
 ## Calibration and validation
 
 1. For every live session, time it with a stopwatch or phone video (start = first movement, stop = seated after the 5th stand).
-2. Enter the ground truth on the **Dev** page next to the measurement (or log it in `evaluation/sensor_accuracy/ground_truth_log.csv`).
-3. The Dev page reports MAE, median error, failure count and mean confidence for logged sessions.
+2. Enter the ground truth with `scripts/collect_trials.py` (preferred) or on the Engineering view next to the measurement.
+3. `real_report.py` (and the Engineering view) report MAE, median error, failure count and mean confidence for logged sessions.
 4. If timing is biased, adjust boundary handling in `pipeline.py`; if real single-person sessions are rejected, re-tune the single-person heuristics against your recordings. Record what you changed.

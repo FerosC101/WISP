@@ -21,6 +21,15 @@ converts words into structured fields and explains results; it never decides urg
 
 Run: `cd services && uv run pytest` (109 tests).
 
+## Multilingual safety questions
+
+Every red-flag question is asked with fixed answer buttons whose values (`yes` / `no` / `unsure` …) are
+language-independent. Questions and buttons exist in English, Mandarin, Malay and Tamil
+(`services/src/wisp/triage/i18n.py`); the rules only ever see the values, so emergency screening never depends on
+free-text understanding in another language. Free-text extraction (English rules, optional LLM) is an additional
+backstop, never the only safeguard. Translations are drafts pending native-speaker and clinical review
+(see [clinical_review.md](clinical_review.md)).
+
 ## Red flags (→ T1, sensing locked)
 
 sudden onset · chest pain · severe breathlessness · one-sided weakness/numbness/clumsiness ·
@@ -74,5 +83,5 @@ the family doctor, a nurse, or a caregiver **today**.
 ## Known limitations
 
 - Rule thresholds are prototype values chosen for the demo; they need clinical review.
-- A single Wi-Fi link cannot always tell a passer-by from the participant (≈50 % rejection on synthetic crossings). Mitigation: the patient is asked whether anyone else is moving, and the protocol's start cue rejects movement before the test begins.
+- **Automatic multi-person detection is experimental**, not a guaranteed protection. A single Wi-Fi link cannot always tell a passer-by from the participant (≈50 % rejection on synthetic crossings). The primary safeguard is procedural: before every check the patient is asked "Is anyone else moving around in the room?" and, if yes, asked to wait until the area is clear. Automatic detection is an additional check; when it fires, the reading is rejected ("I couldn't get a reliable reading, so I won't use that result") and WISP continues conservatively. Future work: second receiver / multi-link CSI.
 - Arm use is self-reported, not sensed.
