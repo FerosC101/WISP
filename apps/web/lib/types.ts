@@ -140,12 +140,17 @@ export interface DecisionTrace {
   events: AuditEvent[];
 }
 
+export interface QuickReply {
+  label: string;
+  value: string;
+}
+
 export interface ChatMessage {
   id: number;
   ts: string;
   role: "agent" | "patient" | "system";
   text: string;
-  data: { kind?: string; quick_replies?: string[]; question?: string; tier?: Tier; source?: string };
+  data: { kind?: string; quick_replies?: QuickReply[]; question?: string; tier?: Tier; source?: string; why?: string };
 }
 
 export interface PublicProfile {

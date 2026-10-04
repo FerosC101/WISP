@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Button, Card } from "@/components/ui";
+import { Button } from "@/components/ui";
 import { api, post } from "@/lib/api";
 
 interface Summary {
@@ -12,7 +12,7 @@ interface Summary {
   tier: string;
 }
 
-export default function CaregiverPreview() {
+export default function ShareWithFamily() {
   const { id } = useParams<{ id: string }>();
   const [s, setS] = useState<Summary | null>(null);
   const [status, setStatus] = useState<"idle" | "shared" | "declined">("idle");
@@ -24,24 +24,23 @@ export default function CaregiverPreview() {
 
   if (error) return <p className="py-10 text-center text-ink-soft">{error}</p>;
   if (!s) return <p className="py-10 text-center text-ink-soft">Loading…</p>;
-  const name = s.caregiver?.name ?? "your caregiver";
+  const name = s.caregiver?.name ?? "your family member";
 
   return (
-    <div className="mx-auto max-w-2xl">
-      <h1 className="text-[2rem] font-bold text-navy">Share with {name}?</h1>
-      <p className="mt-2 text-ink-soft">
-        This is exactly what {name} would receive. Nothing is sent unless you say yes. Raw sensor data is never shared.
-      </p>
+    <div>
+      <h1 className="text-[2rem] font-bold leading-tight text-forest">Share with {name}?</h1>
+      <p className="mt-2 text-ink-soft">This is exactly what {name} would receive. Nothing is sent unless you say yes. Sensor data is never shared.</p>
 
-      <Card className="mt-6">
-        <p className="text-xs font-bold uppercase tracking-[0.14em] text-ink-faint">Message preview</p>
+      <section className="mt-6 rounded-(--radius-card) border border-line bg-card p-6">
+        <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Message preview</p>
         <pre className="mt-3 whitespace-pre-wrap font-sans text-[1.05rem] leading-relaxed">{s.summary}</pre>
-      </Card>
+      </section>
 
       {status === "idle" && (
         <div className="mt-6 flex flex-col gap-3 sm:flex-row">
           <Button
             size="lg"
+            className="w-full sm:w-auto"
             onClick={async () => {
               await post(`/api/sessions/${id}/share`, { consent: true });
               setStatus("shared");
@@ -52,6 +51,7 @@ export default function CaregiverPreview() {
           <Button
             size="lg"
             variant="secondary"
+            className="w-full sm:w-auto"
             onClick={async () => {
               await post(`/api/sessions/${id}/share`, { consent: false });
               setStatus("declined");
@@ -62,16 +62,16 @@ export default function CaregiverPreview() {
         </div>
       )}
       {status === "shared" && (
-        <p role="status" className="mt-6 rounded-2xl bg-green-bg px-5 py-4 font-bold text-green">
-          Shared with {name}. (Demo: delivery is simulated.)
+        <p role="status" className="mt-6 rounded-2xl bg-sage px-5 py-4 font-bold text-forest">
+          Shared with {name}. (Prototype: delivery is simulated.)
         </p>
       )}
       {status === "declined" && (
-        <p role="status" className="mt-6 rounded-2xl bg-grey-bg px-5 py-4">
+        <p role="status" className="mt-6 rounded-2xl bg-slate-bg px-5 py-4">
           Nothing was shared.
         </p>
       )}
-      <Link href={`/session/${id}`} className="mt-6 inline-block font-bold text-blue underline underline-offset-4">
+      <Link href={`/session/${id}`} className="mt-6 inline-block min-h-11 font-bold text-forest underline underline-offset-4">
         Back to my recommendation
       </Link>
     </div>

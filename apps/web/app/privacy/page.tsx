@@ -1,31 +1,23 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Card } from "@/components/ui";
+import { Button, Disclosure } from "@/components/ui";
+import { WispLine } from "@/components/WispLine";
 import { API_URL, api } from "@/lib/api";
 import { usePrefs } from "@/lib/prefs";
 
 interface Privacy {
-  raw_csi: { location: string; live_files: string[]; saved_for_debugging: boolean };
-  baseline: { location: string; sessions: number };
-  assessments: { location: string; count: number };
-  sent_to_agent: string[];
-  never_sent: string[];
+  raw_csi: { live_files: string[]; saved_for_debugging: boolean };
+  baseline: { sessions: number };
+  assessments: { count: number };
   llm_extraction_enabled: boolean;
 }
 
-function Step({ children, tone = "local" }: { children: React.ReactNode; tone?: "local" | "cloud" }) {
-  return (
-    <div className={`rounded-xl border px-4 py-2.5 text-center font-bold ${tone === "local" ? "border-teal/40 bg-card text-ink" : "border-blue/40 bg-card text-ink"}`}>
-      {children}
-    </div>
-  );
+const Dot = ({ cls }: { cls: string }) => <span aria-hidden className={`mt-2.5 h-2 w-2 shrink-0 rounded-full ${cls}`} />;
+
+function Box({ children, tone }: { children: React.ReactNode; tone: "local" | "cloud" }) {
+  return <div className={`rounded-xl border bg-card px-3 py-2 text-center text-[0.92rem] font-bold ${tone === "local" ? "border-forest/30" : "border-teal/30"}`}>{children}</div>;
 }
-const Arrow = () => (
-  <div aria-hidden className="text-center text-ink-faint">
-    ↓
-  </div>
-);
 
 export default function PrivacyPage() {
   const { userId } = usePrefs();
@@ -37,102 +29,49 @@ export default function PrivacyPage() {
   }, [userId, deleted]);
 
   return (
-    <div className="mx-auto max-w-4xl">
-      <h1 className="text-[2rem] font-bold text-navy">Privacy and your data</h1>
-      <p className="mt-2 max-w-2xl text-[1.05rem]">
-        <strong>Raw physical sensing stays local.</strong> WISP only switches on physical sensing during an assessment you start, and only for the chair-rise
-        check. It is not a monitoring camera and does not watch you the rest of the time.
+    <div>
+      <h1 className="text-[2rem] font-bold leading-tight text-forest">Your physical sensing data stays at home.</h1>
+      <p className="mt-3 text-[1.05rem] text-ink-soft">
+        WISP only switches on sensing during a movement check you start. It does not watch you the rest of the time.
       </p>
+      <WispLine className="my-6 h-3 w-32 text-teal" />
 
-      <section aria-labelledby="arch" className="mt-8 grid gap-4 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
-        <h2 id="arch" className="sr-only">
-          Where data goes
-        </h2>
-        <div className="rounded-[var(--radius-card)] border-2 border-teal bg-teal-bg p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-teal">Home · local trust zone</p>
-          <div className="mt-4 space-y-1.5">
-            <Step>Wi-Fi sensor (ESP32)</Step>
-            <Arrow />
-            <Step>Raw Wi-Fi signal (CSI)</Step>
-            <Arrow />
-            <Step>Signal processing on this device</Step>
-            <Arrow />
-            <Step>Chair-rise summary</Step>
-          </div>
-          <p className="mt-4 text-sm text-ink-soft">Your usual pattern (baseline) is stored here, encrypted.</p>
-        </div>
-
-        <div className="flex items-center justify-center md:flex-col" aria-hidden>
-          <div className="h-1 w-full border-t-4 border-dashed border-ink-faint md:h-full md:w-1 md:border-l-4 md:border-t-0" />
-          <span className="mx-2 whitespace-nowrap rounded-full bg-ink px-3 py-1 text-xs font-bold uppercase tracking-wider text-white md:my-2">Privacy boundary</span>
-          <div className="h-1 w-full border-t-4 border-dashed border-ink-faint md:h-full md:w-1 md:border-l-4 md:border-t-0" />
-        </div>
-
-        <div className="rounded-[var(--radius-card)] border-2 border-blue bg-blue-bg p-5">
-          <p className="text-xs font-bold uppercase tracking-[0.16em] text-blue">AI assistant (WorkBuddy) receives only</p>
-          <ul className="mt-4 space-y-2">
-            {(p?.sent_to_agent ?? ["Your answers to the questions", "Chair-rise summary", "Comparison label"]).map((x) => (
-              <li key={x}>
-                <Step tone="cloud">{x}</Step>
-              </li>
-            ))}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <section className="rounded-(--radius-card) bg-sage p-6">
+          <h2 className="text-[0.75rem] font-bold uppercase tracking-[0.16em] text-forest">Stays on your device</h2>
+          <ul className="mt-3 space-y-2 text-[1.05rem]">
+            <li className="flex gap-3"><Dot cls="bg-forest" />Raw Wi-Fi sensing</li>
+            <li className="flex gap-3"><Dot cls="bg-forest" />Your movement signal</li>
+            <li className="flex gap-3"><Dot cls="bg-forest" />Your personal usual pattern</li>
           </ul>
-          <p className="mt-4 text-sm text-ink-soft">Your conversation may be processed by the AI service, depending on how WISP is set up.</p>
-        </div>
-      </section>
-
-      <div className="mt-6 grid gap-5 md:grid-cols-2">
-        <Card>
-          <h2 className="text-[1.15rem] font-bold">Never leaves this device</h2>
-          <ul className="mt-3 space-y-2">
-            {(p?.never_sent ?? []).map((x) => (
-              <li key={x} className="flex gap-3">
-                <span aria-hidden className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-teal" />
-                {x}
-              </li>
-            ))}
+        </section>
+        <section className="rounded-(--radius-card) border border-line bg-card p-6">
+          <h2 className="text-[0.75rem] font-bold uppercase tracking-[0.16em] text-teal">WISP&apos;s assistant may receive</h2>
+          <ul className="mt-3 space-y-2 text-[1.05rem]">
+            <li className="flex gap-3"><Dot cls="bg-teal" />Your answers to the questions</li>
+            <li className="flex gap-3"><Dot cls="bg-teal" />A summary such as “slower than usual”</li>
+            <li className="flex gap-3"><Dot cls="bg-teal" />The care recommendation</li>
           </ul>
-        </Card>
-        <Card>
-          <h2 className="text-[1.15rem] font-bold">What is stored</h2>
-          {p && (
-            <dl className="mt-3 space-y-2">
-              <div>
-                <dt className="font-bold">Raw sensor recordings</dt>
-                <dd className="text-ink-soft">
-                  {p.raw_csi.location}. {p.raw_csi.saved_for_debugging ? `Kept for troubleshooting (${p.raw_csi.live_files.length} files).` : "Not kept."}
-                </dd>
-              </div>
-              <div>
-                <dt className="font-bold">Usual chair-rise pattern</dt>
-                <dd className="text-ink-soft">
-                  {p.baseline.location} · {p.baseline.sessions} well-day checks
-                </dd>
-              </div>
-              <div>
-                <dt className="font-bold">Assessments</dt>
-                <dd className="text-ink-soft">
-                  {p.assessments.location} · {p.assessments.count} checks
-                </dd>
-              </div>
-            </dl>
-          )}
-        </Card>
+          <p className="mt-3 text-[0.9rem] text-ink-soft">Your conversation may be processed by an online AI service, depending on how WISP is set up.</p>
+        </section>
       </div>
 
-      <Card className="mt-6">
-        <h2 className="text-[1.15rem] font-bold">Your controls</h2>
-        <p className="mt-2 text-ink-soft">Sharing with a family member only happens when you say yes each time.</p>
+      <section className="mt-4 rounded-(--radius-card) border border-line bg-card p-6">
+        <h2 className="text-[0.75rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Your controls</h2>
+        <ul className="mt-3 space-y-2">
+          <li className="flex gap-3"><Dot cls="bg-ink-faint" />Sharing with family only happens when you say yes, each time.</li>
+          <li className="flex gap-3"><Dot cls="bg-ink-faint" />You can delete everything WISP stores on this device.</li>
+        </ul>
         {deleted ? (
-          <p role="status" className="mt-4 rounded-xl bg-green-bg px-4 py-3 font-bold text-green">
+          <p role="status" className="mt-4 rounded-xl bg-sage px-4 py-3 font-bold text-forest">
             Your WISP data on this device has been deleted.
           </p>
         ) : (
           <Button
             variant="secondary"
-            className="mt-4 border-red text-red"
+            className="mt-4 w-full border-red/50 text-red sm:w-auto"
             onClick={async () => {
-              if (!confirm("Delete all your WISP checks, your usual pattern and any saved sensor recordings from this device?")) return;
+              if (!confirm("Delete all your WISP check-ins, your usual pattern and any saved sensor recordings from this device?")) return;
               await fetch(`${API_URL}/api/users/${userId}/data`, { method: "DELETE" });
               setDeleted(true);
             }}
@@ -140,7 +79,47 @@ export default function PrivacyPage() {
             Delete all my WISP data
           </Button>
         )}
-      </Card>
+      </section>
+
+      <Disclosure summary="View technical privacy details" className="mt-6">
+        <div className="grid gap-3 rounded-(--radius-card) border border-line bg-card p-5 md:grid-cols-[1fr_auto_1fr] md:items-stretch">
+          <div className="rounded-2xl bg-sage p-4">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-forest">Home · local trust zone</p>
+            <div className="mt-3 space-y-1.5">
+              <Box tone="local">ESP32 Wi-Fi sensor</Box>
+              <p aria-hidden className="text-center text-ink-faint">↓</p>
+              <Box tone="local">Raw CSI (channel state information)</Box>
+              <p aria-hidden className="text-center text-ink-faint">↓</p>
+              <Box tone="local">Signal processing on this device</Box>
+              <p aria-hidden className="text-center text-ink-faint">↓</p>
+              <Box tone="local">Movement-check summary</Box>
+            </div>
+            <p className="mt-3 text-[0.85rem] text-ink-soft">Baseline stored here, encrypted. Raw CSI files kept only for troubleshooting{p ? ` (${p.raw_csi.live_files.length} files)` : ""}.</p>
+          </div>
+          <div className="flex items-center justify-center md:flex-col" aria-hidden>
+            <div className="h-0.5 w-full border-t-2 border-dashed border-ink-faint md:h-full md:w-0.5 md:border-l-2 md:border-t-0" />
+            <span className="mx-2 whitespace-nowrap rounded-full bg-ink px-3 py-1 text-[0.65rem] font-bold uppercase tracking-wider text-white md:my-2">Privacy boundary</span>
+            <div className="h-0.5 w-full border-t-2 border-dashed border-ink-faint md:h-full md:w-0.5 md:border-l-2 md:border-t-0" />
+          </div>
+          <div className="rounded-2xl bg-teal-bg p-4">
+            <p className="text-[0.7rem] font-bold uppercase tracking-[0.16em] text-teal">AI agent (WorkBuddy) receives only</p>
+            <div className="mt-3 space-y-1.5">
+              <Box tone="cloud">Conversation answers</Box>
+              <Box tone="cloud">Functional summary (time, rises)</Box>
+              <Box tone="cloud">Baseline label + confidence</Box>
+            </div>
+            <p className="mt-3 text-[0.85rem] text-ink-soft">
+              Never sent: raw CSI, signal traces, full baseline history, medication list.
+              {p?.llm_extraction_enabled ? " Optional LLM text extraction is ON." : ""}
+            </p>
+          </div>
+        </div>
+        {p && (
+          <p className="mt-3 text-[0.9rem] text-ink-soft">
+            Stored on this device: {p.assessments.count} check-ins · {p.baseline.sessions} healthy-day checks.
+          </p>
+        )}
+      </Disclosure>
     </div>
   );
 }

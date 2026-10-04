@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Button, Card } from "@/components/ui";
 import { api, post } from "@/lib/api";
 import { usePrefs } from "@/lib/prefs";
-import type { AuditEvent, FunctionalAssessment } from "@/lib/types";
+import type { AuditEvent, FunctionalAssessment, Persona, Snapshot } from "@/lib/types";
 
 interface SensorInfo {
   name: string;
@@ -39,7 +41,13 @@ interface Evaluation {
   note: string;
 }
 
-const INK = "#22305a";
+const INK = "#1f4d3a";
+
+const DEMOS = [
+  { n: 1, title: "Agent uses sensing", user: "mdm_tan", text: "I've felt weak for two days." },
+  { n: 2, title: "Agent refuses sensing", user: "mr_lim", text: "This morning I suddenly felt dizzy and my left hand feels clumsy." },
+  { n: 3, title: "Dynamic reassessment (day 1)", user: "mdm_siti", text: "I'm tired and don't feel like myself." },
+];
 
 function SignalChart({ title, data, dataKey, detail }: { title: string; data: Record<string, number>[]; dataKey: string; detail: MeasurementDetail["debug"] }) {
   return (
@@ -65,7 +73,10 @@ function SignalChart({ title, data, dataKey, detail }: { title: string; data: Re
 }
 
 export default function DevPage() {
-  const { devMode, setDevMode, agentMode, setAgentMode } = usePrefs();
+  const { devMode, setDevMode, agentMode, setAgentMode, userId, setUserId, language } = usePrefs();
+  const router = useRouter();
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [auditFilter, setAuditFilter] = useState<"all" | "workbuddy">("all");
   const [sensor, setSensor] = useState<SensorInfo | null>(null);
   const [measurements, setMeasurements] = useState<FunctionalAssessment[]>([]);
   const [selected, setSelected] = useState<MeasurementDetail | null>(null);
@@ -82,14 +93,21 @@ export default function DevPage() {
       api<FunctionalAssessment[]>("/api/dev/measurements"),
       api<AuditEvent[]>("/api/audit"),
       api<Evaluation>("/api/evaluation/sensor"),
-    ]).then(([s, m, a, e]) => {
+      api<Persona[]>("/api/personas"),
+    ]).then(([s, m, a, e, ps]) => {
+      setPersonas(ps);
       setSensor(s);
       setMeasurements(m.reverse());
-      setAudit(a.slice(-60).reverse());
+      setAudit(a.slice(-200).reverse());
       setEvaluation(e);
     });
   }, [reloadKey]);
 
+  const runDemo = async (user: string, text: string) => {
+    setUserId(user);
+    const snap = await post<Snapshot>("/api/sessions", { user_id: user, agent: agentMode, language, text: agentMode === "workbuddy" ? undefined : text });
+    router.push(`/session/${snap.session_id}`);
+  };
   const update = async (body: Record<string, unknown>) => setSensor(await post<SensorInfo>("/api/dev/sensor", body));
   const open = async (id: string) => setSelected(await api<MeasurementDetail>(`/api/dev/measurements/${id}`));
 
@@ -100,14 +118,48 @@ export default function DevPage() {
     <div className="space-y-6 font-[system-ui]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-mono text-2xl font-bold">Developer / demo diagnostics</h1>
-          <p className="text-sm text-ink-soft">Not part of the patient experience. Raw CSI is only visualised here.</p>
+          <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-teal">Engineering view</p>
+          <h1 className="text-2xl font-bold text-forest">Sensing, agent &amp; demo diagnostics</h1>
+          <p className="text-sm text-ink-soft">Not linked from the patient app. Raw CSI-derived signals are only shown here.</p>
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={devMode} onChange={(e) => setDevMode(e.target.checked)} className="h-5 w-5" />
-          Developer mode (shows DEMO banner and demo controls)
+          Demo mode (shows the DEMO bar and demo controls in the patient app)
         </label>
       </div>
+
+      <Card>
+        <h2 className="font-bold">Demo setup</h2>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <span>Patient profile:</span>
+          {personas.map((p) => (
+            <button
+              key={p.user_id}
+              onClick={() => setUserId(p.user_id)}
+              aria-pressed={userId === p.user_id}
+              className={`rounded-full px-3 py-1.5 ${userId === p.user_id ? "bg-forest text-white" : "border border-line bg-card"}`}
+            >
+              {p.display_name} · {p.age} · baseline {p.baseline_sessions}/3
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {DEMOS.map((d) => (
+            <div key={d.n} className="rounded-2xl border border-line p-4">
+              <p className="font-mono text-xs text-ink-faint">DEMO {d.n}</p>
+              <p className="font-bold">{d.title}</p>
+              <p className="mt-1 text-sm text-ink-soft">“{d.text}”</p>
+              <Button className="mt-3 w-full" variant="secondary" onClick={() => runDemo(d.user, d.text)}>
+                Start as {personas.find((p) => p.user_id === d.user)?.display_name ?? d.user}
+              </Button>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-ink-faint">
+          Demo 3 day 2: after the home-monitoring result, use “Simulate next day” and type “My daughter said I seemed confused last night.” With WorkBuddy selected, the
+          session opens empty and WorkBuddy attaches via get_active_session. <Link className="underline" href="/explain">Technical view index</Link>
+        </p>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -115,7 +167,7 @@ export default function DevPage() {
           {sensor && (
             <div className="mt-3 space-y-3 text-sm">
               <p>
-                Provider: <code className="rounded bg-grey-bg px-1">{sensor.name}</code> · mode{" "}
+                Provider: <code className="rounded bg-slate-bg px-1">{sensor.name}</code> · mode{" "}
                 <strong className={sensor.mode === "live" ? "text-teal" : "text-amber"}>{sensor.mode === "live" ? "LIVE SENSOR" : "RECORDED REPLAY"}</strong> ·{" "}
                 {sensor.available ? "available" : "unavailable"}
               </p>
@@ -200,7 +252,7 @@ export default function DevPage() {
             >
               Reset demo data
             </Button>
-            {msg && <span className="self-center text-sm text-green">{msg}</span>}
+            {msg && <span className="self-center text-sm text-forest">{msg}</span>}
           </div>
         </Card>
       </div>
@@ -208,7 +260,7 @@ export default function DevPage() {
       <Card>
         <div className="flex items-baseline justify-between">
           <h2 className="font-bold">Measurements</h2>
-          <button className="text-sm text-blue underline" onClick={load}>
+          <button className="text-sm text-forest underline" onClick={load}>
             Refresh
           </button>
         </div>
@@ -229,7 +281,7 @@ export default function DevPage() {
             </thead>
             <tbody>
               {measurements.slice(0, 25).map((m) => (
-                <tr key={m.measurement_id} className={`cursor-pointer border-t border-line hover:bg-grey-bg ${selected?.measurement.measurement_id === m.measurement_id ? "bg-teal-bg" : ""}`} onClick={() => open(m.measurement_id)}>
+                <tr key={m.measurement_id} className={`cursor-pointer border-t border-line hover:bg-slate-bg ${selected?.measurement.measurement_id === m.measurement_id ? "bg-teal-bg" : ""}`} onClick={() => open(m.measurement_id)}>
                   <td className="py-1 pr-3">{m.measurement_id}</td>
                   <td className="pr-3">{m.session_id}</td>
                   <td className="pr-3">{m.success ? "✓" : `✗ ${m.reason}`}</td>
@@ -298,7 +350,7 @@ export default function DevPage() {
               ["Median abs err (s)", evaluation.median_abs_error_seconds ?? "—"],
               ["Mean confidence", evaluation.mean_confidence ?? "—"],
             ].map(([k, v]) => (
-              <div key={String(k)} className="rounded-lg bg-grey-bg px-3 py-2">
+              <div key={String(k)} className="rounded-lg bg-slate-bg px-3 py-2">
                 <dt className="text-xs text-ink-faint">{k}</dt>
                 <dd className="font-mono text-lg font-bold">{v}</dd>
               </div>
@@ -311,9 +363,18 @@ export default function DevPage() {
       )}
 
       <Card>
-        <h2 className="font-bold">Audit log (latest 60)</h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-bold">Audit log</h2>
+          <div className="flex gap-1 text-sm">
+            {(["all", "workbuddy"] as const).map((f) => (
+              <button key={f} onClick={() => setAuditFilter(f)} className={`rounded-full px-3 py-1 ${auditFilter === f ? "bg-forest text-white" : "border border-line"}`}>
+                {f === "all" ? "All events" : "WorkBuddy tool calls"}
+              </button>
+            ))}
+          </div>
+        </div>
         <ol className="mt-3 max-h-96 space-y-1 overflow-y-auto font-mono text-xs">
-          {audit.map((e) => (
+          {audit.filter((e) => auditFilter === "all" || e.actor === "workbuddy").slice(0, 80).map((e) => (
             <li key={e.id} className="border-b border-line pb-1">
               <span className="text-ink-faint">{new Date(e.timestamp).toLocaleTimeString()}</span> {e.session_id} <strong>{e.actor}</strong> {e.event}
               {e.tool && <> · {e.tool}</>}
