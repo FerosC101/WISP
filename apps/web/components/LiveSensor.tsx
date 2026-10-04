@@ -13,7 +13,17 @@ interface Port {
 interface Status {
   port: string;
   state: "streaming_csi" | "text_only" | "silent" | "error" | "needs_wifi" | "connecting";
-  device: { firmware: string; last?: string; ssid?: string; channel?: string; ip?: string; rate_hz?: string; fw?: string };
+  device: {
+    firmware: string;
+    last?: string;
+    ssid?: string;
+    channel?: string;
+    ip?: string;
+    rate_hz?: string;
+    fw?: string;
+    disconnect_reason?: number | null;
+    networks?: { ssid: string; rssi: number; channel: number; auth: number }[] | null;
+  };
   packets_per_second: number;
   total_packets: number;
   total_text_lines: number;
@@ -26,6 +36,19 @@ interface Frame {
   frame: { amplitude: number[] | null; energy: number | null };
   text: string[];
 }
+
+// ESP-IDF wifi_err_reason_t → plain explanation
+const WIFI_REASON: Record<number, string> = {
+  201: "Network not found. The sensor can only see 2.4 GHz networks — check the name (it is case-sensitive) or pick it from the scan below.",
+  202: "The router rejected the sign-in. Check the password.",
+  15: "Wrong password (the security handshake timed out).",
+  204: "Wrong password (the security handshake failed).",
+  203: "The router refused the connection (it may block new devices or require a sign-in page).",
+  200: "The router stopped responding. Move the sensor closer.",
+  2: "Authentication expired. Check the password.",
+  8: "The router disconnected the sensor.",
+};
+const AUTH = ["Open", "WEP", "WPA", "WPA2", "WPA/WPA2", "Enterprise", "WPA3", "WPA2/WPA3", "WAPI", "OWE", "WPA3-Ent", "WPA3-Ent", "WPA3-Ent"];
 
 const HISTORY = 120; // 30 s at 4 frames/s
 const STATE: Record<Status["state"], { label: string; cls: string; help: string }> = {
@@ -214,6 +237,9 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
                 </Button>
               </form>
               <div className="mt-2 flex flex-wrap gap-2">
+                <Button variant="secondary" onClick={() => post("/api/dev/sensor/command", { port, command: "WISP_SCAN" })}>
+                  Scan for networks
+                </Button>
                 <Button variant="secondary" onClick={() => post("/api/dev/sensor/command", { port, command: "WISP_STATUS" })}>
                   Ask for status
                 </Button>
@@ -222,6 +248,33 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
                 </Button>
               </div>
               {wifiMsg && <p className="mt-2 text-sm">{wifiMsg}</p>}
+              {st.state !== "streaming_csi" && st.device.disconnect_reason != null && (
+                <p className="mt-3 rounded-lg bg-amber-bg px-3 py-2 text-sm">
+                  <strong>Can&apos;t join ({st.device.disconnect_reason}):</strong> {WIFI_REASON[st.device.disconnect_reason] ?? "The connection failed."}
+                </p>
+              )}
+              {st.device.networks && (
+                <div className="mt-3">
+                  <p className="text-sm font-bold">Networks the sensor can see (2.4 GHz) — tap to use</p>
+                  {st.device.networks.length === 0 ? (
+                    <p className="text-sm text-ink-soft">None found. Is the router 2.4 GHz and nearby?</p>
+                  ) : (
+                    <ul className="mt-1 flex flex-wrap gap-2">
+                      {st.device.networks.map((n) => (
+                        <li key={n.ssid + n.channel}>
+                          <button
+                            type="button"
+                            onClick={() => setSsid(n.ssid)}
+                            className={`rounded-full border px-3 py-1.5 text-sm ${ssid === n.ssid ? "border-forest bg-sage" : "border-line"}`}
+                          >
+                            {n.ssid} <span className="font-mono text-xs text-ink-faint">ch{n.channel} · {n.rssi} dBm · {AUTH[n.auth] ?? n.auth}</span>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </details>
           )}
 

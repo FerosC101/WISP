@@ -44,7 +44,7 @@
 
 #include "esp_csi_gain_ctrl.h"
 
-#define WISP_FW_VERSION   "wisp-csi-router 1.0"
+#define WISP_FW_VERSION   "wisp-csi-router 1.1"
 #define SEND_FREQUENCY_HZ 100
 #define NVS_NS            "wisp"
 #define GOT_IP_BIT        BIT0
@@ -54,6 +54,9 @@ static wifi_ap_record_t s_ap_info;
 static char s_ssid[33];
 static char s_pass[65];
 static volatile int s_disconnect_reason;
+static volatile bool s_paused;      /* true while scanning: don't auto-reconnect */
+static bool s_wifi_started;
+static bool s_have_creds;
 
 /* ------------------------------------------------------------------ output */
 
@@ -158,20 +161,27 @@ static void ping_router_start(void)
 static void on_event(void *arg, esp_event_base_t base, int32_t id, void *data)
 {
     if (base == WIFI_EVENT && id == WIFI_EVENT_STA_START) {
-        esp_wifi_connect();
+        if (s_have_creds && !s_paused) {
+            esp_wifi_connect();
+        }
     } else if (base == WIFI_EVENT && id == WIFI_EVENT_STA_DISCONNECTED) {
         wifi_event_sta_disconnected_t *d = (wifi_event_sta_disconnected_t *)data;
         s_disconnect_reason = d->reason;
         xEventGroupClearBits(s_events, GOT_IP_BIT);
-        outf("WISP_WIFI_DISCONNECTED reason=%d\n", d->reason);
-        esp_wifi_connect();
+        if (!s_paused) {
+            outf("WISP_WIFI_DISCONNECTED reason=%d\n", d->reason);
+            esp_wifi_connect();
+        }
     } else if (base == IP_EVENT && id == IP_EVENT_STA_GOT_IP) {
         xEventGroupSetBits(s_events, GOT_IP_BIT);
     }
 }
 
-static void wifi_start(void)
+static void wifi_init_once(void)
 {
+    if (s_wifi_started) {
+        return;
+    }
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
     esp_netif_create_default_wifi_sta();
@@ -179,15 +189,54 @@ static void wifi_start(void)
     ESP_ERROR_CHECK(esp_wifi_init(&init));
     ESP_ERROR_CHECK(esp_event_handler_register(WIFI_EVENT, ESP_EVENT_ANY_ID, on_event, NULL));
     ESP_ERROR_CHECK(esp_event_handler_register(IP_EVENT, IP_EVENT_STA_GOT_IP, on_event, NULL));
-
-    wifi_config_t cfg = {0};
-    strncpy((char *)cfg.sta.ssid, s_ssid, sizeof(cfg.sta.ssid));
-    strncpy((char *)cfg.sta.password, s_pass, sizeof(cfg.sta.password));
-    cfg.sta.threshold.authmode = s_pass[0] ? WIFI_AUTH_WPA_PSK : WIFI_AUTH_OPEN;
     ESP_ERROR_CHECK(esp_wifi_set_mode(WIFI_MODE_STA));
-    ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &cfg));
+    if (s_have_creds) {
+        wifi_config_t cfg = {0};
+        strncpy((char *)cfg.sta.ssid, s_ssid, sizeof(cfg.sta.ssid));
+        strncpy((char *)cfg.sta.password, s_pass, sizeof(cfg.sta.password));
+        cfg.sta.scan_method = WIFI_ALL_CHANNEL_SCAN;
+        cfg.sta.sort_method = WIFI_CONNECT_AP_BY_SIGNAL;
+        cfg.sta.threshold.authmode = WIFI_AUTH_OPEN; /* accept WPA, WPA2 and WPA3 networks */
+        cfg.sta.pmf_cfg.capable = true;
+        cfg.sta.pmf_cfg.required = false;
+        cfg.sta.sae_pwe_h2e = WPA3_SAE_PWE_BOTH;
+        ESP_ERROR_CHECK(esp_wifi_set_config(WIFI_IF_STA, &cfg));
+    }
     ESP_ERROR_CHECK(esp_wifi_start());
     esp_wifi_set_ps(WIFI_PS_NONE); /* power save would throttle the 100 Hz pings */
+    s_wifi_started = true;
+}
+
+/* List the 2.4 GHz networks this board can see. SSIDs are sent as hex so
+ * names with spaces or quotes survive. */
+static void wifi_scan_report(void)
+{
+    static wifi_ap_record_t recs[24];
+    wifi_init_once();
+    s_paused = true;
+    esp_wifi_disconnect();
+    vTaskDelay(pdMS_TO_TICKS(200));
+    wifi_scan_config_t sc = {.show_hidden = false, .scan_type = WIFI_SCAN_TYPE_ACTIVE};
+    esp_err_t err = esp_wifi_scan_start(&sc, true);
+    uint16_t n = sizeof(recs) / sizeof(recs[0]);
+    if (err == ESP_OK) {
+        esp_wifi_scan_get_ap_records(&n, recs);
+    } else {
+        n = 0;
+    }
+    outf("WISP_SCAN_BEGIN count=%d err=%d\n", n, err);
+    for (int i = 0; i < n; i++) {
+        char hex[2 * 33 + 1] = {0};
+        for (int j = 0; j < 32 && recs[i].ssid[j]; j++) {
+            snprintf(hex + 2 * j, 3, "%02x", recs[i].ssid[j]);
+        }
+        outf("WISP_SCAN_AP ssid_hex=%s rssi=%d channel=%d auth=%d\n", hex, recs[i].rssi, recs[i].primary, recs[i].authmode);
+    }
+    outf("WISP_SCAN_END\n");
+    s_paused = false;
+    if (s_have_creds) {
+        esp_wifi_connect();
+    }
 }
 
 /* ------------------------------------------------------------------ credentials (NVS) */
@@ -201,6 +250,7 @@ static bool creds_load(void)
     size_t a = sizeof(s_ssid), b = sizeof(s_pass);
     bool ok = nvs_get_str(h, "ssid", s_ssid, &a) == ESP_OK && nvs_get_str(h, "pass", s_pass, &b) == ESP_OK && s_ssid[0];
     nvs_close(h);
+    s_have_creds = ok;
     return ok;
 }
 
@@ -259,14 +309,16 @@ static void handle_command(char *line)
             return;
         }
         creds_save(ssid, pass);
-        outf("WISP_WIFI_SAVED ssid=\"%s\" — restarting\n", ssid);
+        outf("WISP_WIFI_SAVED ssid=\"%s\" - restarting\n", ssid);
         vTaskDelay(pdMS_TO_TICKS(300));
         esp_restart();
     } else if (strcmp(line, "WISP_FORGET") == 0) {
         creds_erase();
-        outf("WISP_WIFI_FORGOTTEN — restarting\n");
+        outf("WISP_WIFI_FORGOTTEN - restarting\n");
         vTaskDelay(pdMS_TO_TICKS(300));
         esp_restart();
+    } else if (strcmp(line, "WISP_SCAN") == 0) {
+        wifi_scan_report();
     } else if (strcmp(line, "WISP_STATUS") == 0) {
         bool up = xEventGroupGetBits(s_events) & GOT_IP_BIT;
         outf("WISP_STATUS fw=\"%s\" wifi=%s ssid=\"%s\" last_disconnect_reason=%d\n", WISP_FW_VERSION,
@@ -314,19 +366,24 @@ void app_main(void)
     WISP_VFS_USE_DRIVER();
 
     s_events = xEventGroupCreate();
-    xTaskCreate(command_task, "wisp_cmd", 4096, NULL, 5, NULL);
+    xTaskCreate(command_task, "wisp_cmd", 6144, NULL, 5, NULL);
 
     if (!creds_load()) {
         for (;;) {
-            outf("WISP_NEED_WIFI fw=\"%s\" — send: WISP_WIFI <ssid hex> <password hex>\n", WISP_FW_VERSION);
+            outf("WISP_NEED_WIFI fw=\"%s\" - send: WISP_WIFI <ssid hex> <password hex>\n", WISP_FW_VERSION);
             vTaskDelay(pdMS_TO_TICKS(3000));
         }
     }
 
     outf("WISP_CONNECTING fw=\"%s\" ssid=\"%s\"\n", WISP_FW_VERSION, s_ssid);
-    wifi_start();
+    wifi_init_once();
+    bool scanned = false;
     while (!(xEventGroupWaitBits(s_events, GOT_IP_BIT, pdFALSE, pdTRUE, pdMS_TO_TICKS(15000)) & GOT_IP_BIT)) {
-        outf("WISP_WIFI_TIMEOUT ssid=\"%s\" last_reason=%d — still trying (check name/password, 2.4 GHz)\n", s_ssid, s_disconnect_reason);
+        outf("WISP_WIFI_TIMEOUT ssid=\"%s\" last_reason=%d - still trying\n", s_ssid, s_disconnect_reason);
+        if (!scanned && s_disconnect_reason == WIFI_REASON_NO_AP_FOUND) {
+            wifi_scan_report(); /* show which networks are actually visible */
+            scanned = true;
+        }
     }
     wifi_csi_start();
     ping_router_start();

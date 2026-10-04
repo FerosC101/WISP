@@ -56,7 +56,7 @@ class SerialStream:
         self.port = port
         self.baud = baud
         self.packets: deque[tuple[float, np.ndarray]] = deque(maxlen=int(keep_seconds * 400))
-        self.text: deque[tuple[float, str]] = deque(maxlen=60)
+        self.text: deque[tuple[float, str]] = deque(maxlen=300)
         self.rssi: deque[int] = deque(maxlen=200)
         self.total_packets = 0
         self.total_text_lines = 0
@@ -115,8 +115,34 @@ class SerialStream:
         wisp = [(t, line) for t, line in list(self.text) if line.startswith("WISP_")]
         if not wisp:
             return {"firmware": "unknown"}
-        last = wisp[-1][1]
-        info: dict = {"firmware": "wisp", "last": last.split(" ")[0]}
+        state_lines = [line for _, line in wisp if not line.startswith("WISP_SCAN")]
+        last = state_lines[-1] if state_lines else wisp[-1][1]
+        info: dict = {"firmware": "wisp", "last": last.split(" ")[0], "networks": None, "disconnect_reason": None}
+        for _, line in reversed(wisp):
+            if line.startswith(("WISP_WIFI_DISCONNECTED", "WISP_WIFI_TIMEOUT")):
+                for part in line.split(" "):
+                    if part.startswith(("reason=", "last_reason=")):
+                        try:
+                            info["disconnect_reason"] = int(part.split("=", 1)[1])
+                        except ValueError:
+                            pass
+                break
+        # Most recent complete scan, if any.
+        lines = [line for _, line in wisp]
+        if "WISP_SCAN_END" in lines:
+            end = len(lines) - 1 - lines[::-1].index("WISP_SCAN_END")
+            begin = max((i for i in range(end) if lines[i].startswith("WISP_SCAN_BEGIN")), default=None)
+            if begin is not None:
+                nets = []
+                for line in lines[begin + 1:end]:
+                    kv = dict(p.split("=", 1) for p in line.split(" ")[1:] if "=" in p)
+                    try:
+                        name = bytes.fromhex(kv.get("ssid_hex", "")).decode("utf-8", errors="replace")
+                    except ValueError:
+                        continue
+                    if name:
+                        nets.append({"ssid": name, "rssi": int(kv.get("rssi", 0)), "channel": int(kv.get("channel", 0)), "auth": int(kv.get("auth", 0))})
+                info["networks"] = nets
         for _, line in reversed(wisp):
             if line.startswith("WISP_READY"):
                 for part in line.split(" ")[1:]:

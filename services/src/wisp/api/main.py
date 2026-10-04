@@ -340,7 +340,7 @@ def dev_sensor_command(body: dict = Body(...)) -> dict:
     if stream is None:
         raise HTTPException(409, "Open the live monitor for this port first")
     cmd = body.get("command")
-    if cmd not in ("WISP_STATUS", "WISP_FORGET"):
+    if cmd not in ("WISP_STATUS", "WISP_FORGET", "WISP_SCAN"):
         raise HTTPException(400, "Unknown command")
     stream.write_line(cmd)
     return {"sent": cmd}
