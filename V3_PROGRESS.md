@@ -16,7 +16,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | # | Pri | Task | Status |
 |---|---|---|---|
 | 1 | P0 | Expand the patient app beyond chat (bottom nav) | ✅ |
-| 2 | P0 | Build a proper Today dashboard | ⬜ |
+| 2 | P0 | Build a proper Today dashboard | ✅ |
 | 3 | P1 | Build a dedicated Check flow | ⬜ |
 | 4 | P1 | Replace chat-style red-flag questions | ⬜ |
 | 5 | P1 | Add "What WISP understood" screen | ⬜ |
@@ -54,14 +54,29 @@ What changed:
 
 Verified: `tsc` and `eslint` are clean. In the browser, `/` redirects to `/today`, every tab loads, and the active tab is correct on `/baseline` and `/session/*`. The bottom bar was checked at 390 px. "I feel weak" still starts a session.
 
-### 2. P0 — Build a proper Today dashboard ⬜
-- [ ] Greeting
-- [ ] "How are you today?"
-- [ ] Quick symptom cards
-- [ ] Next scheduled check
-- [ ] Last recommendation
-- [ ] Current baseline status
-- [ ] Shortcut to new check-in
+### 2. P0 — Build a proper Today dashboard ✅
+- [x] Greeting
+- [x] "How are you today?"
+- [x] Quick symptom cards
+- [x] Next scheduled check
+- [x] Last recommendation
+- [x] Current baseline status
+- [x] Shortcut to new check-in
+
+What changed:
+- `app/today/page.tsx` was rebuilt as a dashboard, and the free-text box is gone (it lives on the Check tab).
+- A 2×2 grid of large symptom cards: Weaker than usual, Dizzy, Unusually tired, Something feels off. Each starts a check with those words.
+- The "Start a new check-in" button goes to `/check`.
+- The scheduled check-in card appears at the top when one is due.
+- The last recommendation is shown as a card.
+- A new "My usual" status card reads `/api/baselines/{user}`. It shows "Ready to compare", "N of 3 healthy-day checks" or "Not set up yet", and links to `/baseline`. No seconds are shown.
+
+Verified: `tsc` and `eslint` are clean. At 390 px:
+- Mdm Tan: baseline ready.
+- Mr Lim, after an API-run emergency session: "Emergency help" recommendation card and "Not set up yet" baseline.
+- Tapping "Unusually tired" starts a session.
+
+Not checked live: the scheduled check-in card. No persona had a recheck due, and the component is unchanged from v2.
 
 ### 3. P1 — Build a dedicated Check flow ⬜
 - [ ] /check/start, /check/concern, /check/safety, /check/summary, /check/decision
@@ -184,5 +199,6 @@ Verified: `tsc` and `eslint` are clean. In the browser, `/` redirects to `/today
 
 ## Log
 
+- 2026-10-06 — ✅ Task 2: Today dashboard with symptom cards, new check-in shortcut, next check, last recommendation and baseline status.
 - 2026-10-06 — ✅ Task 1: five-tab navigation (Today / Check / Care / History / You), `/` → `/today`, new Check, Care and You hubs.
 - 2026-10-06 — Tracker created. Branch `v3/patient-app` cut from `origin/refactor/product-v2` @ `8e482b0`.
