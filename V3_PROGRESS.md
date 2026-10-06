@@ -18,7 +18,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 1 | P0 | Expand the patient app beyond chat (bottom nav) | ✅ |
 | 2 | P0 | Build a proper Today dashboard | ✅ |
 | 3 | P1 | Build a dedicated Check flow | ✅ |
-| 4 | P1 | Replace chat-style red-flag questions | ⬜ |
+| 4 | P1 | Replace chat-style red-flag questions | ✅ |
 | 5 | P1 | Add "What WISP understood" screen | ⬜ |
 | 6 | P1 | Add an agent-decision screen | ⬜ |
 | 7 | P1 | Create a proper Room Ready screen | ⬜ |
@@ -101,13 +101,29 @@ Verified in the browser at 390 px:
 - Reopening from Care with no stored flow state → recommendation. The share prompt goes away after answering.
 - `tsc` and `eslint` are clean. Backend `pytest`: 112 passed (backend unchanged).
 
-### 4. P1 — Replace chat-style red-flag questions ⬜
-- [ ] Dedicated "Safety Check"
-- [ ] One question per screen
-- [ ] Progress indicator
-- [ ] Large Yes / No / Not sure buttons
-- [ ] Keep deterministic backend rules unchanged
-- [ ] Immediately route red flags to emergency care
+### 4. P1 — Replace chat-style red-flag questions ✅
+- [x] Dedicated "Safety Check"
+- [x] One question per screen
+- [x] Progress indicator
+- [x] Large Yes / No / Not sure buttons
+- [x] Keep deterministic backend rules unchanged
+- [x] Immediately route red flags to emergency care
+
+What changed:
+- `app/check/safety/page.tsx` is now a dedicated screen.
+- "Question N of 11" counter, driven by `SAFETY_ORDER` / `safetyStep()` in `lib/checkFlow.ts`. These mirror the agent's question order. Follow-ups (fall → injury, eating → fluids) keep their parent's number.
+- Answer buttons are 64 px tall and full width. Yes / No / Not sure get ✓ ✗ ? icons only when every option has one. Colours are neutral, so no answer looks "right".
+- "If you're not sure, that's fine. WISP will play it safe."
+- The agent's lead-in ("You said you've been feeling dizzy…") sits in a soft card above the first question.
+- Focus moves to each new question for screen readers. Typing stays behind "Answer in your own words".
+- A "Feeling very unwell right now? Call 995" link is always on screen.
+- Backend: no changes.
+
+Verified in the browser at 390 px:
+- Counter: 1→3 after onset and duration; fall and fall-injury are both "10 of 11"; eating is "11 of 11".
+- "Not sure" on confusion → **ABSTAIN** ("I can't safely judge this from here"), never self-care.
+- Chest pain "Yes" → T1 (tested in task 3).
+- `tsc` and `eslint` are clean.
 
 ### 5. P1 — Add "What WISP understood" screen ⬜
 - [ ] Main complaint
@@ -121,6 +137,7 @@ Verified in the browser at 390 px:
 - [ ] If sensing is useful: explain why; "Do the check / Continue without it"
 - [ ] If sensing is unnecessary: go directly to recommendation
 - [ ] Make this the signature agentic moment
+- Note from task 4: when the screen ends without an offer, the decision screen says "WISP has enough to recommend a next step". That's wrong when the result is ABSTAIN (a "not sure" answer). The copy should come from the agent's logged decision (`trace.why`).
 
 ### 7. P1 — Create a proper Room Ready screen ⬜
 - [ ] Chair against wall
@@ -218,6 +235,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 4: dedicated Safety Check screen with question counter, large Yes/No/Not sure buttons and an always-visible 995 link. "Not sure" → ABSTAIN verified.
 - 2026-10-06 — ✅ Task 3: dedicated Check flow (9 routes) over the existing agent. Scenario 1 → T2, a mid-check red flag → T1, declining the check → T3.
 - 2026-10-06 — ✅ Task 2: Today dashboard with symptom cards, new check-in shortcut, next check, last recommendation and baseline status.
 - 2026-10-06 — ✅ Task 1: five-tab navigation (Today / Check / Care / History / You), `/` → `/today`, new Check, Care and You hubs.

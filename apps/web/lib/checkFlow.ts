@@ -15,7 +15,8 @@ import { useSession } from "./useSession";
  */
 export type Stage = "concern" | "safety" | "summary" | "decision" | "room-ready" | "movement" | "movement-result" | "complete";
 
-const SAFETY = new Set([
+/** Safety questions in the order the agent asks them (mirrors triage/agent.py). */
+export const SAFETY_ORDER = [
   "onset",
   "duration",
   "chest_pain",
@@ -26,10 +27,16 @@ const SAFETY = new Set([
   "loss_of_consciousness",
   "sudden_vision_change",
   "fall",
-  "fall_injury",
   "eating",
-  "fluids",
-]);
+];
+/** Follow-up questions count as the same step as the question they follow. */
+const SAFETY_FOLLOW_UP: Record<string, string> = { fall_injury: "fall", fluids: "eating" };
+const SAFETY = new Set([...SAFETY_ORDER, ...Object.keys(SAFETY_FOLLOW_UP)]);
+
+/** 1-based position of a safety question, for the progress indicator. */
+export function safetyStep(key: string) {
+  return SAFETY_ORDER.indexOf(SAFETY_FOLLOW_UP[key] ?? key) + 1;
+}
 const ROOM = new Set(["steady", "others", "others_clear"]);
 const RESULT = new Set(["arms", "stop_reason", "stop_chest", "stop_breath"]);
 
