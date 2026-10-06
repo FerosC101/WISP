@@ -20,7 +20,7 @@ export default function Care() {
           <Card>
             <p className="font-bold">No recommendation yet</p>
             <p className="mt-1 text-ink-soft">After a check, your next step and where to go will appear here.</p>
-            <Link href="/check" className="mt-3 inline-flex min-h-11 items-center font-bold text-forest underline underline-offset-4">
+            <Link href="/check/start" className="mt-3 inline-flex min-h-11 items-center font-bold text-forest underline underline-offset-4">
               Start a check
             </Link>
           </Card>

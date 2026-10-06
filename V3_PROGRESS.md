@@ -17,7 +17,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 |---|---|---|---|
 | 1 | P0 | Expand the patient app beyond chat (bottom nav) | ✅ |
 | 2 | P0 | Build a proper Today dashboard | ✅ |
-| 3 | P1 | Build a dedicated Check flow | ⬜ |
+| 3 | P1 | Build a dedicated Check flow | ✅ |
 | 4 | P1 | Replace chat-style red-flag questions | ⬜ |
 | 5 | P1 | Add "What WISP understood" screen | ⬜ |
 | 6 | P1 | Add an agent-decision screen | ⬜ |
@@ -78,10 +78,28 @@ Verified: `tsc` and `eslint` are clean. At 390 px:
 
 Not checked live: the scheduled check-in card. No persona had a recheck due, and the component is unchanged from v2.
 
-### 3. P1 — Build a dedicated Check flow ⬜
-- [ ] /check/start, /check/concern, /check/safety, /check/summary, /check/decision
-- [ ] /check/room-ready, /check/movement, /check/movement-result, /check/complete
-- [ ] One clear task per screen
+### 3. P1 — Build a dedicated Check flow ✅
+- [x] /check/start, /check/concern, /check/safety, /check/summary, /check/decision
+- [x] /check/room-ready, /check/movement, /check/movement-result, /check/complete
+- [x] One clear task per screen
+
+How it works:
+- The screens sit on top of the same built-in agent the chat used. The agent asks one question at a time, and each question key belongs to one screen: `lib/checkFlow.ts` → `stageOf()`.
+- A screen shows the question as large buttons and sends the language-independent answer value. Backend rules and the agent are unchanged.
+- Every screen redirects to the stage the session is really at (`useCheckFlow`). Refreshing, the back button and emergency answers always land on the right screen.
+- A T1 result jumps straight to `/check/complete`.
+- The session id is in `?s=`. `app/check/layout.tsx` provides the Suspense boundary that `useSearchParams` needs.
+- Summary, decision and movement-result are "Continue" screens. Their acknowledgements live in sessionStorage. A finished check opened later from Care or History goes straight to the recommendation.
+- WorkBuddy sessions still use the conversation view at `/session/[id]`, which is also reachable from "See the conversation".
+- Shared parts: `components/check/CheckFrame.tsx` (journey progress bar, loading/error) and `components/check/QuestionScreen.tsx` (question + answer buttons; typing only behind "Answer in your own words").
+- Entry points now go to the flow: Today cards, `/check/start`, the scheduled check-in, and the recommendation cards.
+
+Verified in the browser at 390 px:
+- Scenario 1 (Mdm Tan, weak 2 days, eating less → movement check, arms used) goes start → safety ×10 → summary → decision → room-ready ×2 → movement (replay) → movement-result → complete. Result **T2 "Please be seen today"**, the same as the README.
+- Answering "Yes" to chest pain partway through the safety check → straight to **T1 "This needs help now"**.
+- Declining the movement check → **T3**, never self-care (SAFE-4).
+- Reopening from Care with no stored flow state → recommendation. The share prompt goes away after answering.
+- `tsc` and `eslint` are clean. Backend `pytest`: 112 passed (backend unchanged).
 
 ### 4. P1 — Replace chat-style red-flag questions ⬜
 - [ ] Dedicated "Safety Check"
@@ -124,6 +142,7 @@ Not checked live: the scheduled check-in card. No persona had a recheck due, and
 - [ ] "Within your usual range" / "Slower than your usual pattern" / "Unable to compare" / "Reading wasn't reliable"
 - [ ] Explain that this does not diagnose the cause
 - [ ] CTA: "See my next step"
+- Note from task 3: `comparison.explanation` from the backend reads technically ("outside this user's usual recorded range"). Patient wording is needed here.
 
 ### 10. P1 — Expand Care into a real section ⬜
 - [ ] Recommendation
@@ -193,12 +212,13 @@ Not checked live: the scheduled check-in card. No persona had a recheck due, and
 ### 21. P1 — Improve mobile UX ⬜
 - [ ] Design primarily for 390 px
 - [ ] Large touch targets, bottom navigation
-- [ ] Primary action visible without scrolling
+- [ ] Primary action visible without scrolling (task 3 found that the summary screen's Continue sits just below the fold at 390×844)
 - [ ] No desktop-first cards squeezed onto mobile
 - [ ] Test all T1–T4 results
 
 ## Log
 
+- 2026-10-06 — ✅ Task 3: dedicated Check flow (9 routes) over the existing agent. Scenario 1 → T2, a mid-check red flag → T1, declining the check → T3.
 - 2026-10-06 — ✅ Task 2: Today dashboard with symptom cards, new check-in shortcut, next check, last recommendation and baseline status.
 - 2026-10-06 — ✅ Task 1: five-tab navigation (Today / Check / Care / History / You), `/` → `/today`, new Check, Care and You hubs.
 - 2026-10-06 — Tracker created. Branch `v3/patient-app` cut from `origin/refactor/product-v2` @ `8e482b0`.

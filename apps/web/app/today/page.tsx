@@ -105,7 +105,7 @@ export default function Today() {
           ))}
         </ul>
         <Link
-          href="/check"
+          href="/check/start"
           className="mt-3 flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
         >
           {check.busy ? "Starting…" : "Start a new check-in"}

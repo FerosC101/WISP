@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui";
 import { post } from "@/lib/api";
+import { beginFlow, stagePath } from "@/lib/checkFlow";
 import { type Lang, usePrefs } from "@/lib/prefs";
 import type { Persona, Snapshot } from "@/lib/types";
 
@@ -40,7 +41,8 @@ export function useStartCheck(me: Persona | null) {
     setBusy(true);
     try {
       const snap = await post<Snapshot>("/api/sessions", { user_id: me.user_id, agent: agentMode, language, text: firstWords.trim() });
-      router.push(`/session/${snap.session_id}`);
+      beginFlow(snap.session_id);
+      router.push(snap.agent === "workbuddy" ? `/session/${snap.session_id}` : stagePath("concern", snap.session_id));
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
@@ -51,7 +53,8 @@ export function useStartCheck(me: Persona | null) {
     setBusy(true);
     try {
       const snap = await post<Snapshot>(`/api/sessions/${prev}/followup`, { agent: agentMode, language });
-      router.push(`/session/${snap.session_id}`);
+      beginFlow(snap.session_id);
+      router.push(snap.agent === "workbuddy" ? `/session/${snap.session_id}` : stagePath("concern", snap.session_id));
     } catch (e) {
       setError((e as Error).message);
       setBusy(false);
