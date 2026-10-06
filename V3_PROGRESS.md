@@ -22,7 +22,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 5 | P1 | Add "What WISP understood" screen | ✅ |
 | 6 | P1 | Add an agent-decision screen | ✅ |
 | 7 | P1 | Create a proper Room Ready screen | ✅ |
-| 8 | P1 | Redesign the movement test as an immersive experience | ⬜ |
+| 8 | P1 | Redesign the movement test as an immersive experience | ✅ |
 | 9 | P1 | Add a movement-result screen | ⬜ |
 | 10 | P1 | Expand Care into a real section | ⬜ |
 | 11 | P1 | Build a Care Plan screen | ⬜ |
@@ -200,13 +200,31 @@ Verified in the browser at 390 px:
 - "Not steady" → **T2** "You normally get up on your own, but today you don't…" (SR-2).
 - `tsc` and `eslint` are clean.
 
-### 8. P1 — Redesign the movement test as an immersive experience ⬜
-- [ ] Near-full-screen layout
-- [ ] "Quick movement check"
-- [ ] WISP line animation
-- [ ] Five-step counter if reliable
-- [ ] Stop button always available
-- [ ] No CSI graphs, timing numbers or confidence % on patient UI
+### 8. P1 — Redesign the movement test as an immersive experience ✅
+- [x] Near-full-screen layout
+- [x] "Quick movement check"
+- [x] WISP line animation
+- [x] Five-step counter if reliable
+- [x] Stop button always available
+- [x] No CSI graphs, timing numbers or confidence % on patient UI
+
+What changed:
+- New `components/check/MovementCheck.tsx`, used by `/check/movement`. It's a full-screen forest-green dialog that covers the header and tabs, locks page scroll, and takes focus.
+- It renders through a portal on `<body>`, because the screen fade-in's `transform` traps `position: fixed`.
+- Phases:
+  1. "Sit back in your chair" (feet flat, arms crossed, five times at your normal pace) with **I'm seated — start** / **Skip the check**.
+  2. "Sit still… 3, 2, 1".
+  3. "Stand up and sit down five times" with the flowing WISP line.
+- Five dots fill as rises are counted, only when `sensor.live_counts` (the reliability toggle in the Engineering view) is on. Otherwise: "Take your time. WISP is following your movement."
+- **Stop** is pinned at the bottom in every phase, with "Stop if you feel dizzy, breathless, or in pain".
+- No signal plots, timings or confidence values. The only label is a small "Recorded session" badge for non-live sensor data, as the README requires.
+- v2's `CheckScreen` is kept for the WorkBuddy conversation view.
+
+Verified in the browser at 390 px:
+- The overlay covers the full screen in all three phases.
+- With `live_counts` on, the dots showed 2 of 5 mid-check.
+- Stop mid-check → `/check/movement-result` asking "Did you stop because you felt unwell?" Page scroll restored, `live_counts` set back to off.
+- `tsc` and `eslint` are clean.
 
 ### 9. P1 — Add a movement-result screen ⬜
 - [ ] "Within your usual range" / "Slower than your usual pattern" / "Unable to compare" / "Reading wasn't reliable"
@@ -288,6 +306,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 8: full-screen movement check with countdown, WISP line, a five-dot counter only when live counts are reliable, and Stop always visible.
 - 2026-10-06 — ✅ Task 7: Room Ready screen with setup checklist, steady question and room question. Confirmed no sensing before Start; "not steady" → T2.
 - 2026-10-06 — ✅ Task 6: agent-decision screen showing the options WISP weighed and the one it chose, with a plain-language reason. Auto-continues when no check is needed.
 - 2026-10-06 — ✅ Task 5: "What WISP understood" screen with corrections. Backend: opt-in `confirm` step, `/corrections` endpoint, ORD-5, and 14 new tests (126 pass).
