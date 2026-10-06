@@ -8,11 +8,13 @@ import { usePrefs } from "@/lib/prefs";
 import type { Persona } from "@/lib/types";
 import { WispLogo } from "./WispLine";
 
+// Five primary patient sections. `match` lists the route prefixes each tab owns.
 const NAV = [
-  { href: "/", label: "Home", icon: "M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" },
-  { href: "/history", label: "History", icon: "M12 7v5l3 2M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
-  { href: "/baseline", label: "My usual", icon: "M4 17c3-6 5 2 8-4s5 2 8-4" },
-  { href: "/privacy", label: "Privacy", icon: "M12 3 5 6v5c0 4.5 3 8.4 7 10 4-1.6 7-5.5 7-10V6z" },
+  { href: "/today", label: "Today", match: ["/today"], icon: "M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" },
+  { href: "/check", label: "Check", match: ["/check", "/session"], icon: "M9 12l2 2 4-4M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
+  { href: "/care", label: "Care", match: ["/care", "/caregiver"], icon: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" },
+  { href: "/history", label: "History", match: ["/history"], icon: "M12 7v5l3 2M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
+  { href: "/you", label: "You", match: ["/you", "/baseline", "/privacy"], icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" },
 ];
 
 function useHydrated() {
@@ -66,7 +68,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
     document.documentElement.dataset.large = String(largeText);
   }, [largeText]);
 
-  const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
+  const isActive = (match: string[]) => match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -76,7 +78,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
       {hydrated && devMode && <DemoBar />}
       <header className="border-b border-line/70">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link href="/" aria-label="WISP home" className="no-underline">
+          <Link href="/today" aria-label="WISP home" className="no-underline">
             <WispLogo />
           </Link>
           <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
@@ -84,8 +86,8 @@ export function Shell({ children }: { children: React.ReactNode }) {
               <Link
                 key={n.href}
                 href={n.href}
-                aria-current={isActive(n.href) ? "page" : undefined}
-                className={`rounded-full px-4 py-2 text-[0.95rem] ${isActive(n.href) ? "bg-forest text-white" : "text-ink-soft hover:bg-sage"}`}
+                aria-current={isActive(n.match) ? "page" : undefined}
+                className={`rounded-full px-4 py-2 text-[0.95rem] ${isActive(n.match) ? "bg-forest text-white" : "text-ink-soft hover:bg-sage"}`}
               >
                 {n.label}
               </Link>
@@ -115,13 +117,13 @@ export function Shell({ children }: { children: React.ReactNode }) {
 
       {/* Mobile: bottom navigation with large touch targets */}
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ivory/95 backdrop-blur md:hidden">
-        <ul className="mx-auto grid max-w-md grid-cols-4">
+        <ul className="mx-auto grid max-w-md grid-cols-5">
           {NAV.map((n) => (
             <li key={n.href}>
               <Link
                 href={n.href}
-                aria-current={isActive(n.href) ? "page" : undefined}
-                className={`flex min-h-16 flex-col items-center justify-center gap-1 text-[0.72rem] font-bold ${isActive(n.href) ? "text-forest" : "text-ink-faint"}`}
+                aria-current={isActive(n.match) ? "page" : undefined}
+                className={`flex min-h-16 flex-col items-center justify-center gap-1 text-[0.72rem] font-bold ${isActive(n.match) ? "text-forest" : "text-ink-faint"}`}
               >
                 <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
                   <path d={n.icon} />
