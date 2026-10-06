@@ -75,11 +75,13 @@ export function stageOf(snap: Snapshot, acks: Acks): Stage {
   if (q === "complaint" || q === "scope") return "concern";
   if (q && SAFETY.has(q)) return "safety";
   if (q === "confirm") return "summary";
-  if (q === "offer" || !acks.decision) return "decision";
+  if (q === "offer") return "decision";
   if (q && ROOM.has(q)) return "room-ready";
   if (q && RESULT.has(q)) return "movement-result";
+  // A check was attempted: its result screen comes next, whatever was acknowledged before it.
   const measured = ["measured", "unreliable", "stopped_early"].includes(snap.case.functional_status);
-  if (measured && !acks.result) return "movement-result";
+  if (measured) return d && acks.result ? "complete" : "movement-result";
+  if (d && !acks.decision) return "decision";
   if (d) return "complete";
   // The agent is between steps (e.g. a check is about to start): stay on the decision screen.
   return "decision";

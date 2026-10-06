@@ -23,7 +23,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 6 | P1 | Add an agent-decision screen | ✅ |
 | 7 | P1 | Create a proper Room Ready screen | ✅ |
 | 8 | P1 | Redesign the movement test as an immersive experience | ✅ |
-| 9 | P1 | Add a movement-result screen | ⬜ |
+| 9 | P1 | Add a movement-result screen | ✅ |
 | 10 | P1 | Expand Care into a real section | ⬜ |
 | 11 | P1 | Build a Care Plan screen | ⬜ |
 | 12 | P1 | Improve Find Care | ⬜ |
@@ -226,11 +226,34 @@ Verified in the browser at 390 px:
 - Stop mid-check → `/check/movement-result` asking "Did you stop because you felt unwell?" Page scroll restored, `live_counts` set back to off.
 - `tsc` and `eslint` are clean.
 
-### 9. P1 — Add a movement-result screen ⬜
-- [ ] "Within your usual range" / "Slower than your usual pattern" / "Unable to compare" / "Reading wasn't reliable"
-- [ ] Explain that this does not diagnose the cause
-- [ ] CTA: "See my next step"
-- Note from task 3: `comparison.explanation` from the backend reads technically ("outside this user's usual recorded range"). Patient wording is needed here.
+### 9. P1 — Add a movement-result screen ✅
+- [x] "Within your usual range" / "Slower than your usual pattern" / "Unable to compare" / "Reading wasn't reliable"
+- [x] Explain that this does not diagnose the cause
+- [x] CTA: "See my next step"
+- [x] (task 3 note) The backend's technical `comparison.explanation`, which also contains confidence numbers for unreliable readings, is no longer shown to patients.
+
+What changed:
+- `app/check/movement-result/page.tsx` maps `comparison.status` / `severity` / `functional_status` to six patient outcomes with their own wording:
+  - within (also covers "quicker")
+  - a little slower (mild)
+  - slower than your usual pattern (clear)
+  - unable to compare
+  - the reading wasn't reliable
+  - you stopped before finishing
+- Within, mild and clear get a number-free picture: a "Your usual" band on a track and a "Today" marker. The marker is green when within and amber when slower.
+- Unreliable readings say why, from the pipeline's reason code: someone else moving nearby / couldn't see five stands / sensor problem / signal not clear.
+- New arm use gets its own line.
+- The "doesn't tell us what is causing how you feel" note appears whenever a comparison was made.
+- `lib/checkFlow.ts` routing fix: once a check was attempted, the session always goes to the result screen. Before, a missing "decision" acknowledgement (another tab, cleared storage) sent it back to the decision screen, which then wrongly said no check was needed. Room questions also no longer depend on that acknowledgement.
+
+Verified (four checks driven through the API at 8× replay, then each result screen at 390 px):
+- `tan_today` → "Slower than your usual pattern" (T2).
+- `siti_today` → "Within your usual range" (T3, because eating less sets that floor).
+- `tan_interference` → "The reading wasn't reliable · It looked like someone else was moving nearby" (ABSTAIN).
+- `tan_baseline_2` → within.
+- Not exercised: "a little slower". No bundled recording produces a mild result.
+- Re-checked after the routing fix: Do the check → room-ready; Continue without it → T3.
+- `tsc` and `eslint` are clean.
 
 ### 10. P1 — Expand Care into a real section ⬜
 - [ ] Recommendation
@@ -306,6 +329,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 9: movement-result screen with number-free comparison picture and patient wording for all outcomes. Routing fix so an attempted check always shows its result.
 - 2026-10-06 — ✅ Task 8: full-screen movement check with countdown, WISP line, a five-dot counter only when live counts are reliable, and Stop always visible.
 - 2026-10-06 — ✅ Task 7: Room Ready screen with setup checklist, steady question and room question. Confirmed no sensing before Start; "not steady" → T2.
 - 2026-10-06 — ✅ Task 6: agent-decision screen showing the options WISP weighed and the one it chose, with a plain-language reason. Auto-continues when no check is needed.
