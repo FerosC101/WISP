@@ -20,7 +20,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 3 | P1 | Build a dedicated Check flow | ✅ |
 | 4 | P1 | Replace chat-style red-flag questions | ✅ |
 | 5 | P1 | Add "What WISP understood" screen | ✅ |
-| 6 | P1 | Add an agent-decision screen | ⬜ |
+| 6 | P1 | Add an agent-decision screen | ✅ |
 | 7 | P1 | Create a proper Room Ready screen | ⬜ |
 | 8 | P1 | Redesign the movement test as an immersive experience | ⬜ |
 | 9 | P1 | Add a movement-result screen | ⬜ |
@@ -158,12 +158,25 @@ Verified:
   - One-sided weakness changed to Yes on the summary → T1.
 - `tsc` and `eslint` are clean.
 
-### 6. P1 — Add an agent-decision screen ⬜
-- [ ] "WISP is checking what would help next…"
-- [ ] If sensing is useful: explain why; "Do the check / Continue without it"
-- [ ] If sensing is unnecessary: go directly to recommendation
-- [ ] Make this the signature agentic moment
-- Note from task 4: when the screen ends without an offer, the decision screen says "WISP has enough to recommend a next step". That's wrong when the result is ABSTAIN (a "not sure" answer). The copy should come from the agent's logged decision (`trace.why`).
+### 6. P1 — Add an agent-decision screen ✅
+- [x] "WISP is checking what would help next…"
+- [x] If sensing is useful: explain why; "Do the check / Continue without it"
+- [x] If sensing is unnecessary: go directly to recommendation
+- [x] Make this the signature agentic moment
+- [x] (task 4 note) Fixed: the misleading "WISP has enough…" copy for ABSTAIN
+
+What changed:
+- `app/check/decision/page.tsx` shows "WISP is checking what would help next…" with the flowing WISP line.
+- It lists the three options the agent weighs (`trace.available_actions`), in patient words: ask more questions / a short movement check / suggest your next step now. Then it reveals the one the agent picked (`selected_action`). Unchosen options fade and shrink so the action stays near the fold.
+- The reveal takes about 1.4 s, or is instant with prefers-reduced-motion.
+- Check offered: the agent's own patient-facing reason (`offer.why`), "about 30 seconds… it's your choice", then **Do the check** / **Continue without it**.
+- No check: a plain reason, then auto-continue to the recommendation after 4 s, or tap "See my next step". The reason is derived from the same structured state the agent checks, in the same order as `_after_screen`: "not sure" answers, out of scope, mobility, range already fixed, no baseline, sensor unavailable. It never parses the technical `trace.why` text.
+
+Verified:
+- Browser at 390 px, Mdm Tan: checking state → movement check chosen, with reason and buttons.
+- Mr Lim (no baseline): "suggest your next step now" with "WISP doesn't have your usual movement on record yet…", then auto-advance to T3.
+- API: a "not sure" answer gives `safety_screen.status = incomplete` → ABSTAIN, which shows the "couldn't be ruled out" reason.
+- `tsc` and `eslint` are clean.
 
 ### 7. P1 — Create a proper Room Ready screen ⬜
 - [ ] Chair against wall
@@ -261,6 +274,7 @@ Verified:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 6: agent-decision screen showing the options WISP weighed and the one it chose, with a plain-language reason. Auto-continues when no check is needed.
 - 2026-10-06 — ✅ Task 5: "What WISP understood" screen with corrections. Backend: opt-in `confirm` step, `/corrections` endpoint, ORD-5, and 14 new tests (126 pass).
 - 2026-10-06 — ✅ Task 4: dedicated Safety Check screen with question counter, large Yes/No/Not sure buttons and an always-visible 995 link. "Not sure" → ABSTAIN verified.
 - 2026-10-06 — ✅ Task 3: dedicated Check flow (9 routes) over the existing agent. Scenario 1 → T2, a mid-check red flag → T1, declining the check → T3.
