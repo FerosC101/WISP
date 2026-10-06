@@ -70,6 +70,14 @@ class Caregiver(Strict):
     sharing_enabled: bool = False
 
 
+class ProviderDetails(Strict):
+    """Where the person's usual clinic is. No opening hours or availability: WISP never claims those."""
+
+    address: str | None = Field(default=None, max_length=200)
+    lat: float | None = Field(default=None, ge=-90, le=90)
+    lng: float | None = Field(default=None, ge=-180, le=180)
+
+
 class UserProfile(Strict):
     user_id: str
     display_name: str
@@ -78,6 +86,7 @@ class UserProfile(Strict):
     preferred_language: str = "en"
     lives_alone: bool
     usual_gp: str
+    usual_gp_details: ProviderDetails | None = None
     mobility_aid: str | None = None
     normally_stands_unaided: bool
     conditions: list[str] = []

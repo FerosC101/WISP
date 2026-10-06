@@ -73,3 +73,13 @@ def test_corrections_endpoint(client):
     # WorkBuddy sessions cannot be corrected through the patient endpoint.
     wb = client.post("/api/sessions", json={"user_id": "mdm_siti", "agent": "workbuddy"}).json()["session_id"]
     assert client.post(f"/api/sessions/{wb}/corrections", json={"field": "duration", "value": "d_week"}).status_code == 409
+
+
+def test_clinic_location_reaches_the_screen_not_the_agent(client):
+    snap = client.post("/api/sessions", json={"user_id": "mdm_tan"}).json()
+    details = snap["profile"]["usual_gp_details"]
+    assert details["address"] and details["lat"] is not None
+    client.post("/api/sessions", json={"user_id": "mdm_siti", "agent": "workbuddy"})
+    sid = client.post("/api/tools/get_active_session", json={"user_id": "mdm_siti"}, headers=H).json()["session_id"]
+    agent_view = client.post("/api/tools/get_health_profile", json={"session_id": sid}, headers=H).json()
+    assert "usual_gp_details" not in agent_view and agent_view["usual_gp"]

@@ -26,7 +26,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 9 | P1 | Add a movement-result screen | ✅ |
 | 10 | P1 | Expand Care into a real section | ✅ |
 | 11 | P1 | Build a Care Plan screen | ✅ |
-| 12 | P1 | Improve Find Care | ⬜ |
+| 12 | P1 | Improve Find Care | ✅ |
 | 13 | P1 | Build a Doctor Visit Summary | ⬜ |
 | 14 | P1 | Turn follow-up into its own flow | ⬜ |
 | 15 | P1 | Upgrade History | ⬜ |
@@ -305,10 +305,32 @@ Verified in the browser at 390 px:
 - T4 "Check in now" → `/check/concern` with "Hello again, Mdm Siti. Last time you said…".
 - `tsc` and `eslint` are clean.
 
-### 12. P1 — Improve Find Care ⬜
-- [ ] GP / Polyclinic / A&E / Usual provider
-- [ ] Distance/address if available
-- [ ] Never fake appointment availability
+### 12. P1 — Improve Find Care ✅
+- [x] GP / Polyclinic / A&E / Usual provider
+- [x] Distance/address if available
+- [x] Never fake appointment availability
+
+What changed, backend:
+- `UserProfile.usual_gp_details` (`ProviderDetails`: address, lat, lng), optional.
+- The demo personas' fictional clinics get "‹Town› town centre (demo address)" with approximate town-centre coordinates. No phone numbers, because a fake number could dial a real one.
+- The address and location go only to the patient's screen (snapshot). The agent's `get_health_profile` view leaves them out. New test: `test_clinic_location_reaches_the_screen_not_the_agent`.
+- Existing local databases keep their old profiles until re-seeded (the field is optional). I refreshed the demo profiles in `data/`.
+
+What changed, frontend:
+- `/care/find` groups places as **Best for you now** (highlighted), **Other options**, and **In an emergency** (A&E, for T3/T4/ABSTAIN). T1 shows Call 995 and A&E only.
+- Each card shows type, name, address if known, distance if known, and "When: …" for this recommendation. Buttons: **Directions** (to known coordinates) or **Find nearest** (a "near me" map search), and **Details**.
+- Distance is opt-in ("Show how far away your clinic is"). It uses browser geolocation, is calculated on the device (haversine), and is never stored or sent. Denied/unavailable states are handled. It only appears for places with known coordinates (the usual clinic). Nearest polyclinic/GP/A&E is left to the maps app.
+- Availability: Find care says WISP can't see opening hours, waiting times or appointment slots and doesn't book. Provider detail has an "Opening hours and appointments" card: "WISP can't see these, please call". For A&E it gives the true general statement that Singapore emergency departments are open 24 hours.
+- New `components/care/ProviderCard.tsx`. `lib/care.ts` gains `directionsHref`, `distanceKm`, `distanceLabel`, `useMyLocation`.
+
+Verified:
+- Backend `pytest`: 127 passed.
+- Browser at 390 px:
+  - T2 list order: usual clinic (best) → polyclinic → GP → A&E ("if no clinic can see you today").
+  - With a stubbed browser location near Bishan, the usual clinic showed "About 1.9 km away". The stub avoided the real browser permission prompt.
+  - T3 puts A&E under "In an emergency" ("Only if warning signs appear").
+  - The A&E detail page reads correctly.
+- `tsc` and `eslint` are clean.
 
 ### 13. P1 — Build a Doctor Visit Summary ⬜
 - [ ] Complaint, duration, important symptoms
@@ -366,6 +388,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 12: Find Care with best / other / emergency groups, the usual clinic's demo address (screen only, not sent to the agent), opt-in on-device distance, and explicit "WISP can't see hours or slots".
 - 2026-10-06 — ✅ Task 11: Care Plan timeline (Now / Today / Next / If worse) built from the disposition, with action buttons and done-ticks. Checked for all five tiers.
 - 2026-10-06 — ✅ Task 10: Care is now a section: hub plus recommendation, plan, find care, provider detail, visit summary, share and follow-up. `/caregiver/[id]` redirects to `/care/share`.
 - 2026-10-06 — ✅ Task 9: movement-result screen with number-free comparison picture and patient wording for all outcomes. Routing fix so an attempted check always shows its result.

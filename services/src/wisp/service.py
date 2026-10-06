@@ -153,7 +153,7 @@ class WispService:
             "session_id": session_id,
             "version": version,
             "agent": meta.get("agent"),
-            "profile": _public_profile(profile) if profile else None,
+            "profile": _public_profile(profile, for_screen=True) if profile else None,
             "case": case.model_dump(mode="json"),
             "messages": messages,
             "trace": trace.model_dump(mode="json"),
@@ -528,9 +528,12 @@ class WispService:
         return {"shared": True, **record}
 
 
-def _public_profile(p) -> dict:
-    """Minimum profile needed for personalisation (no medications list sent to the agent)."""
-    return {
+def _public_profile(p, *, for_screen: bool = False) -> dict:
+    """Minimum profile needed for personalisation (no medications list sent to the agent).
+
+    The clinic's address and location are for the patient's own screen (Find care), not the agent.
+    """
+    out = {
         "user_id": p.user_id,
         "display_name": p.display_name,
         "age": p.age,
@@ -541,6 +544,9 @@ def _public_profile(p) -> dict:
         "conditions": p.conditions,
         "caregiver": {"name": p.caregiver.name, "relationship": p.caregiver.relationship} if p.caregiver else None,
     }
+    if for_screen:
+        out["usual_gp_details"] = p.usual_gp_details.model_dump() if p.usual_gp_details else None
+    return out
 
 
 def _agent_view(m: FunctionalAssessment) -> dict:
