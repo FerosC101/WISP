@@ -21,7 +21,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 4 | P1 | Replace chat-style red-flag questions | ✅ |
 | 5 | P1 | Add "What WISP understood" screen | ✅ |
 | 6 | P1 | Add an agent-decision screen | ✅ |
-| 7 | P1 | Create a proper Room Ready screen | ⬜ |
+| 7 | P1 | Create a proper Room Ready screen | ✅ |
 | 8 | P1 | Redesign the movement test as an immersive experience | ⬜ |
 | 9 | P1 | Add a movement-result screen | ⬜ |
 | 10 | P1 | Expand Care into a real section | ⬜ |
@@ -178,13 +178,27 @@ Verified:
 - API: a "not sure" answer gives `safety_screen.status = incomplete` → ABSTAIN, which shows the "couldn't be ruled out" reason.
 - `tsc` and `eslint` are clean.
 
-### 7. P1 — Create a proper Room Ready screen ⬜
-- [ ] Chair against wall
-- [ ] No wheels
-- [ ] Clear surrounding area
-- [ ] Ask whether someone else is moving nearby
-- [ ] Ask whether user feels steady enough
-- [ ] Only activate sensing after confirmation
+### 7. P1 — Create a proper Room Ready screen ✅
+- [x] Chair against wall
+- [x] No wheels
+- [x] Clear surrounding area
+- [x] Ask whether someone else is moving nearby
+- [x] Ask whether user feels steady enough
+- [x] Only activate sensing after confirmation
+
+What changed:
+- `app/check/room-ready/page.tsx` has three steps.
+  1. **Set up:** a chair-against-wall picture and a tick-off checklist (sturdy chair with no wheels / against a wall / clear space). Continue stays disabled until all three are ticked, and "I can't set this up — skip the check" is available.
+  2. **Feeling steady?** The agent's `steady` question.
+  3. **The room:** the agent's `others` question, then `others_clear` ("wait until the area is clear") if someone is there.
+- Every step shows "Sensing is off. It only turns on when you press Start on the next screen." Focus moves to each step's heading.
+- Backend: unchanged. It already captures only after `patient_ready` (the Start press on the movement screen).
+
+Verified in the browser at 390 px:
+- Continue disabled until all three items are ticked → steady → "someone is here" → "It's clear now" → movement screen.
+- At that point the API shows `functional_status = awaiting_patient` and no `sensing_active` audit event, so nothing is captured before Start.
+- "Not steady" → **T2** "You normally get up on your own, but today you don't…" (SR-2).
+- `tsc` and `eslint` are clean.
 
 ### 8. P1 — Redesign the movement test as an immersive experience ⬜
 - [ ] Near-full-screen layout
@@ -274,6 +288,7 @@ Verified:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 7: Room Ready screen with setup checklist, steady question and room question. Confirmed no sensing before Start; "not steady" → T2.
 - 2026-10-06 — ✅ Task 6: agent-decision screen showing the options WISP weighed and the one it chose, with a plain-language reason. Auto-continues when no check is needed.
 - 2026-10-06 — ✅ Task 5: "What WISP understood" screen with corrections. Backend: opt-in `confirm` step, `/corrections` endpoint, ORD-5, and 14 new tests (126 pass).
 - 2026-10-06 — ✅ Task 4: dedicated Safety Check screen with question counter, large Yes/No/Not sure buttons and an always-visible 995 link. "Not sure" → ABSTAIN verified.
