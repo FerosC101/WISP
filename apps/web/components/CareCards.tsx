@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui";
-import { sessionHref } from "@/lib/checkFlow";
 import { PATIENT_OUTCOME, TIER_STYLE, dayLabel, timeLabel } from "@/lib/tiers";
 import type { HistoryItem, Persona } from "@/lib/types";
 
@@ -25,7 +24,7 @@ export function NextCheckCard({ recheck, busy, onStart }: { recheck: Persona["re
 export function RecentRecommendationCard({ item }: { item: HistoryItem }) {
   if (!item.tier) return null;
   return (
-    <Link href={sessionHref(item.session_id)} className="flex items-center justify-between gap-3 rounded-(--radius-card) border border-line bg-card p-5 hover:border-forest/40">
+    <Link href={`/care?s=${item.session_id}`} className="flex items-center justify-between gap-3 rounded-(--radius-card) border border-line bg-card p-5 hover:border-forest/40">
       <div>
         <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Recent recommendation · {dayLabel(item.created_at)}</p>
         <p className="mt-1 flex items-center gap-2 text-[1.1rem] font-bold">

@@ -11,6 +11,7 @@ export function useMe() {
   const [me, setMe] = useState<Persona | null>(null);
   const [recent, setRecent] = useState<HistoryItem | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     api<Persona[]>("/api/personas")
@@ -18,8 +19,9 @@ export function useMe() {
       .catch(() => setError("WISP can't reach its local service right now."));
     api<HistoryItem[]>(`/api/history?user_id=${userId}`)
       .then((h) => setRecent(h.find((x) => x.tier) ?? null))
-      .catch(() => setRecent(null));
+      .catch(() => setRecent(null))
+      .finally(() => setLoaded(true));
   }, [userId]);
 
-  return { me, recent, error };
+  return { me, recent, error, loaded };
 }

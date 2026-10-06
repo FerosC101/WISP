@@ -24,7 +24,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 7 | P1 | Create a proper Room Ready screen | ✅ |
 | 8 | P1 | Redesign the movement test as an immersive experience | ✅ |
 | 9 | P1 | Add a movement-result screen | ✅ |
-| 10 | P1 | Expand Care into a real section | ⬜ |
+| 10 | P1 | Expand Care into a real section | ✅ |
 | 11 | P1 | Build a Care Plan screen | ⬜ |
 | 12 | P1 | Improve Find Care | ⬜ |
 | 13 | P1 | Build a Doctor Visit Summary | ⬜ |
@@ -255,14 +255,32 @@ Verified (four checks driven through the API at 8× replay, then each result scr
 - Re-checked after the routing fix: Do the check → room-ready; Continue without it → T3.
 - `tsc` and `eslint` are clean.
 
-### 10. P1 — Expand Care into a real section ⬜
-- [ ] Recommendation
-- [ ] Care plan
-- [ ] Find care
-- [ ] Provider detail
-- [ ] Visit summary
-- [ ] Share with family
-- [ ] Follow-up plan
+### 10. P1 — Expand Care into a real section ✅
+- [x] Recommendation
+- [x] Care plan (first version; task 11 restructures it into Now / Today / Next / If worse)
+- [x] Find care (first version; task 12 adds distance/address and the usual-provider details)
+- [x] Provider detail
+- [x] Visit summary (first version; task 13 completes it)
+- [x] Share with family (moved here; task 18 redesigns it)
+- [x] Follow-up plan
+
+What changed:
+- New routes: `/care/recommendation`, `/care/plan`, `/care/find`, `/care/provider/[id]` (usual-gp / polyclinic / gp / ae), `/care/visit-summary`, `/care/share`. All take `?s=<session>` and default to the latest check with a recommendation (`useCareSession` in `lib/care.ts`).
+- `app/care/layout.tsx` provides the Suspense boundary.
+- `CareShell` gives each sub-page a "‹ Your care" back link, scrollable section tabs, and loading/empty states.
+- `/care` hub:
+  - The current recommendation in its tier colours.
+  - Cards for care plan, find care, visit summary, and share with family (only when a trusted person exists and it isn't T1).
+  - Follow-up: the scheduled check-in with "Check in now", or what to do if nothing is scheduled.
+- `lib/care.ts`: provider list and which ones suit each tier (T1 → A&E only), plus "when to go" text. It never claims opening hours or availability.
+- The Recommendation component's "Find care" links to `/care/find` (the inline panel is gone), and "Share with family" links to `/care/share`.
+- v2's `/caregiver/[id]` page became `components/care/ShareSummary.tsx`. The old URL redirects to `/care/share?s=`.
+- The end of a check links into Care. Today's "Recent recommendation" card opens the Care hub for that check.
+
+Verified in the browser at 390 px:
+- Mdm Tan's latest check (T3): hub → plan → find → polyclinic detail → visit summary → share → recommendation, and `/caregiver/<id>` → `/care/share`.
+- A T1 check: hub without "Share with family", "Call 995 or go to the nearest A&E"; Find care shows only the 995 button and A&E.
+- `tsc` and `eslint` are clean.
 
 ### 11. P1 — Build a Care Plan screen ⬜
 - [ ] Now / Today / Next / If symptoms worsen
@@ -329,6 +347,7 @@ Verified (four checks driven through the API at 8× replay, then each result scr
 
 ## Log
 
+- 2026-10-06 — ✅ Task 10: Care is now a section: hub plus recommendation, plan, find care, provider detail, visit summary, share and follow-up. `/caregiver/[id]` redirects to `/care/share`.
 - 2026-10-06 — ✅ Task 9: movement-result screen with number-free comparison picture and patient wording for all outcomes. Routing fix so an attempted check always shows its result.
 - 2026-10-06 — ✅ Task 8: full-screen movement check with countdown, WISP line, a five-dot counter only when live counts are reliable, and Stop always visible.
 - 2026-10-06 — ✅ Task 7: Room Ready screen with setup checklist, steady question and room question. Confirmed no sensing before Start; "not steady" → T2.

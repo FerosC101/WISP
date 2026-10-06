@@ -2,53 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { MAPS } from "@/lib/care";
 import { TIER_STYLE, dayLabel, timeLabel } from "@/lib/tiers";
-import type { CareDisposition, Snapshot } from "@/lib/types";
+import type { Snapshot } from "@/lib/types";
 import { HowDecided } from "./HowDecided";
 import { Button } from "./ui";
 import { WispLine } from "./WispLine";
-
-const MAPS = (q: string) => `https://www.google.com/maps/search/${encodeURIComponent(q)}`;
-
-function FindCare({ d, snapshot }: { d: CareDisposition; snapshot: Snapshot }) {
-  const gp = snapshot.profile?.usual_gp;
-  const caregiver = snapshot.profile?.caregiver;
-  const items: { label: string; detail: string; href?: string }[] = [];
-  if (d.tier === "T2" || d.tier === "T3") {
-    if (gp) items.push({ label: gp, detail: "Your usual clinic. WISP doesn't check opening hours." });
-    items.push({ label: "Polyclinic or GP near me", detail: "Opens a map search.", href: MAPS("polyclinic near me") });
-    if (d.tier === "T2") items.push({ label: "No one can see you today?", detail: "Go to the nearest A&E.", href: MAPS("hospital emergency department near me") });
-  } else if (d.tier === "ABSTAIN") {
-    if (gp) items.push({ label: gp, detail: "Call your family doctor and describe how you feel." });
-    if (caregiver) items.push({ label: `${caregiver.name} (${caregiver.relationship})`, detail: "Ask them to help you get advice today." });
-    items.push({ label: "A nurse or healthcare professional", detail: "Talk it through with someone who can see the full picture." });
-  } else {
-    items.push({ label: "Stay at home and rest", detail: "WISP will check in with you again." });
-    if (gp) items.push({ label: gp, detail: "If you're not improving, book an appointment." });
-  }
-  return (
-    <ul className="mt-4 space-y-2.5">
-      {items.map((i) => (
-        <li key={i.label} className="rounded-2xl bg-card/80 px-4 py-3">
-          {i.href ? (
-            <a href={i.href} target="_blank" rel="noreferrer" className="font-bold text-forest underline underline-offset-4">
-              {i.label}
-            </a>
-          ) : (
-            <span className="font-bold">{i.label}</span>
-          )}
-          <div className="text-[0.95rem] text-ink-soft">{i.detail}</div>
-        </li>
-      ))}
-    </ul>
-  );
-}
 
 export function Recommendation({ snapshot, onShowConversation }: { snapshot: Snapshot; onShowConversation: () => void }) {
   const d = snapshot.disposition!;
   const s = TIER_STYLE[d.tier];
   const emergency = d.tier === "T1";
-  const [showCare, setShowCare] = useState(false);
   const [showHow, setShowHow] = useState(false);
   const caregiver = snapshot.profile?.caregiver;
 
@@ -81,13 +45,16 @@ export function Recommendation({ snapshot, onShowConversation }: { snapshot: Sna
               </a>
             </>
           ) : (
-            <Button size="lg" onClick={() => setShowCare((v) => !v)} aria-expanded={showCare} className="w-full sm:w-auto">
+            <Link
+              href={`/care/find?s=${snapshot.session_id}`}
+              className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep sm:w-auto"
+            >
               Find care
-            </Button>
+            </Link>
           )}
           {caregiver && !emergency && (
             <Link
-              href={`/caregiver/${snapshot.session_id}`}
+              href={`/care/share?s=${snapshot.session_id}`}
               className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border-2 border-line bg-card px-6 text-[1.05rem] font-bold text-ink hover:border-forest/50 sm:w-auto"
             >
               Share with family
@@ -98,7 +65,6 @@ export function Recommendation({ snapshot, onShowConversation }: { snapshot: Sna
           </Button>
         </div>
         {emergency && <p className="mt-3 text-sm text-ink-soft">WISP never calls by itself. “Call 995” opens your phone&apos;s dialler.</p>}
-        {showCare && !emergency && <FindCare d={d} snapshot={snapshot} />}
       </section>
 
       {showHow && <HowDecided snapshot={snapshot} />}
