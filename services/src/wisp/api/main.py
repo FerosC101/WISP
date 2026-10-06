@@ -113,6 +113,7 @@ class StartSession(BaseModel):
     previous_session_id: str | None = None
     language: Literal["en", "zh", "ms", "ta"] = "en"
     text: str | None = Field(default=None, max_length=1000)  # the patient's first words, typed on the home screen
+    confirm_summary: bool = False  # pause after the safety questions for review (the app's Check flow)
 
 
 @app.post("/api/sessions")
@@ -121,7 +122,7 @@ def start_session(body: StartSession) -> dict:
     case = s.start_session(body.user_id, agent=body.agent, previous_session_id=body.previous_session_id)
     if body.agent == "local_agent":
         first = (body.text or "").strip()
-        agent().open(case.session_id, lang=body.language, greet=not first)
+        agent().open(case.session_id, lang=body.language, greet=not first, confirm_summary=body.confirm_summary)
         if first:
             agent().handle(case.session_id, first)
     else:
@@ -138,7 +139,7 @@ def followup(session_id: str, body: dict = Body(default={})) -> dict:
     lang = body.get("language", "en") if body.get("language") in ("en", "zh", "ms", "ta") else "en"
     case = s.start_session(prev.user_id, agent=agent_kind, previous_session_id=session_id)
     if agent_kind == "local_agent":
-        agent().open(case.session_id, lang=lang)
+        agent().open(case.session_id, lang=lang, confirm_summary=body.get("confirm_summary") is True)
     return s.snapshot(case.session_id)
 
 
@@ -161,6 +162,27 @@ def post_message(session_id: str, body: Message) -> dict:
     if meta["agent"] != "local_agent":
         raise HTTPException(409, "This assessment is being run by WorkBuddy")
     agent().handle(session_id, body.text, body.value)
+    return s.snapshot(session_id)
+
+
+class Correction(BaseModel):
+    field: str = Field(max_length=40)
+    value: str = Field(max_length=40)
+
+
+@app.post("/api/sessions/{session_id}/corrections")
+def correct(session_id: str, body: Correction) -> dict:
+    """The patient corrects an answer on the "What WISP understood" screen."""
+    s = svc()
+    meta = s.store.session_meta(session_id)
+    if not meta:
+        raise HTTPException(404, "Unknown session")
+    if meta["agent"] != "local_agent":
+        raise HTTPException(409, "This assessment is being run by WorkBuddy")
+    try:
+        agent().correct(session_id, body.field, body.value)
+    except ToolError as e:
+        raise HTTPException(409 if e.code == "invalid_state" else 400, str(e)) from e
     return s.snapshot(session_id)
 
 

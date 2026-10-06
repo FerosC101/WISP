@@ -17,6 +17,7 @@ converts words into structured fields and explains results; it never decides urg
 | ORD-2 | Sensing requires a single-use, session-bound eligibility grant | `service.py`, `store.py` | `test_sensing_requires_grant`, `test_grant_is_single_use_and_session_bound` |
 | ORD-3 | A red flag locks sensing for the rest of the session and cancels a pending check | `service.py` | `test_red_flag_locks_sensor` |
 | ORD-4 | A reported red flag cannot be withdrawn in the same session (fail closed) | `service.py` | `test_red_flag_cannot_be_withdrawn` |
+| ORD-5 | Patient corrections on the summary screen are only accepted while the agent is waiting for confirmation, go through `record_case_facts` (audited as `patient`), re-run the red-flag screen, and cannot withdraw a reported red flag | `triage/agent.py` (`correct`), `api/main.py` | `test_summary_confirm.py`, `test_corrections_endpoint` |
 | SEC-1 | Agents cannot author measurements; measurements are HMAC-signed and bound to the session | `store.py`, `service.py` | `test_agent_cannot_fabricate_measurement`, `test_tampered_measurement_fails_verification`, `test_measurement_from_other_session_rejected` |
 
 Run: `cd services && uv run pytest` (109 tests).

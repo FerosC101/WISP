@@ -44,7 +44,7 @@ const RESULT = new Set(["arms", "stop_reason", "stop_chest", "stop_breath"]);
 export const isMovementQuestion = (key: string | undefined) => !!key && RESULT.has(key);
 
 /** Screens the patient moves past by tapping Continue, rather than by answering the agent. */
-export type Ack = "summary" | "decision" | "result";
+export type Ack = "decision" | "result";
 type Acks = Partial<Record<Ack, boolean>>;
 
 /** Agent messages since the patient last spoke: the current "turn" of the conversation. */
@@ -74,7 +74,7 @@ export function stageOf(snap: Snapshot, acks: Acks): Stage {
   if (isChecking(snap)) return "movement";
   if (q === "complaint" || q === "scope") return "concern";
   if (q && SAFETY.has(q)) return "safety";
-  if (!acks.summary) return "summary";
+  if (q === "confirm") return "summary";
   if (q === "offer" || !acks.decision) return "decision";
   if (q && ROOM.has(q)) return "room-ready";
   if (q && RESULT.has(q)) return "movement-result";
@@ -92,7 +92,7 @@ export function sessionHref(sid: string, agent: Snapshot["agent"] = "local_agent
   return agent === "workbuddy" ? `/session/${sid}` : `/check/complete?s=${sid}`;
 }
 
-const ALL_ACKED: Acks = { summary: true, decision: true, result: true };
+const ALL_ACKED: Acks = { decision: true, result: true };
 
 /** Call before navigating into a check the patient has just started. */
 export function beginFlow(sid: string) {
@@ -175,5 +175,22 @@ export function useCheckFlow(here: Stage) {
     [sid, setSnapshot],
   );
 
-  return { ...session, sid, stage, ready: stage === here, ack, answer, sending, error: error ?? session.error };
+  /** Change an answer while reviewing the summary (the backend re-runs the safety screen). */
+  const correct = useCallback(
+    async (field: string, value: string) => {
+      if (!sid) return;
+      setSending(true);
+      setError(null);
+      try {
+        setSnapshot(await post<Snapshot>(`/api/sessions/${sid}/corrections`, { field, value }));
+      } catch (e) {
+        setError((e as Error).message);
+      } finally {
+        setSending(false);
+      }
+    },
+    [sid, setSnapshot],
+  );
+
+  return { ...session, sid, stage, ready: stage === here, ack, answer, correct, sending, error: error ?? session.error };
 }

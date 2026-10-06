@@ -40,7 +40,7 @@ export function useStartCheck(me: Persona | null) {
     if (!me || !firstWords.trim()) return;
     setBusy(true);
     try {
-      const snap = await post<Snapshot>("/api/sessions", { user_id: me.user_id, agent: agentMode, language, text: firstWords.trim() });
+      const snap = await post<Snapshot>("/api/sessions", { user_id: me.user_id, agent: agentMode, language, text: firstWords.trim(), confirm_summary: true });
       beginFlow(snap.session_id);
       router.push(snap.agent === "workbuddy" ? `/session/${snap.session_id}` : stagePath("concern", snap.session_id));
     } catch (e) {
@@ -52,7 +52,7 @@ export function useStartCheck(me: Persona | null) {
   async function startFollowUp(prev: string) {
     setBusy(true);
     try {
-      const snap = await post<Snapshot>(`/api/sessions/${prev}/followup`, { agent: agentMode, language });
+      const snap = await post<Snapshot>(`/api/sessions/${prev}/followup`, { agent: agentMode, language, confirm_summary: true });
       beginFlow(snap.session_id);
       router.push(snap.agent === "workbuddy" ? `/session/${snap.session_id}` : stagePath("concern", snap.session_id));
     } catch (e) {

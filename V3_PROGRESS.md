@@ -19,7 +19,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 2 | P0 | Build a proper Today dashboard | ✅ |
 | 3 | P1 | Build a dedicated Check flow | ✅ |
 | 4 | P1 | Replace chat-style red-flag questions | ✅ |
-| 5 | P1 | Add "What WISP understood" screen | ⬜ |
+| 5 | P1 | Add "What WISP understood" screen | ✅ |
 | 6 | P1 | Add an agent-decision screen | ⬜ |
 | 7 | P1 | Create a proper Room Ready screen | ⬜ |
 | 8 | P1 | Redesign the movement test as an immersive experience | ⬜ |
@@ -125,12 +125,38 @@ Verified in the browser at 390 px:
 - Chest pain "Yes" → T1 (tested in task 3).
 - `tsc` and `eslint` are clean.
 
-### 5. P1 — Add "What WISP understood" screen ⬜
-- [ ] Main complaint
-- [ ] Duration
-- [ ] Associated changes
-- [ ] Safety screen result
-- [ ] Allow user to correct mistakes before continuing
+### 5. P1 — Add "What WISP understood" screen ✅
+- [x] Main complaint
+- [x] Duration
+- [x] Associated changes
+- [x] Safety screen result
+- [x] Allow user to correct mistakes before continuing
+
+What changed, backend (opt-in, so the chat view, WorkBuddy, existing tests and the evaluation harness are unchanged):
+- `LocalAgent.open(confirm_summary=True)` pauses after the safety questions with a new `confirm` step. It doesn't decide anything until the patient taps "That's right". New i18n strings `confirm` and `q_confirm` (zh/ms/ta are drafts, like the rest).
+- `LocalAgent.correct(field, value)` and `POST /api/sessions/{id}/corrections` are only accepted while the agent waits at `confirm`.
+- Correctable fields: duration, onset, eating, fluids, fall (no / not hurt / hurt) and each warning sign (yes/no).
+- Every correction goes through `record_case_facts` as actor `patient`, then the red-flag screen.
+- Correcting a warning sign to Yes, or "fell and was hurt", escalates to T1 at once. A reported red flag still can't be withdrawn.
+- Changing eating to "less than usual" asks the fluids question that was skipped.
+- A warning sign can only be corrected to Yes or No, because the backend can't reset an answer to "unknown".
+- `docs/safety.md`: new invariant ORD-5.
+- `POST /api/sessions` and `/followup` accept `confirm_summary`. The Check flow always sends it.
+
+What changed, frontend:
+- `/check/summary` lists the main concern ("Start again" link), how long, how it started, eating and drinking, keeping fluids down (if relevant), a recent fall, and anything else found in the patient's words (fever, getting worse).
+- Each row has a "Change" control with large options, using the agent's own translated answer labels where it has them.
+- The safety check card shows "No warning signs reported" plus a count of "not sure" answers. If there are any, the card explains what they mean, and the answers list opens automatically so they can be changed.
+- The summary is now shown whenever the agent waits at `confirm`. The client-side "summary" acknowledgement is gone.
+
+Verified:
+- Backend `pytest`: 126 passed. That's 13 new tests in `tests/test_summary_confirm.py` plus `test_corrections_endpoint`: pause before deciding, no pause without opt-in, Yes-correction → T1 + sensing locked, fall-with-injury → T1, not sure → No, eating → fluids follow-up, audited as patient, refused after confirming, invalid values refused, WorkBuddy sessions refused.
+- Browser at 390 px:
+  - Confusion "not sure" → No clears the "not sure" count.
+  - Eating → "Less than usual" asks the fluids question and returns to the summary.
+  - Confirming → decision screen.
+  - One-sided weakness changed to Yes on the summary → T1.
+- `tsc` and `eslint` are clean.
 
 ### 6. P1 — Add an agent-decision screen ⬜
 - [ ] "WISP is checking what would help next…"
@@ -235,6 +261,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 5: "What WISP understood" screen with corrections. Backend: opt-in `confirm` step, `/corrections` endpoint, ORD-5, and 14 new tests (126 pass).
 - 2026-10-06 — ✅ Task 4: dedicated Safety Check screen with question counter, large Yes/No/Not sure buttons and an always-visible 995 link. "Not sure" → ABSTAIN verified.
 - 2026-10-06 — ✅ Task 3: dedicated Check flow (9 routes) over the existing agent. Scenario 1 → T2, a mid-check red flag → T1, declining the check → T3.
 - 2026-10-06 — ✅ Task 2: Today dashboard with symptom cards, new check-in shortcut, next check, last recommendation and baseline status.

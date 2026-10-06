@@ -57,3 +57,19 @@ def test_patient_chat_flow(client):
     assert snap["disposition"]["tier"] == "T1"
     assert snap["case"]["sensing_locked"] is True
     assert client.post(f"/api/sessions/{sid}/messages", json={"text": ""}).status_code == 422
+
+
+def test_corrections_endpoint(client):
+    # Not reviewing yet: corrections are refused.
+    sid = client.post("/api/sessions", json={"user_id": "mdm_tan", "text": "I feel weak", "confirm_summary": True}).json()["session_id"]
+    assert client.post(f"/api/sessions/{sid}/corrections", json={"field": "duration", "value": "d_week"}).status_code == 409
+    answers = ["gradual", "d_days"] + ["no"] * 8 + ["yes"]
+    for v in answers:
+        snap = client.post(f"/api/sessions/{sid}/messages", json={"text": v, "value": v}).json()
+    assert snap["messages"][-1]["data"]["question"] == "confirm"
+    assert client.post(f"/api/sessions/{sid}/corrections", json={"field": "chest_pain", "value": "maybe"}).status_code == 400
+    snap = client.post(f"/api/sessions/{sid}/corrections", json={"field": "chest_pain", "value": "yes"}).json()
+    assert snap["disposition"]["tier"] == "T1"
+    # WorkBuddy sessions cannot be corrected through the patient endpoint.
+    wb = client.post("/api/sessions", json={"user_id": "mdm_siti", "agent": "workbuddy"}).json()["session_id"]
+    assert client.post(f"/api/sessions/{wb}/corrections", json={"field": "duration", "value": "d_week"}).status_code == 409
