@@ -25,7 +25,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 8 | P1 | Redesign the movement test as an immersive experience | ✅ |
 | 9 | P1 | Add a movement-result screen | ✅ |
 | 10 | P1 | Expand Care into a real section | ✅ |
-| 11 | P1 | Build a Care Plan screen | ⬜ |
+| 11 | P1 | Build a Care Plan screen | ✅ |
 | 12 | P1 | Improve Find Care | ⬜ |
 | 13 | P1 | Build a Doctor Visit Summary | ⬜ |
 | 14 | P1 | Turn follow-up into its own flow | ⬜ |
@@ -282,9 +282,28 @@ Verified in the browser at 390 px:
 - A T1 check: hub without "Share with family", "Call 995 or go to the nearest A&E"; Find care shows only the 995 button and A&E.
 - `tsc` and `eslint` are clean.
 
-### 11. P1 — Build a Care Plan screen ⬜
-- [ ] Now / Today / Next / If symptoms worsen
-- [ ] Actionable instructions, not just informational
+### 11. P1 — Build a Care Plan screen ✅
+- [x] Now / Today / Next / If symptoms worsen
+- [x] Actionable instructions, not just informational
+
+What changed:
+- `lib/carePlan.ts` → `buildPlan(snapshot)` arranges the disposition's own content into a timeline: care actions, escalation advice split into sentences, self-care steps, re-check and warning signs. It only adds practical steps (find care, take your visit summary) and never sets or changes urgency.
+- Per tier:
+  - **T1:** Call 995 / nearest A&E / do-not-drive advice.
+  - **T2:** call your GP (by name) to be seen today; if not, A&E.
+  - **T3:** book your GP; watch for changes; see your doctor within 2–3 days.
+  - **T4:** the self-care checklist and the scheduled check-in.
+  - **ABSTAIN:** call your GP or a nurse; ask your trusted person for help.
+- `app/care/plan/page.tsx` is a vertical timeline (Now / Today / Next / If symptoms get worse).
+  - Steps have action buttons: Call 995, Find care, Nearest A&E in maps, Show visit summary, Share with {name}, Check in now.
+  - Steps that can be finished have a "done" tick, saved per check in `localStorage` with try/catch fallback. Emergency steps can't be ticked off.
+  - "If symptoms get worse" lists the tier's escalation advice, the warning signs and a Call 995 button.
+
+Verified in the browser at 390 px:
+- Plans for T1, T2, T3, T4 (a new Mdm Siti within-usual check via the API) and ABSTAIN all read correctly.
+- A tick survives a reload.
+- T4 "Check in now" → `/check/concern` with "Hello again, Mdm Siti. Last time you said…".
+- `tsc` and `eslint` are clean.
 
 ### 12. P1 — Improve Find Care ⬜
 - [ ] GP / Polyclinic / A&E / Usual provider
@@ -347,6 +366,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-06 — ✅ Task 11: Care Plan timeline (Now / Today / Next / If worse) built from the disposition, with action buttons and done-ticks. Checked for all five tiers.
 - 2026-10-06 — ✅ Task 10: Care is now a section: hub plus recommendation, plan, find care, provider detail, visit summary, share and follow-up. `/caregiver/[id]` redirects to `/care/share`.
 - 2026-10-06 — ✅ Task 9: movement-result screen with number-free comparison picture and patient wording for all outcomes. Routing fix so an attempted check always shows its result.
 - 2026-10-06 — ✅ Task 8: full-screen movement check with countdown, WISP line, a five-dot counter only when live counts are reliable, and Stop always visible.
