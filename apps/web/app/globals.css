@@ -56,6 +56,11 @@ body {
     transition: none !important;
   }
 }
+/* The same, chosen in You → Accessibility. */
+html[data-motion="reduce"] * {
+  animation: none !important;
+  transition: none !important;
+}
 
 /* The WISP line: conversation → evidence → decision → care */
 .wisp-line-flow {

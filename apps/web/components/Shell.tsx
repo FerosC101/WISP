@@ -59,7 +59,7 @@ function DemoBar() {
 }
 
 export function Shell({ children }: { children: React.ReactNode }) {
-  const { largeText, setLargeText, devMode } = usePrefs();
+  const { largeText, setLargeText, reduceMotion, devMode } = usePrefs();
   const pathname = usePathname();
   const hydrated = useHydrated();
   const technical = pathname.startsWith("/dev") || pathname.startsWith("/explain");
@@ -67,6 +67,9 @@ export function Shell({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     document.documentElement.dataset.large = String(largeText);
   }, [largeText]);
+  useEffect(() => {
+    document.documentElement.dataset.motion = reduceMotion ? "reduce" : "full";
+  }, [reduceMotion]);
 
   const isActive = (match: string[]) => match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 

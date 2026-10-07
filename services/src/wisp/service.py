@@ -197,6 +197,14 @@ class WispService:
         self.audit(session_id, actor, "tool_call", "get_health_profile", "ok")
         return _public_profile(p)
 
+    def profile_for_screen(self, user_id: str) -> dict | None:
+        """The person's own profile for their You screens. Unlike the agent's view it includes
+        medications and clinic details, because it is shown only to the person themselves."""
+        p = self.store.get_profile(user_id)
+        if p is None:
+            return None
+        return {**_public_profile(p, for_screen=True), "sex": p.sex, "medications": p.medications, "preferred_language": p.preferred_language}
+
     def get_previous_assessments(self, session_id: str, actor: Actor, limit: int = 3) -> list[dict]:
         case = self.case(session_id)
         out = []

@@ -1,76 +1,79 @@
 "use client";
 
 import Link from "next/link";
-import { Card } from "@/components/ui";
-import { LANGUAGE_NAMES, type Lang, usePrefs } from "@/lib/prefs";
-import { useMe } from "@/lib/useMe";
+import { STATUS_WORDS, baselineStatus, useBaseline } from "@/lib/baseline";
+import { LANGUAGE_NAMES, usePrefs } from "@/lib/prefs";
+import { useProfile } from "@/lib/useProfile";
 
-const LINKS = [
-  { href: "/you/baseline", title: "My usual", detail: "Your healthy-day movement checks, used for comparison" },
-  { href: "/privacy", title: "Privacy", detail: "What WISP keeps, what it shares, and deleting your data" },
-];
+function Item({ href, title, detail }: { href: string; title: string; detail: string }) {
+  return (
+    <li>
+      <Link href={href} className="flex min-h-16 items-center justify-between gap-3 px-5 py-3 hover:bg-sage/40">
+        <span className="min-w-0">
+          <span className="block text-[1.08rem] font-bold">{title}</span>
+          <span className="block text-[0.92rem] text-ink-soft">{detail}</span>
+        </span>
+        <span aria-hidden className="text-2xl text-ink-faint">›</span>
+      </Link>
+    </li>
+  );
+}
+
+function Group({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section aria-label={title} className="mt-5">
+      <h2 className="mb-2 text-[0.75rem] font-bold uppercase tracking-[0.16em] text-ink-faint">{title}</h2>
+      <ul className="divide-y divide-line overflow-hidden rounded-(--radius-card) border border-line bg-card">{children}</ul>
+    </section>
+  );
+}
 
 export default function You() {
-  const { me, error } = useMe();
-  const { language, setLanguage, largeText, setLargeText } = usePrefs();
+  const { userId, language, largeText, reduceMotion } = usePrefs();
+  const { profile, error } = useProfile();
+  const { data: baseline } = useBaseline(userId);
+  const caregiver = profile?.caregiver;
 
   return (
     <div className="mx-auto max-w-xl pt-2 sm:pt-8">
       <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">You</p>
-      <h1 className="mt-1 text-[2rem] font-bold leading-[1.15] text-forest">{me?.display_name ?? "Your profile"}</h1>
-      {me && (
+      <h1 className="mt-1 text-[2rem] font-bold leading-[1.15] text-forest">{profile?.display_name ?? "Your profile"}</h1>
+      {profile && (
         <p className="mt-1 text-ink-soft">
-          {me.age} · {me.lives_alone ? "Lives alone" : "Lives with others"}
+          {profile.age} · {profile.lives_alone ? "Lives alone" : "Lives with others"}
         </p>
       )}
       {error && (
         <p role="alert" className="mt-4 rounded-xl bg-amber-bg px-4 py-3 text-amber">
-          {error}
+          WISP can&apos;t reach its local service right now.
         </p>
       )}
 
-      <nav aria-label="Your settings" className="mt-6 space-y-3">
-        {LINKS.map((l) => (
-          <Link key={l.href} href={l.href} className="flex items-center justify-between gap-3 rounded-(--radius-card) border border-line bg-card p-5 hover:border-forest/40">
-            <div>
-              <p className="text-[1.1rem] font-bold">{l.title}</p>
-              <p className="text-[0.95rem] text-ink-soft">{l.detail}</p>
-            </div>
-            <span aria-hidden className="text-2xl text-ink-faint">›</span>
-          </Link>
-        ))}
-      </nav>
+      <Group title="Your health">
+        <Item href="/you/health" title="Health profile" detail={profile ? `Conditions, medicines, mobility, ${profile.usual_gp}` : "Conditions, medicines, mobility, usual GP"} />
+        <Item href="/you/baseline" title="My usual" detail={baseline ? STATUS_WORDS[baselineStatus(baseline)].title : "Your healthy-day movement checks"} />
+      </Group>
 
-      <Card className="mt-3" aria-labelledby="lang-title">
-        <h2 id="lang-title" className="text-[1.1rem] font-bold">
-          Language
-        </h2>
-        <p className="text-[0.95rem] text-ink-soft">Used for the safety questions.</p>
-        <div className="mt-3 flex flex-wrap gap-2" role="radiogroup" aria-labelledby="lang-title">
-          {(Object.keys(LANGUAGE_NAMES) as Lang[]).map((l) => (
-            <button
-              key={l}
-              type="button"
-              role="radio"
-              aria-checked={language === l}
-              onClick={() => setLanguage(l)}
-              className={`min-h-11 rounded-full px-4 ${language === l ? "bg-forest text-white" : "border border-line bg-card text-ink"}`}
-            >
-              {LANGUAGE_NAMES[l]}
-            </button>
-          ))}
-        </div>
-      </Card>
+      <Group title="People">
+        <Item
+          href="/you/caregivers"
+          title="Trusted people"
+          detail={caregiver ? `${caregiver.name} (${caregiver.relationship})` : "No one added yet"}
+        />
+      </Group>
 
-      <Card className="mt-3" aria-labelledby="a11y-title">
-        <h2 id="a11y-title" className="text-[1.1rem] font-bold">
-          Accessibility
-        </h2>
-        <label className="mt-2 flex min-h-11 items-center justify-between gap-3">
-          <span>Larger text</span>
-          <input type="checkbox" checked={largeText} onChange={(e) => setLargeText(e.target.checked)} className="h-6 w-6 accent-forest" />
-        </label>
-      </Card>
+      <Group title="Settings">
+        <Item href="/you/language" title="Language" detail={LANGUAGE_NAMES[language]} />
+        <Item
+          href="/you/accessibility"
+          title="Accessibility"
+          detail={[largeText ? "Larger text on" : "Standard text", reduceMotion ? "less motion" : null].filter(Boolean).join(" · ")}
+        />
+      </Group>
+
+      <Group title="Privacy">
+        <Item href="/you/privacy" title="Privacy and your data" detail="What WISP keeps, what it shares, deleting your data" />
+      </Group>
     </div>
   );
 }

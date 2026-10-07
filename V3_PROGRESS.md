@@ -31,7 +31,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 14 | P1 | Turn follow-up into its own flow | ✅ |
 | 15 | P1 | Upgrade History | ✅ |
 | 16 | P1 | Expand "My Usual" | ✅ |
-| 17 | P1 | Create a proper "You" section | ⬜ |
+| 17 | P1 | Create a proper "You" section | ✅ |
 | 18 | P1 | Redesign caregiver sharing | ⬜ |
 | 19 | P1 | Preserve separate Technical View | ⬜ |
 | 20 | P1 | Preserve and polish Engineering View | ⬜ |
@@ -458,11 +458,36 @@ Verified in the browser at 390 px:
 - Mdm Tan: ✓✓✓ "3 of 3 done · Stable · last updated yesterday". View details shows 11.5 s (11.3–11.8) and three [synthetic] sessions.
 - `tsc` and `eslint` are clean.
 
-### 17. P1 — Create a proper "You" section ⬜
-- [ ] Health profile, mobility information, usual GP
-- [ ] Trusted people
-- [ ] Language, accessibility
-- [ ] Privacy, data deletion
+### 17. P1 — Create a proper "You" section ✅
+- [x] Health profile, mobility information, usual GP
+- [x] Trusted people (list; removing someone and the sharing redesign are task 18)
+- [x] Language, accessibility
+- [x] Privacy, data deletion
+
+What changed, backend:
+- `GET /api/profile/{user_id}` (`WispService.profile_for_screen`) returns the person's own profile for their screens, including medications, sex, preferred language and clinic details.
+- The agent's `get_health_profile` view is unchanged and still has no medications, so the privacy page's "medication list never sent" stays true. Test: `test_profile_for_own_screen_includes_medications_but_agent_view_does_not`. Total 139 passed.
+
+What changed, frontend:
+- `/you` hub: name, age, home, then groups. Your health (health profile, My usual with its live status); People (trusted people); Settings (language, accessibility with current values); Privacy.
+- `/you/health` (read-only, honestly labelled as a demo profile that can't be edited in the prototype):
+  - About you: age, home.
+  - Conditions.
+  - Medicines, with "stays on this device, not sent to the assistant".
+  - Mobility: getting up from a chair, walking aid.
+  - Usual GP: address and Directions.
+- `/you/caregivers`: the trusted person and the sharing rules (asked every time, preview first, no sensor data).
+- `/you/language`: large radio cards and a note that the zh/ms/ta wording is still being checked by native speakers (as `triage/i18n.py` says).
+- `/you/accessibility`: Larger text, and a new **Less motion** preference (`html[data-motion="reduce"]` turns off animations, alongside the OS setting). Voice input availability is detected.
+- `/you/privacy` is the v2 privacy page moved here. "Delete all my WISP data" uses an inline confirmation instead of `window.confirm`. `/privacy` redirects.
+- Shared `components/you/YouPage.tsx` and `lib/useProfile.ts`.
+
+Verified in the browser at 390 px:
+- `/privacy` redirects to `/you/privacy`. The hub shows "My usual: Stable", "Daniel (son)", "English", "Standard text".
+- The health profile lists hypertension and amlodipine, mobility and the clinic address.
+- Less motion sets `data-motion=reduce` and back.
+- The delete confirmation opens and "Keep my data" cancels it. I did not delete the demo data.
+- `tsc` and `eslint` are clean.
 
 ### 18. P1 — Redesign caregiver sharing ⬜
 - [ ] Preview exactly what will be shared
@@ -489,6 +514,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 17: You section with hub, health profile, trusted people, language, accessibility (new Less motion) and privacy with inline delete. Backend `GET /api/profile/{user}` for the person's own screen (139 tests pass).
 - 2026-10-07 — ✅ Task 16: My usual at `/you/baseline` (progress tracker, status, last updated, seconds behind details, inline delete) and an `/you/baseline/enroll` journey. Backend: healthy-day checks can be stopped and are then discarded (2 new tests, 138 pass).
 - 2026-10-07 — ✅ Task 15: History timeline (filters, movement result, follow-up links, continue unfinished, healthy-day entries) and a `/history/[session]` detail page. History API adds semantic movement fields (136 tests pass).
 - 2026-10-07 — ✅ Task 14: follow-up flow (`/follow-up`, `/follow-up/changes`) with better / same / worse / something new, last-time vs today on the result, and backend `follow_up()` that re-asks every safety question (FU-1, 9 new tests, 135 pass).

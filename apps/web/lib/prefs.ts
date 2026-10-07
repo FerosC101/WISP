@@ -7,11 +7,13 @@ export type Lang = "en" | "zh" | "ms" | "ta";
 
 interface Prefs {
   largeText: boolean;
+  reduceMotion: boolean;
   userId: string;
   devMode: boolean;
   agentMode: "local_agent" | "workbuddy";
   language: Lang;
   setLargeText: (v: boolean) => void;
+  setReduceMotion: (v: boolean) => void;
   setUserId: (v: string) => void;
   setDevMode: (v: boolean) => void;
   setAgentMode: (v: "local_agent" | "workbuddy") => void;
@@ -22,11 +24,13 @@ export const usePrefs = create<Prefs>()(
   persist(
     (set) => ({
       largeText: false,
+      reduceMotion: false,
       userId: "mdm_tan",
       devMode: false,
       agentMode: "local_agent",
       language: "en",
       setLargeText: (largeText) => set({ largeText }),
+      setReduceMotion: (reduceMotion) => set({ reduceMotion }),
       setUserId: (userId) => set({ userId }),
       setDevMode: (devMode) => set({ devMode }),
       setAgentMode: (agentMode) => set({ agentMode }),

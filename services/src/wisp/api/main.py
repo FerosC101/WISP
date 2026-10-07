@@ -217,6 +217,14 @@ def share(session_id: str, body: dict = Body(...)) -> dict:
     return svc().share_summary(session_id, "patient", consent=body.get("consent") is True)
 
 
+@app.get("/api/profile/{user_id}")
+def profile(user_id: str) -> dict:
+    p = svc().profile_for_screen(user_id)
+    if p is None:
+        raise HTTPException(404, "Unknown user")
+    return p
+
+
 @app.get("/api/history")
 def history(user_id: str | None = None) -> list[dict]:
     return svc().store.list_sessions(user_id)

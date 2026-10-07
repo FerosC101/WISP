@@ -101,3 +101,13 @@ def test_history_includes_semantic_movement_result_only(client):
     item = client.get("/api/history?user_id=mdm_tan").json()[0]
     assert {"agent", "functional_status", "comparison_status", "comparison_severity"} <= item.keys()
     assert not any("time" in k and "created" not in k for k in item)  # no timings in the timeline feed
+
+
+def test_profile_for_own_screen_includes_medications_but_agent_view_does_not(client):
+    me = client.get("/api/profile/mdm_tan").json()
+    assert me["medications"] == ["amlodipine"] and me["usual_gp_details"]["address"]
+    assert client.get("/api/profile/nobody").status_code == 404
+    client.post("/api/sessions", json={"user_id": "mdm_tan", "agent": "workbuddy"})
+    sid = client.post("/api/tools/get_active_session", json={"user_id": "mdm_tan"}, headers=H).json()["session_id"]
+    agent_view = client.post("/api/tools/get_health_profile", json={"session_id": sid}, headers=H).json()
+    assert "medications" not in agent_view
