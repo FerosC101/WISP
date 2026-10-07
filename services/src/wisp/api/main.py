@@ -302,7 +302,7 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
         single_person_confidence=seg.single_person_confidence, measurement_confidence=seg.measurement_confidence,
         source=run.source, provider_mode=run.mode, recording_id=run.recording_id, timestamp=utcnow(),
     )
-    m = s.store.save_measurement(m, user_id=user_id, purpose="baseline", debug={"trace": seg.debug, "features": seg.features})
+    m = s.store.save_measurement(m, user_id=user_id, purpose="baseline", debug={"trace": seg.debug, "features": seg.features, "onset_s": seg.onset_s, "offset_s": seg.offset_s, "stand_peaks_s": seg.stand_peaks_s})
     if not seg.success:
         return {"accepted": False, "reason": seg.reason, "measurement": m.model_dump(mode="json", exclude={"signature"}), "baseline": existing.model_dump(mode="json") if existing else None}
     sessions.append(

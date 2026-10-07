@@ -279,12 +279,11 @@ class Store:
         return ev.model_copy(update={"id": cur.lastrowid})
 
     def audit(self, session_id: str | None = None, limit: int = 500) -> list[AuditEvent]:
-        sql = "SELECT * FROM audit"
-        args: tuple = ()
+        """A session's events, or (without a session) the most recent `limit` events; oldest first."""
         if session_id:
-            sql += " WHERE session_id=?"
-            args = (session_id,)
-        rows = self._all(sql + " ORDER BY id LIMIT ?", (*args, limit))
+            rows = self._all("SELECT * FROM audit WHERE session_id=? ORDER BY id LIMIT ?", (session_id, limit))
+        else:
+            rows = self._all("SELECT * FROM (SELECT * FROM audit ORDER BY id DESC LIMIT ?) ORDER BY id", (limit,))
         return [
             AuditEvent(
                 id=r["id"], timestamp=r["ts"], session_id=r["session_id"], actor=r["actor"], event=r["event"],

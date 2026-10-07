@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from wisp import config
 from wisp.api import main as api_main
+from wisp.schemas import AuditEvent
 
 
 @pytest.fixture
@@ -111,3 +112,10 @@ def test_profile_for_own_screen_includes_medications_but_agent_view_does_not(cli
     sid = client.post("/api/tools/get_active_session", json={"user_id": "mdm_tan"}, headers=H).json()["session_id"]
     agent_view = client.post("/api/tools/get_health_profile", json={"session_id": sid}, headers=H).json()
     assert "medications" not in agent_view
+
+
+def test_global_audit_returns_the_latest_events(store):
+    for i in range(30):
+        store.log(AuditEvent(session_id=f"s_{i:012d}", actor="system", event=f"e{i}"))
+    latest = store.audit(limit=10)
+    assert [e.event for e in latest] == [f"e{i}" for i in range(20, 30)]  # newest 10, oldest first

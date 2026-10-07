@@ -37,5 +37,8 @@ async def test_completed_healthy_day_check_is_added(store, provider):
         async with httpx.AsyncClient(transport=transport, base_url="http://wisp") as c:
             r = (await c.post("/api/baselines/mr_lim/sessions", json={})).json()
             assert r["accepted"] is True and len(r["baseline"]["sessions"]) == 1
+            # The Engineering view needs the detection window for healthy-day checks too.
+            debug = (await c.get(f"/api/dev/measurements/{r['measurement']['measurement_id']}")).json()["debug"]
+            assert debug["onset_s"] is not None and debug["offset_s"] is not None and len(debug["stand_peaks_s"]) == 5
     finally:
         api_main.state.clear()

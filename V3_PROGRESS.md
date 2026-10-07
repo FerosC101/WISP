@@ -34,7 +34,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 17 | P1 | Create a proper "You" section | ✅ |
 | 18 | P1 | Redesign caregiver sharing | ✅ |
 | 19 | P1 | Preserve separate Technical View | ✅ |
-| 20 | P1 | Preserve and polish Engineering View | ⬜ |
+| 20 | P1 | Preserve and polish Engineering View | ✅ |
 | 21 | P1 | Improve mobile UX | ⬜ |
 
 ## Tasks
@@ -540,11 +540,40 @@ Verified:
 - `tsc` and `eslint` are clean.
 - Known limit: the demo bar reads `?s=` on each route change, so switching between two Care pages for different checks without a path change could show the previous check's link until the next navigation.
 
-### 20. P1 — Preserve and polish Engineering View ⬜
-- [ ] Live ESP32 connection, real vs recorded data
-- [ ] CSI heatmap, motion signal, detection window
-- [ ] Ground-truth timing entry, audit log
-- [ ] WorkBuddy tool-call filter
+### 20. P1 — Preserve and polish Engineering View ✅
+- [x] Live ESP32 connection, real vs recorded data
+- [x] CSI heatmap, motion signal, detection window
+- [x] Ground-truth timing entry, audit log
+- [x] WorkBuddy tool-call filter
+
+v2's `/dev` already had all eight items: the `LiveSensor` panel (ESP32 connect, Wi-Fi provisioning, CSI heatmap), sensor source and replay controls, motion-energy and posture charts with the detected window shaded and standing peaks marked, ground-truth entry, the validation summary and an audit log. Kept as is and polished.
+
+Polish (frontend):
+- Real vs recorded: coloured **LIVE / RECORDED / SYNTHETIC** badges in the measurements table, a mode filter (All / Live only / Recorded-synthetic), and a badge plus "Not real-world evidence" on the selected measurement's charts.
+- Ground truth:
+  - Input validated (2–120 s, matching the API). Save is disabled until valid and shows an inline error.
+  - Method picker (stopwatch / phone video).
+  - A saved/error message. Before, a blank value posted `NaN` and failed silently.
+- Audit log:
+  - Filters: All / **WorkBuddy tool calls** (actor workbuddy *and* a tool, not every WorkBuddy event) / Agent decisions / Deterministic rules / Patient / Sensing.
+  - A session filter, an event count, and an expandable `data` payload per event.
+  - Session ids link to `/explain/…`. Loads the latest 600 events (the API returns at most 500).
+- Measurement session ids link to the Technical view.
+- Demo shortcuts start the v3 Check flow (with `confirm_summary`) instead of the v2 chat page. The Demo 3 day-2 hint describes the v3 follow-up path.
+
+Two v2 bugs found and fixed (backend):
+1. **The audit log stopped updating after 500 events.** `store.audit()` without a session returned the *oldest* 500 events (`ORDER BY id LIMIT`), so new events, including every WorkBuddy call, never appeared. It now returns the latest N in chronological order. Per-session queries, used by the decision trace, are unchanged. Test: `test_global_audit_returns_the_latest_events`.
+2. **Healthy-day measurements had no detection window.** The enrol endpoint stored only `trace`/`features`, not `onset_s`/`offset_s`/`stand_peaks_s`, so their charts couldn't shade the window. It now stores them. The `test_completed_healthy_day_check_is_added` test asserts them.
+- Total 144 passed.
+
+Verified in the browser (desktop):
+- Badges and the mode filter (0 live / 14 recorded-synthetic rows).
+- An assessment measurement shows 2 shaded windows and 10 peak lines (5 per chart).
+- Ground-truth Save is disabled for "abc" with the error, and enabled for "12.4". I didn't save, to keep the real-participant table clean.
+- Audit filter counts.
+- After one local WorkBuddy tool call through the API, the WorkBuddy filter showed `screen_red_flags → incomplete` with its payload. Before the fix it showed 0.
+- `tsc` and `eslint` are clean.
+- Leftover from that test: an unfinished WorkBuddy session for Mdm Siti (`s_1117dfe50f39`). The Dev page's reset clears it.
 
 ### 21. P1 — Improve mobile UX ⬜
 - [ ] Design primarily for 390 px
@@ -555,6 +584,7 @@ Verified:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 20: Engineering view polish (mode badges and filter, validated ground-truth entry, richer audit filters with payloads). Fixed two v2 bugs: the audit log froze after 500 events, and healthy-day checks had no detection window (144 tests pass).
 - 2026-10-07 — ✅ Task 19: Technical view kept and extended with follow-up answer, patient corrections and sharing decisions; links to and from it work from all v3 screens (143 tests pass).
 - 2026-10-07 — ✅ Task 18: Sharing redesign (minimal by default, opt-in reasons, exact preview, explicit agree tick, history, remove trusted person). No sharing without a preview anywhere (3 new tests, 142 pass).
 - 2026-10-07 — ✅ Task 17: You section with hub, health profile, trusted people, language, accessibility (new Less motion) and privacy with inline delete. Backend `GET /api/profile/{user}` for the person's own screen (139 tests pass).
