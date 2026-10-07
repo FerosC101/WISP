@@ -6,7 +6,7 @@ import { LANGUAGE_NAMES, type Lang, usePrefs } from "@/lib/prefs";
 import { useMe } from "@/lib/useMe";
 
 const LINKS = [
-  { href: "/baseline", title: "My usual", detail: "Your healthy-day movement checks, used for comparison" },
+  { href: "/you/baseline", title: "My usual", detail: "Your healthy-day movement checks, used for comparison" },
   { href: "/privacy", title: "Privacy", detail: "What WISP keeps, what it shares, and deleting your data" },
 ];
 

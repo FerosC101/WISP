@@ -5,6 +5,7 @@ import { QuestionScreen } from "@/components/check/QuestionScreen";
 import { Button } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { isMovementQuestion, pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
+import { unreliableWhy } from "@/lib/movementWords";
 import type { BaselineComparison, Snapshot } from "@/lib/types";
 
 type Outcome = "within" | "mild" | "clear" | "unable" | "unreliable" | "stopped";
@@ -18,15 +19,6 @@ const COPY: Record<Outcome, { title: string; body: string }> = {
   unreliable: { title: "The reading wasn't reliable", body: "WISP won't use this reading. Your advice will be based on what you've told it." },
   stopped: { title: "You stopped before finishing", body: "That's okay. Not being able to finish is useful information, and WISP has taken it into account." },
 };
-
-/** Why a reading couldn't be used, from the sensing pipeline's reason code. */
-function unreliableWhy(reason: string | null | undefined) {
-  if (!reason) return "The signal wasn't clear enough.";
-  if (reason === "multiple_people_detected") return "It looked like someone else was moving nearby.";
-  if (reason.startsWith("expected_5_rises")) return "WISP couldn't clearly see five stands.";
-  if (reason === "tool_failure") return "The sensor had a problem.";
-  return "The signal wasn't clear enough.";
-}
 
 function outcomeOf(s: Snapshot, c: BaselineComparison | null): Outcome {
   if (s.case.functional_status === "stopped_early") return "stopped";

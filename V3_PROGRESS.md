@@ -30,7 +30,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 13 | P1 | Build a Doctor Visit Summary | ✅ |
 | 14 | P1 | Turn follow-up into its own flow | ✅ |
 | 15 | P1 | Upgrade History | ✅ |
-| 16 | P1 | Expand "My Usual" | ⬜ |
+| 16 | P1 | Expand "My Usual" | ✅ |
 | 17 | P1 | Create a proper "You" section | ⬜ |
 | 18 | P1 | Redesign caregiver sharing | ⬜ |
 | 19 | P1 | Preserve separate Technical View | ⬜ |
@@ -424,12 +424,39 @@ Verified in the browser at 390 px (Mdm Siti):
 
 Testing note: restarting the API had left stale uvicorn instances running alongside the new one (they wait for open WebSockets). I stopped them all so exactly one instance runs the current code.
 
-### 16. P1 — Expand "My Usual" ⬜
-- [ ] Baseline progress: 1/3, 2/3, 3/3 healthy-day checks
-- [ ] Current status: stable / insufficient baseline
-- [ ] Last updated
-- [ ] "Record another healthy-day check"
-- [ ] Exact seconds behind "View details"
+### 16. P1 — Expand "My Usual" ✅
+- [x] Baseline progress: 1/3, 2/3, 3/3 healthy-day checks
+- [x] Current status: stable / insufficient baseline
+- [x] Last updated
+- [x] "Record another healthy-day check"
+- [x] Exact seconds behind "View details"
+
+What changed, backend:
+- Healthy-day checks can be stopped. `POST /api/baselines/{user}/sessions` runs the capture as a cancellable task, and the new `POST /api/baselines/{user}/stop` cancels it. A stopped (or abandoned) check returns `reason: "stopped"` and nothing is added to the usual pattern. Before, a check the patient abandoned could still have been saved.
+- A second concurrent enrolment is refused (409).
+- Tests: `tests/test_baseline_enrol.py` (stopped → not added, baseline unchanged, stop again → 409; completed → added). Total 138 passed.
+
+What changed, frontend:
+- My usual moved to `/you/baseline`. `/baseline` redirects, and the links on Today, History and You were updated.
+  - A 1 → 2 → 3 step tracker ("2 of 3 done", plus the total when more than 3).
+  - Status: Not set up yet / Not enough checks yet / Stable / Varies a little, using the same 15 % rule as v2 (`lib/baseline.ts`).
+  - "Last updated".
+  - Exact seconds and per-check times only behind "View details", with a [synthetic]/[recorded] tag.
+  - Delete uses an inline confirmation instead of `window.confirm`.
+- New `/you/baseline/enroll` journey, one task per screen:
+  1. "Feeling like your usual self today?" "Not really" leads to "do this another day" and a link to start a check.
+  2. Keep-it-the-same checklist (same chair and wall, same spot, arms the same way, no one moving), all ticked to continue.
+  3. "Do you usually push up with your arms?" (recorded as `arms_used`), which starts the check.
+  4. Full-screen check: "Sit still… 3, 2, 1", then stand five times, with Stop always visible.
+  5. Result: added (n of 3, status once complete) / stopped, nothing saved / reading not clear (reason in the same wording as the movement result, now shared via `lib/movementWords.ts`).
+
+Verified in the browser at 390 px:
+- Mr Lim (no baseline): `/baseline` → `/you/baseline` shows "0 of 3 · Not set up yet".
+- Enrolment at 8× replay → "Thank you. That check has been added. 1 of 3".
+- A second enrolment stopped two seconds in → "You stopped the check. Nothing was saved", and the API still shows 1 session.
+- Inline delete → back to 0 of 3. This also restored Mr Lim's no-baseline demo state.
+- Mdm Tan: ✓✓✓ "3 of 3 done · Stable · last updated yesterday". View details shows 11.5 s (11.3–11.8) and three [synthetic] sessions.
+- `tsc` and `eslint` are clean.
 
 ### 17. P1 — Create a proper "You" section ⬜
 - [ ] Health profile, mobility information, usual GP
@@ -462,6 +489,7 @@ Testing note: restarting the API had left stale uvicorn instances running alongs
 
 ## Log
 
+- 2026-10-07 — ✅ Task 16: My usual at `/you/baseline` (progress tracker, status, last updated, seconds behind details, inline delete) and an `/you/baseline/enroll` journey. Backend: healthy-day checks can be stopped and are then discarded (2 new tests, 138 pass).
 - 2026-10-07 — ✅ Task 15: History timeline (filters, movement result, follow-up links, continue unfinished, healthy-day entries) and a `/history/[session]` detail page. History API adds semantic movement fields (136 tests pass).
 - 2026-10-07 — ✅ Task 14: follow-up flow (`/follow-up`, `/follow-up/changes`) with better / same / worse / something new, last-time vs today on the result, and backend `follow_up()` that re-asks every safety question (FU-1, 9 new tests, 135 pass).
 - 2026-10-07 — ✅ Task 13: Doctor visit summary with 5xSTS timings vs usual range, symptom answers, conditions and recommendation, a synthetic-data notice, and show-to-doctor / print / share.

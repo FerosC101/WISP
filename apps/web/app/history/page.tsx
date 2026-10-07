@@ -135,7 +135,7 @@ function EntryCard({ e, onCheckIn, busy }: { e: Entry; onCheckIn: (sid: string) 
   }
   if (e.kind === "baseline") {
     return (
-      <Link href="/baseline" className="block rounded-2xl border border-line bg-card px-4 py-3 hover:border-forest/40">
+      <Link href="/you/baseline" className="block rounded-2xl border border-line bg-card px-4 py-3 hover:border-forest/40">
         <p className="font-bold">
           Healthy-day check <span className="ml-1 text-[0.85rem] font-normal text-ink-faint">{timeLabel(e.at)}</span>
         </p>

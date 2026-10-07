@@ -233,6 +233,8 @@ def audit(session_id: str | None = None) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- baseline
+_enrolling: dict[str, asyncio.Task] = {}  # running healthy-day checks, so the patient can stop one
+
 @app.get("/api/baselines/{user_id}")
 def get_baseline(user_id: str) -> dict:
     b = svc().store.get_baseline(user_id)
@@ -263,8 +265,20 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
         if not recs:
             raise HTTPException(409, "No baseline recordings configured for this demo user")
         kwargs["recording_id"] = recs[len(sessions) % len(recs)]
+    if user_id in _enrolling and not _enrolling[user_id].done():
+        raise HTTPException(409, "A healthy-day check is already running")
     s.bus.publish(key, {"type": "sensing_state", "state": "ACTIVE"})
-    run = await s.provider.run("5xSTS", user_id=user_id, on_progress=progress, **kwargs)
+    task = asyncio.create_task(s.provider.run("5xSTS", user_id=user_id, on_progress=progress, **kwargs))
+    _enrolling[user_id] = task
+    try:
+        run = await task
+    except asyncio.CancelledError:
+        # Stopped by the patient (or the request went away): nothing is added to their usual pattern.
+        task.cancel()
+        s.bus.publish(key, {"type": "sensing_state", "state": "OFF"})
+        return {"accepted": False, "reason": "stopped", "measurement": None, "baseline": existing.model_dump(mode="json") if existing else None}
+    finally:
+        _enrolling.pop(user_id, None)
     seg = run.segmentation
     s.bus.publish(key, {"type": "sensing_state", "state": "COMPLETE"})
     m = FunctionalAssessment(
@@ -286,6 +300,16 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
     b = summarise_baseline(user_id, sessions, any(x["arms_used"] for x in sessions), existing.created_at if existing else now, now)
     s.store.put_baseline(b)
     return {"accepted": True, "measurement": m.model_dump(mode="json", exclude={"signature"}), "baseline": b.model_dump(mode="json")}
+
+
+@app.post("/api/baselines/{user_id}/stop")
+def stop_enrol(user_id: str) -> dict:
+    """The patient stopped a healthy-day check; the reading is discarded."""
+    task = _enrolling.get(user_id)
+    if task is None or task.done():
+        raise HTTPException(409, "No healthy-day check is running")
+    task.cancel()
+    return {"stopped": True}
 
 
 @app.delete("/api/baselines/{user_id}")

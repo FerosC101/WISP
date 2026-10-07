@@ -38,7 +38,7 @@ function BaselineStatus({ userId }: { userId: string }) {
   const last = data.baseline?.sessions.at(-1)?.date;
 
   return (
-    <Link href="/baseline" className="flex items-center justify-between gap-3 rounded-(--radius-card) border border-line bg-card p-5 hover:border-forest/40">
+    <Link href="/you/baseline" className="flex items-center justify-between gap-3 rounded-(--radius-card) border border-line bg-card p-5 hover:border-forest/40">
       <div className="min-w-0">
         <Eyebrow>My usual</Eyebrow>
         <p className="mt-1 flex items-center gap-2 text-[1.1rem] font-bold">

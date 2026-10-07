@@ -12,3 +12,12 @@ export function movementPhrase(
   if (functionalStatus === "declined") return { text: "Movement check skipped", used: false };
   return { text: "No movement check", used: false };
 }
+
+/** Why a reading couldn't be used, from the sensing pipeline's reason code. */
+export function unreliableWhy(reason: string | null | undefined) {
+  if (!reason) return "The signal wasn't clear enough.";
+  if (reason === "multiple_people_detected") return "It looked like someone else was moving nearby.";
+  if (reason.startsWith("expected_5_rises")) return "WISP couldn't clearly see five stands.";
+  if (reason === "tool_failure") return "The sensor had a problem.";
+  return "The signal wasn't clear enough.";
+}
