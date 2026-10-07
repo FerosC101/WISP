@@ -52,7 +52,28 @@ The flow is: agent → MCP server (`mcp/server.py`, a thin validated bridge that
 - Any red flag → T1, whatever any measurement says. A reported red flag can't be withdrawn within the session.
 - An unreliable or rejected measurement is never used. T4 requires a verified, reliable, within-baseline measurement. ABSTAIN never routes to self-care. An unknown red flag left unresolved at the end → ABSTAIN.
 
+- ORD-5: patient corrections on the summary screen are accepted only while the agent waits at `confirm`, and they re-run the red-flag screen.
+- FU-1: structured follow-ups re-ask every safety question, and the previous result is context only.
+
 The four end-to-end demo scenarios (`docs/demo.md`) run in `tests/test_scenarios.py`. If you change rules, update `docs/safety.md` and rerun the evaluation suite.
+
+## Patient app (v3, branch `v3/patient-app`)
+
+Progress and per-task notes are in `V3_PROGRESS.md`.
+
+The app has five tabs: Today · Check · Care · History · You. A tab's route prefixes are listed in `NAV[].match` in `components/Shell.tsx`.
+
+- **Check flow** (`app/check/*`, `lib/checkFlow.ts`). The screens sit on top of the same built-in agent the chat view (`/session/[id]`) uses. Each agent question key (the `question` on its latest message) belongs to one screen. `stageOf()` maps the session to a screen, and `useCheckFlow` redirects there, so a red flag always lands on `/check/complete`. The session id travels in `?s=`, so each route group's `layout.tsx` provides the Suspense boundary that `useSearchParams` needs. Answers are posted as the agent's language-independent `value`s.
+- **Opt-in agent behaviour.** Sessions started from the Check flow send `confirm_summary: true`, which makes the agent pause at `confirm` and lets `POST /api/sessions/{id}/corrections` work. Follow-ups send `trend`/`text` to `/followup`, which calls `LocalAgent.follow_up()`. Without these fields the agent behaves as before, so the chat view, WorkBuddy, `tests/test_scenarios.py` and the evaluation harness are unaffected. Keep them opt-in.
+- **Care section** (`app/care/*`, `lib/care.ts`). Pages default to the latest check that has a recommendation, or take `?s=`. The care plan (`lib/carePlan.ts`) only rearranges disposition content and never sets urgency. Find Care never claims opening hours or availability.
+- **What leaves the device.** The agent's profile view (`_public_profile`) excludes medications and clinic location. The patient's own screens use `GET /api/profile/{user}`. Caregiver summaries are minimal by default, and the reasons are opt-in.
+- **Mobile.** On mobile, `components/StickyActions.tsx` pins a screen's primary actions above the bottom nav. Use it for any screen whose main button could fall below 390×844.
+
+## Gotchas
+
+- `npm install` (including the one in `scripts/demo.sh`) rewrites `apps/web/package-lock.json` with npm-version noise. Revert it before committing.
+- Restarting the API while the web app has a session open can leave the old uvicorn instance alive (it waits for WebSockets). Afterwards, check `lsof -nP -iTCP:8787 -sTCP:LISTEN` and make sure exactly one instance remains.
+- The demo personas and clinics are fictional. Recorded sensor sessions are synthetic and must stay labelled as such in any patient-, clinician- or evaluation-facing output.
 
 ## Web app note
 
