@@ -11,7 +11,7 @@ import { WispLogo } from "./WispLine";
 // Five primary patient sections. `match` lists the route prefixes each tab owns.
 const NAV = [
   { href: "/today", label: "Today", match: ["/today"], icon: "M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" },
-  { href: "/check/start", label: "Check", match: ["/check", "/session"], icon: "M9 12l2 2 4-4M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
+  { href: "/check/start", label: "Check", match: ["/check", "/session", "/follow-up"], icon: "M9 12l2 2 4-4M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
   { href: "/care", label: "Care", match: ["/care", "/caregiver"], icon: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" },
   { href: "/history", label: "History", match: ["/history"], icon: "M12 7v5l3 2M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
   { href: "/you", label: "You", match: ["/you", "/baseline", "/privacy"], icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" },

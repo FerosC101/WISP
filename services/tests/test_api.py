@@ -83,3 +83,14 @@ def test_clinic_location_reaches_the_screen_not_the_agent(client):
     sid = client.post("/api/tools/get_active_session", json={"user_id": "mdm_siti"}, headers=H).json()["session_id"]
     agent_view = client.post("/api/tools/get_health_profile", json={"session_id": sid}, headers=H).json()
     assert "usual_gp_details" not in agent_view and agent_view["usual_gp"]
+
+
+def test_follow_up_endpoint_validates_trend(client):
+    sid = client.post("/api/sessions", json={"user_id": "mdm_tan", "text": "I feel weak"}).json()["session_id"]
+    before = len(client.get("/api/history?user_id=mdm_tan").json())
+    assert client.post(f"/api/sessions/{sid}/followup", json={"trend": "fine"}).status_code == 400
+    assert client.post(f"/api/sessions/{sid}/followup", json={"trend": "new", "text": " "}).status_code == 400
+    assert len(client.get("/api/history?user_id=mdm_tan").json()) == before  # nothing created
+    snap = client.post(f"/api/sessions/{sid}/followup", json={"trend": "same", "confirm_summary": True}).json()
+    assert snap["case"]["previous_session_id"] == sid
+    assert snap["messages"][-1]["data"]["question"] == "onset"

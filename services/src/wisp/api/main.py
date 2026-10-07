@@ -26,7 +26,7 @@ from ..sensing.hub import HUB, list_ports
 from ..sensing.providers import ESP32CSIProvider, ReplayCSIProvider, build_provider
 from ..service import CaseFacts, EventBus, ToolError, WispService
 from ..store import Store
-from ..triage.agent import LocalAgent
+from ..triage.agent import TRENDS, LocalAgent
 
 state: dict[str, Any] = {}
 
@@ -137,9 +137,18 @@ def followup(session_id: str, body: dict = Body(default={})) -> dict:
     prev = s.case(session_id)
     agent_kind = body.get("agent", "local_agent")
     lang = body.get("language", "en") if body.get("language") in ("en", "zh", "ms", "ta") else "en"
+    trend = body.get("trend")
+    text = body.get("text")
+    if trend is not None:
+        if agent_kind != "local_agent" or trend not in TRENDS or (text is not None and not isinstance(text, str)):
+            raise HTTPException(400, "Invalid follow-up answer")
+        if trend == "new" and not (text or "").strip():
+            raise HTTPException(400, "Please say what is new.")
     case = s.start_session(prev.user_id, agent=agent_kind, previous_session_id=session_id)
     if agent_kind == "local_agent":
-        agent().open(case.session_id, lang=lang, confirm_summary=body.get("confirm_summary") is True)
+        agent().open(case.session_id, lang=lang, greet=trend is None, confirm_summary=body.get("confirm_summary") is True)
+        if trend is not None:
+            agent().follow_up(case.session_id, trend, text)
     return s.snapshot(case.session_id)
 
 

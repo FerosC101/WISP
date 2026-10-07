@@ -49,7 +49,7 @@ function duration(days: number | null) {
   if (days < 1) return "Since today";
   if (days < 2) return "Since yesterday";
   if (days === 2.5) return "2–3 days";
-  if (days < 14) return `${days} days`;
+  if (days < 14) return `${Math.round(days)} days`;
   return `About ${Math.round(days / 7)} weeks or more`;
 }
 

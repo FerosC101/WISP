@@ -29,6 +29,8 @@ function speechCtor(): RecognitionCtor | null {
   return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }
 
+export type Trend = "better" | "same" | "worse" | "new";
+
 /** Hook shared by every entry point that starts a check or a scheduled follow-up. */
 export function useStartCheck(me: Persona | null) {
   const router = useRouter();
@@ -49,10 +51,22 @@ export function useStartCheck(me: Persona | null) {
     }
   }
 
-  async function startFollowUp(prev: string) {
+  /** A scheduled check-in starts by asking how things compare with last time. */
+  function startFollowUp(prev: string) {
+    // WorkBuddy runs its own conversation, so it starts straight away.
+    if (agentMode === "workbuddy") return startFollowUpWith(prev);
+    router.push(`/follow-up?prev=${prev}`);
+  }
+
+  async function startFollowUpWith(prev: string, trend?: Trend, text?: string) {
     setBusy(true);
     try {
-      const snap = await post<Snapshot>(`/api/sessions/${prev}/followup`, { agent: agentMode, language, confirm_summary: true });
+      const snap = await post<Snapshot>(`/api/sessions/${prev}/followup`, {
+        agent: agentMode,
+        language,
+        confirm_summary: true,
+        ...(agentMode === "local_agent" && trend ? { trend, text: text?.trim() || undefined } : {}),
+      });
       beginFlow(snap.session_id);
       router.push(snap.agent === "workbuddy" ? `/session/${snap.session_id}` : stagePath("concern", snap.session_id));
     } catch (e) {
@@ -61,7 +75,7 @@ export function useStartCheck(me: Persona | null) {
     }
   }
 
-  return { start, startFollowUp, busy, error, setError };
+  return { start, startFollowUp, startFollowUpWith, busy, error, setError };
 }
 
 /** Free-text / voice entry with quick-start cards. */

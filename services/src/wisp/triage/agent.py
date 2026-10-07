@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from datetime import datetime, timezone
 
 from ..rules.care_tier import complaint_sentence
 from ..rules.ranges import symptom_range
@@ -37,6 +38,14 @@ RED_FLAG_QUESTIONS = [
 ]
 
 DURATIONS = {"d_today": 0.5, "d_yesterday": 1, "d_days": 2.5, "d_week": 7, "d_longer": 14}
+
+# How a follow-up check-in starts: the patient's answer to "compared with last time?"
+TRENDS = {
+    "better": "I'm feeling better than last time.",
+    "same": "I feel about the same as last time.",
+    "worse": "I'm feeling worse than last time.",
+    "new": "Something new has happened.",
+}
 
 # Fields the patient may correct on the "What WISP understood" screen.
 CORRECTABLE = {"duration", "onset", "eating", "fluids", "fall", *RED_FLAG_QUESTIONS}
@@ -121,7 +130,7 @@ class LocalAgent:
         case = self.svc.case(sid)
         profile = self.svc.get_health_profile(sid, ACTOR)
         name = profile["display_name"]
-        if case.previous_session_id:
+        if case.previous_session_id and greet:
             prev = self.svc.get_previous_assessments(sid, ACTOR, limit=1)
             if prev:
                 p = prev[0]
@@ -135,6 +144,48 @@ class LocalAgent:
                 return
         if greet:
             self.tell(sid, f"Hello {name}. How are you feeling today? Tell me in your own words.", kind="question", question="complaint")
+
+    def follow_up(self, sid: str, trend: str, text: str | None = None) -> None:
+        """Start a follow-up check-in from a structured "compared with last time" answer.
+
+        Better / same / worse carry over the previous complaint (worse also records
+        getting_worse, which the rules treat as a concerning finding). Something new is
+        handled as a new complaint. Either way every safety question is asked again in
+        this session, and the previous result is context only: it never lowers urgency.
+        """
+        if trend not in TRENDS:
+            raise ToolError("Unknown trend", "invalid_input")
+        text = (text or "").strip()[:1000] or None
+        if trend == "new" and not text:
+            raise ToolError("Please say what is new.", "invalid_input")
+        case = self.svc.case(sid)
+        prev = self.svc.case(case.previous_session_id) if case.previous_session_id else None
+        if prev is None or prev.user_id != case.user_id:
+            raise ToolError("No previous check to follow up", "invalid_state")
+        self.svc.say(sid, "patient", f"{TRENDS[trend]} {text}" if text else TRENDS[trend])
+        if trend == "new":
+            return self._on_complaint(sid, text, extract(text))
+
+        elapsed = max(1.0, (datetime.now(timezone.utc) - prev.created_at).total_seconds() / 86400)
+        facts: dict = {
+            "complaint_text": prev.complaint_text,
+            "complaint_summary": prev.complaint_summary,
+            "complaint_category": prev.complaint_category,
+            "modifiers": {"getting_worse": True} if trend == "worse" else {},
+        }
+        if prev.duration_days is not None:
+            facts["duration_days"] = min(3650, round(prev.duration_days + elapsed, 1))
+        if prev.onset == "gradual":
+            facts["onset"] = "gradual"
+        if text:  # anything else they mentioned, read like any typed message
+            ex = extract(text)
+            facts["red_flags"] = ex.red_flags
+            facts["modifiers"] = {**ex.modifiers, **facts["modifiers"]}
+        self.record(sid, **{k: v for k, v in facts.items() if v is not None})
+        if self._emergency_if_needed(sid):
+            return
+        self._acknowledge(sid)
+        self._next(sid)
 
     def handle(self, sid: str, text: str, value: str | None = None) -> None:
         text = text.strip()[:1000]

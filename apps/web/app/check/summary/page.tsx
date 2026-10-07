@@ -20,7 +20,7 @@ function durationLabel(days: number | null) {
   if (days < 1) return "Since today";
   if (days < 2) return "Since yesterday";
   if (days === 2.5) return "2–3 days"; // the "2–3 days" answer button
-  if (days < 7) return `${days} days`;
+  if (days < 7) return `${Math.round(days)} days`;
   if (days < 14) return "About a week";
   return "More than a week";
 }

@@ -28,7 +28,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 11 | P1 | Build a Care Plan screen | ✅ |
 | 12 | P1 | Improve Find Care | ✅ |
 | 13 | P1 | Build a Doctor Visit Summary | ✅ |
-| 14 | P1 | Turn follow-up into its own flow | ⬜ |
+| 14 | P1 | Turn follow-up into its own flow | ✅ |
 | 15 | P1 | Upgrade History | ⬜ |
 | 16 | P1 | Expand "My Usual" | ⬜ |
 | 17 | P1 | Create a proper "You" section | ⬜ |
@@ -363,11 +363,34 @@ Verified in the browser at 390 px:
 - Not clicked: Print, because the browser print dialog would block automation. Print-hiding is done with Tailwind `print:` classes.
 - `tsc` and `eslint` are clean.
 
-### 14. P1 — Turn follow-up into its own flow ⬜
-- [ ] Better / Same / Worse / Something new
-- [ ] Compare to previous session
-- [ ] New red flags override previous normal result
-- [ ] Keep current reassessment safety logic
+### 14. P1 — Turn follow-up into its own flow ✅
+- [x] Better / Same / Worse / Something new
+- [x] Compare to previous session
+- [x] New red flags override previous normal result
+- [x] Keep current reassessment safety logic
+
+What changed, backend:
+- `LocalAgent.follow_up(trend, text)`.
+  - Better / same / worse carry over the previous complaint, gradual onset, and duration plus the days since. "Worse" records `getting_worse`, which the rules already treat as a concerning finding (SR-3).
+  - "Something new" needs words and is handled as a new complaint.
+  - Added words are screened for red flags and modifiers like any typed message.
+  - Every safety question is asked again in the new session, and the previous result stays context only.
+  - Documented as FU-1 in `docs/safety.md`.
+- `POST /api/sessions/{id}/followup` accepts optional `trend` / `text`, validated before a session is created. Without them it behaves as before (chat view, WorkBuddy). `open(greet=False)` now also skips the follow-up greeting.
+- Tests: 9 new (`tests/test_follow_up.py` plus `test_follow_up_endpoint_validates_trend`). They cover: carry-over + safety re-asked for each trend; worse → getting-worse reason; "new" + confusion → T1 and sensing locked; "better but chest pain" → T1; "new" without words refused; invalid trend refused with no session created. Total 135 passed.
+
+What changed, frontend:
+- `/follow-up?prev=` shows "Hello again", a "Last time" card (what you said, outcome, movement result) and four big cards: Better / About the same / Worse / Something new. It also keeps the 995 link.
+- `/follow-up/changes` asks for optional words (required for "Something new"), then starts the check-in with `confirm_summary`, so it joins the normal Check flow (safety → summary → decision…).
+- Every "Check in now" / "Start check-in" goes to `/follow-up`. WorkBuddy check-ins still start straight into its conversation. Shell: `/follow-up` belongs to the Check tab.
+- `/check/complete` for a follow-up shows "Compared with your last check: last time … · today …", noting that today's answers decide and last time is only background.
+- Durations are rounded for display (a carried-over "3.5 days" now reads "4 days").
+
+Verified in the browser at 390 px:
+- Mdm Siti's T4 check → `/follow-up` shows last time (home monitoring, movement within usual range).
+- Something new + "My daughter said I seemed confused last night" → **T1**, with the last-time/today card (Scenario 3 through the new flow). Continue stays disabled until words are entered.
+- Worse, skipping the words → safety restarts at "Question 3 of 11" (onset and duration carried over) → summary shows "Also mentioned: Getting worse".
+- `tsc` and `eslint` are clean.
 
 ### 15. P1 — Upgrade History ⬜
 - [ ] Health timeline instead of plain records
@@ -413,6 +436,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 14: follow-up flow (`/follow-up`, `/follow-up/changes`) with better / same / worse / something new, last-time vs today on the result, and backend `follow_up()` that re-asks every safety question (FU-1, 9 new tests, 135 pass).
 - 2026-10-07 — ✅ Task 13: Doctor visit summary with 5xSTS timings vs usual range, symptom answers, conditions and recommendation, a synthetic-data notice, and show-to-doctor / print / share.
 - 2026-10-07 — ✅ Task 12: Find Care with best / other / emergency groups, the usual clinic's demo address (screen only, not sent to the agent), opt-in on-device distance, and explicit "WISP can't see hours or slots".
 - 2026-10-06 — ✅ Task 11: Care Plan timeline (Now / Today / Next / If worse) built from the disposition, with action buttons and done-ticks. Checked for all five tiers.
