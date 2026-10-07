@@ -27,6 +27,12 @@ cd apps/web && npm run dev | npm run build | npm run lint
 cd services && uv run pytest
 cd services && uv run pytest tests/test_service_order.py::test_red_flag_locks_sensor
 
+# End-to-end tests (Playwright, 390×844). They start their own isolated stack: a freshly seeded API on :8788
+# (data in apps/web/.e2e/, 8× replay) and a production build on :3100 (.next-e2e). The demo on :8787/:3000 is untouched.
+cd apps/web && npx playwright install chromium   # once
+cd apps/web && npm run test:e2e
+cd apps/web && npx playwright test e2e/scenarios.spec.ts -g "Scenario 3"
+
 # Evaluation suite → evaluation/results/report.md
 cd services && uv run python ../evaluation/run_all.py
 ```
@@ -67,7 +73,8 @@ The app has five tabs: Today · Check · Care · History · You. A tab's route p
 - **Opt-in agent behaviour.** Sessions started from the Check flow send `confirm_summary: true`, which makes the agent pause at `confirm` and lets `POST /api/sessions/{id}/corrections` work. Follow-ups send `trend`/`text` to `/followup`, which calls `LocalAgent.follow_up()`. Without these fields the agent behaves as before, so the chat view, WorkBuddy, `tests/test_scenarios.py` and the evaluation harness are unaffected. Keep them opt-in.
 - **Care section** (`app/care/*`, `lib/care.ts`). Pages default to the latest check that has a recommendation, or take `?s=`. The care plan (`lib/carePlan.ts`) only rearranges disposition content and never sets urgency. Find Care never claims opening hours or availability.
 - **What leaves the device.** The agent's profile view (`_public_profile`) excludes medications and clinic location. The patient's own screens use `GET /api/profile/{user}`. Caregiver summaries are minimal by default, and the reasons are opt-in.
-- **Mobile.** On mobile, `components/StickyActions.tsx` pins a screen's primary actions above the bottom nav. Use it for any screen whose main button could fall below 390×844.
+- **Persona.** Read the selected person with `useUserId()` from `lib/prefs.ts`, never `usePrefs().userId`. It is null until saved preferences hydrate; before that the store holds the default persona. Using it too early once started a check for the wrong person.
+- **Mobile.** On mobile, `components/StickyActions.tsx` pins a screen's primary actions above the bottom nav. Use it for any screen whose main button could fall below 390×844. The bar publishes its height as `--sticky-h`, and `<main>` pads by it, so content after it stays reachable.
 
 ## Gotchas
 

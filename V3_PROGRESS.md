@@ -51,6 +51,24 @@ Safety-relevant backend additions, all opt-in or additive and documented in `doc
 
 Still open (out of scope here): the hardware/WorkBuddy P0 items (first real 5xSTS, real sensor data, live WorkBuddy) and the P2 items (native-speaker and clinical review, interference handling, persisting live ESP32 mode, merging into `main`).
 
+## End-to-end testing (after task 21)
+
+There's an automated Playwright suite in `apps/web/e2e/` (`npm run test:e2e`). It drives the real UI at 390×844 with touch, against an isolated stack started by `playwright.config.ts`: a freshly seeded API on :8788 (own data dir, 8× replay) and a production build on :3100. Each test resets the API.
+
+**39 tests, all passing, two consecutive full runs (3.4 min each).** Backend still 144/144.
+
+- `scenarios.spec.ts`: the four demo scenarios through the v3 screens (T2 via the movement check, T1 red flag, T4 then a follow-up red flag → T1, interference → ABSTAIN).
+- `check-paths.spec.ts` (12): mid-safety red flag; "not sure" → ABSTAIN and its correction; correcting a warning sign → T1; eating-less correction → fluids question; declining → T3; unsteady → T2; someone in the room; stopping the check (non-medical → T3, unwell → T2, chest pain → T1); no baseline → explained, auto-continue.
+- `care.spec.ts` (9): empty Care; hub; plan ticks persist; T4 "Check in now"; Find care groups plus real browser geolocation → distance; T1 only 995/A&E; visit summary (timings, synthetic notice, doctor view, copy fallback); sharing (minimal, reasons, agreement, recorded); end-of-check prompt → preview.
+- `history-you.spec.ts` (7): timeline, filters, follow-up links, detail page; continue an unfinished check; My usual; enrolment (not today, stopped → discarded, full → added, inline delete); You pages, language switches the safety questions to Malay, accessibility; removing the trusted person; delete all data.
+- `app.spec.ts` (7): bottom nav + active tab; old URLs redirect; no sideways scrolling on 15 pages; Larger text keeps main buttons on screen; Technical view and its links; Engineering view (badges, ground-truth validation, WorkBuddy filter after a real token-authenticated tool call); WorkBuddy mode → conversation view.
+
+**Bugs the suite found (both fixed):**
+1. **A check could start for the wrong person.** The prefs store renders its default persona (`mdm_tan`) before loading the saved one, and `useMe`/`useProfile`/`useBaseline`/History/You fetched for it immediately. Late or out-of-order responses could also overwrite the right person. In the test, Mdm Siti's check played Mdm Tan's recording and was compared with Mdm Tan's history. Fix: `useUserId()` (null until hydrated) is used everywhere, and stale responses are ignored.
+2. **Content after a sticky action bar was unreachable.** `StickyActions` reserved space with an in-flow spacer, so anything after it (e.g. "Delete my usual pattern") sat permanently under the fixed bar. Fix: the bar publishes `--sticky-h`, and `<main>` pads by it.
+
+Supporting changes: `WISP_CORS_ORIGINS` (config, default unchanged) and `NEXT_DIST_DIR` (Next `distDir`) so the isolated stack can run next to the demo; e2e artefacts are git- and lint-ignored. Next's build adds the `.next-e2e` type paths to `tsconfig.json`.
+
 ## Tasks
 
 ### 1. P0 — Expand the patient app beyond chat ✅
@@ -623,6 +641,7 @@ Verified:
 
 ## Log
 
+- 2026-10-07 — 🧪 End-to-end suite: 39 Playwright tests over every patient journey on an isolated stack, all passing (twice). It found and we fixed a wrong-persona race and an unreachable-content bug from the sticky bar.
 - 2026-10-07 — ✅ Task 21: mobile UX audit at 390×844 (normal and Larger text). Sticky primary actions above the tab bar, safe-area support, bigger plan ticks, Today's main action first. All T1–T4 and ABSTAIN results pass. `next build` OK. **All 21 tasks done.**
 - 2026-10-07 — ✅ Task 20: Engineering view polish (mode badges and filter, validated ground-truth entry, richer audit filters with payloads). Fixed two v2 bugs: the audit log froze after 500 events, and healthy-day checks had no detection window (144 tests pass).
 - 2026-10-07 — ✅ Task 19: Technical view kept and extended with follow-up answer, patient corrections and sharing decisions; links to and from it work from all v3 screens (143 tests pass).
