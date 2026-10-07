@@ -32,14 +32,14 @@ export function Recommendation({ snapshot, onShowConversation }: { snapshot: Sna
         <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
           {emergency ? (
             <>
-              <a href="tel:995" className="inline-flex min-h-16 items-center justify-center rounded-2xl bg-red px-8 text-[1.3rem] font-bold text-white">
+              <a href="tel:995" className="inline-flex min-h-16 items-center justify-center rounded-2xl text-center bg-red px-8 text-[1.3rem] font-bold text-white">
                 Call 995
               </a>
               <a
                 href={MAPS("hospital emergency department near me")}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex min-h-14 items-center justify-center rounded-2xl border-2 border-red bg-card px-6 text-[1.05rem] font-bold text-red"
+                className="inline-flex min-h-14 items-center justify-center rounded-2xl text-center border-2 border-red bg-card px-6 text-[1.05rem] font-bold text-red"
               >
                 Nearest emergency department
               </a>
@@ -47,7 +47,7 @@ export function Recommendation({ snapshot, onShowConversation }: { snapshot: Sna
           ) : (
             <Link
               href={`/care/find?s=${snapshot.session_id}`}
-              className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep sm:w-auto"
+              className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl text-center bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep sm:w-auto"
             >
               Find care
             </Link>
@@ -55,7 +55,7 @@ export function Recommendation({ snapshot, onShowConversation }: { snapshot: Sna
           {caregiver && !emergency && (
             <Link
               href={`/care/share?s=${snapshot.session_id}`}
-              className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl border-2 border-line bg-card px-6 text-[1.05rem] font-bold text-ink hover:border-forest/50 sm:w-auto"
+              className="inline-flex min-h-14 w-full items-center justify-center rounded-2xl text-center border-2 border-line bg-card px-6 text-[1.05rem] font-bold text-ink hover:border-forest/50 sm:w-auto"
             >
               Share with family
             </Link>

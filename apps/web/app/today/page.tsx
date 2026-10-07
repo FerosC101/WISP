@@ -84,8 +84,14 @@ export default function Today() {
       )}
 
       <section aria-labelledby="symptoms-title" className="mt-6">
-        <h2 id="symptoms-title" className="text-[1.1rem] font-bold">
-          Is something different today?
+        <Link
+          href="/check/start"
+          className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
+        >
+          {check.busy ? "Starting…" : "Start a new check-in"}
+        </Link>
+        <h2 id="symptoms-title" className="mt-5 text-[1.1rem] font-bold">
+          Or tap what&apos;s different today
         </h2>
         <ul className="mt-3 grid grid-cols-2 gap-3">
           {SYMPTOMS.map((s) => (
@@ -104,12 +110,6 @@ export default function Today() {
             </li>
           ))}
         </ul>
-        <Link
-          href="/check/start"
-          className="mt-3 flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
-        >
-          {check.busy ? "Starting…" : "Start a new check-in"}
-        </Link>
         {check.error && (
           <p role="alert" className="mt-3 rounded-xl bg-amber-bg px-4 py-3 text-amber">
             {check.error}

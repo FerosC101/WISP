@@ -1,6 +1,7 @@
 "use client";
 
 import { CheckFrame } from "@/components/check/CheckFrame";
+import { StickyActions } from "@/components/StickyActions";
 import { QuestionScreen } from "@/components/check/QuestionScreen";
 import { Button } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
@@ -78,9 +79,11 @@ export default function MovementResult() {
               This only compares today with your usual. It doesn&apos;t tell us what is causing how you feel.
             </p>
           )}
-          <Button size="lg" className="mt-6 w-full" onClick={() => f.ack("result")}>
-            See my next step
-          </Button>
+          <StickyActions>
+            <Button size="lg" className="w-full" onClick={() => f.ack("result")}>
+              See my next step
+            </Button>
+          </StickyActions>
         </section>
       ) : (
         <section aria-live="polite" className="py-10 text-center">

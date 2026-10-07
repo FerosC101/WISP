@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { StickyActions } from "@/components/StickyActions";
 import { Button } from "@/components/ui";
 import { api, post } from "@/lib/api";
 import { formatDate } from "@/lib/tiers";
@@ -128,20 +129,20 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
           Nothing was shared.
         </p>
       ) : (
-        <div className="mt-5">
-          <label className="flex min-h-14 cursor-pointer items-start gap-3 rounded-2xl border-2 border-line bg-card px-4 py-3">
-            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="mt-1 h-6 w-6 shrink-0 accent-forest" />
-            <span className="text-[1.05rem] font-bold">I agree to send this message to {name}</span>
+        <StickyActions>
+          <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border-2 border-line bg-card px-4 py-2">
+            <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="h-6 w-6 shrink-0 accent-forest" />
+            <span className="text-[1.02rem] font-bold">I agree to send this message to {name}</span>
           </label>
-          <div className="mt-3 flex flex-col gap-3">
-            <Button size="lg" disabled={!agreed || status === "sending"} onClick={send} className="w-full">
-              {status === "sending" ? "Sending…" : `Send to ${name}`}
-            </Button>
-            <Button size="lg" variant="secondary" disabled={status === "sending"} onClick={decline} className="w-full">
+          <div className="flex gap-2">
+            <Button disabled={status === "sending"} variant="secondary" onClick={decline} className="flex-1">
               Don&apos;t share
             </Button>
+            <Button disabled={!agreed || status === "sending"} onClick={send} className="flex-[2]">
+              {status === "sending" ? "Sending…" : `Send to ${name}`}
+            </Button>
           </div>
-        </div>
+        </StickyActions>
       )}
 
       {s.shared.length > 0 && (

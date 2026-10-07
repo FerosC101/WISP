@@ -35,7 +35,21 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 18 | P1 | Redesign caregiver sharing | ✅ |
 | 19 | P1 | Preserve separate Technical View | ✅ |
 | 20 | P1 | Preserve and polish Engineering View | ✅ |
-| 21 | P1 | Improve mobile UX | ⬜ |
+| 21 | P1 | Improve mobile UX | ✅ |
+
+## Outcome
+
+All 21 tasks are done: the 2 P0 UI prerequisites and all 18 P1 tasks. Backend tests: 112 at the start, 144 now (all pass). `next build` succeeds.
+
+Safety-relevant backend additions, all opt-in or additive and documented in `docs/safety.md` / `docs/privacy.md`:
+- **ORD-5**: summary-screen corrections.
+- **FU-1**: structured follow-ups.
+- Healthy-day checks can be stopped and are then discarded.
+- Minimal-by-default caregiver sharing with exact preview and removal.
+- Clinic location and medicines are kept off the agent's view.
+- The global audit list returns the latest events.
+
+Still open (out of scope here): the hardware/WorkBuddy P0 items (first real 5xSTS, real sensor data, live WorkBuddy) and the P2 items (native-speaker and clinical review, interference handling, persisting live ESP32 mode, merging into `main`).
 
 ## Tasks
 
@@ -575,15 +589,41 @@ Verified in the browser (desktop):
 - `tsc` and `eslint` are clean.
 - Leftover from that test: an unfinished WorkBuddy session for Mdm Siti (`s_1117dfe50f39`). The Dev page's reset clears it.
 
-### 21. P1 — Improve mobile UX ⬜
-- [ ] Design primarily for 390 px
-- [ ] Large touch targets, bottom navigation
-- [ ] Primary action visible without scrolling (task 3 found that the summary screen's Continue sits just below the fold at 390×844)
-- [ ] No desktop-first cards squeezed onto mobile
-- [ ] Test all T1–T4 results
+### 21. P1 — Improve mobile UX ✅
+- [x] Design primarily for 390 px
+- [x] Large touch targets, bottom navigation
+- [x] Primary action visible without scrolling (incl. the task 3 summary-screen note)
+- [x] No desktop-first cards squeezed onto mobile
+- [x] Test all T1–T4 results
+
+Method: a scripted audit at 390×844 (in-browser) over 20+ routes. It checks horizontal overflow, interactive elements under 44 px (unless inside a ≥44 px label), and whether the primary action is on screen *and* not covered (using `elementFromPoint`). The pages were audited first at normal size and again with **Larger text** (22 px root).
+
+Found → fixed:
+- Primary action below the fold:
+  - `/check/summary`: Continue at 1168 px.
+  - `/check/decision`: Do the check at 919 px.
+  - `/you/baseline`: Record at 856 px.
+  - Share: Send under a long preview.
+  - Room Ready setup.
+  - Fix: new `components/StickyActions.tsx`. On mobile it portals the screen's actions into a slot in the same fixed container as the bottom nav, so they always sit directly above it. A measured spacer keeps content clear. On ≥md it renders inline.
+  - Used on: summary, decision (offer and no-check), movement result, Room Ready setup, share (agree tick + Don't share / Send), My usual, and the enrolment checklist.
+- Today in Larger text: "Start a new check-in" fell below the fold, so it moved above the symptom cards ("Or tap what's different today").
+- Care-plan "done" ticks were bare 27 px checkboxes, so each is now wrapped in a 44 px tap target.
+- "Nearest emergency department" wrapped left-aligned inside its button, so Recommendation buttons now centre their text.
+- iPhone safe area: `viewport` export (`viewport-fit=cover`, device width, theme colour), safe-area padding under the bottom nav, and `main` padding includes the inset.
+- Already fine and kept: the five-tab bottom nav (64 px targets), with no horizontal overflow on any audited page.
+
+Verified:
+- After the fixes, at 390×844, every audited page passes: primary visible, 0 small targets, no overflow.
+  - Today, summary, decision, Room Ready, movement result, share, My usual.
+  - **All five results**: T1 "Call 995", T2/T3/T4/ABSTAIN "Find care".
+- With Larger text: Today, decision, Room Ready, share, My usual, T1, T2, History and Follow-up pass. (On the care plan the audit's "first coloured button" was the Call 995 in "If symptoms get worse", which is meant to sit below the steps.)
+- Desktop: the summary shows its inline Continue, and the sticky copy is not displayed.
+- `next build` succeeds (all 40 routes). `tsc` and `eslint` are clean.
 
 ## Log
 
+- 2026-10-07 — ✅ Task 21: mobile UX audit at 390×844 (normal and Larger text). Sticky primary actions above the tab bar, safe-area support, bigger plan ticks, Today's main action first. All T1–T4 and ABSTAIN results pass. `next build` OK. **All 21 tasks done.**
 - 2026-10-07 — ✅ Task 20: Engineering view polish (mode badges and filter, validated ground-truth entry, richer audit filters with payloads). Fixed two v2 bugs: the audit log froze after 500 events, and healthy-day checks had no detection window (144 tests pass).
 - 2026-10-07 — ✅ Task 19: Technical view kept and extended with follow-up answer, patient corrections and sharing decisions; links to and from it work from all v3 screens (143 tests pass).
 - 2026-10-07 — ✅ Task 18: Sharing redesign (minimal by default, opt-in reasons, exact preview, explicit agree tick, history, remove trusted person). No sharing without a preview anywhere (3 new tests, 142 pass).

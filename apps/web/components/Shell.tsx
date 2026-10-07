@@ -113,7 +113,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main id="main" className={`mx-auto w-full flex-1 px-4 pb-28 pt-6 sm:px-6 md:pb-12 ${technical ? "max-w-6xl" : "max-w-3xl"}`}>
+      <main id="main" className={`mx-auto w-full flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-12 ${technical ? "max-w-6xl" : "max-w-3xl"}`}>
         {children}
       </main>
 
@@ -121,8 +121,10 @@ export function Shell({ children }: { children: React.ReactNode }) {
         WISP helps you decide what to do next. It does not diagnose. In an emergency, call <strong className="text-ink">995</strong>.
       </footer>
 
-      {/* Mobile: bottom navigation with large touch targets */}
-      <nav aria-label="Main" className="print:hidden fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ivory/95 backdrop-blur md:hidden">
+      {/* Mobile: a screen's primary actions (StickyActions) sit just above the bottom navigation. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 print:hidden md:hidden">
+      <div id="sticky-actions" />
+      <nav aria-label="Main" className="border-t border-line bg-ivory/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <ul className="mx-auto grid max-w-md grid-cols-5">
           {NAV.map((n) => (
             <li key={n.href}>
@@ -140,6 +142,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
           ))}
         </ul>
       </nav>
+      </div>
     </div>
   );
 }

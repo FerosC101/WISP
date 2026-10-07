@@ -68,13 +68,9 @@ function Step({
     <li className={`rounded-2xl border border-line bg-card p-4 ${done ? "opacity-70" : ""}`}>
       <div className="flex items-start gap-3">
         {step.checkable ? (
-          <input
-            type="checkbox"
-            checked={done}
-            onChange={onToggle}
-            aria-label={`Done: ${step.text}`}
-            className="mt-1 h-6 w-6 shrink-0 accent-forest"
-          />
+          <label className="-m-2.5 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
+            <input type="checkbox" checked={done} onChange={onToggle} aria-label={`Done: ${step.text}`} className="h-6 w-6 accent-forest" />
+          </label>
         ) : (
           <span aria-hidden className="mt-2.5 h-2 w-2 shrink-0 rounded-full bg-ink-faint" />
         )}

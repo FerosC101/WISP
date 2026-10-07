@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckFrame } from "@/components/check/CheckFrame";
+import { StickyActions } from "@/components/StickyActions";
 import { Button } from "@/components/ui";
 import { pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
 import type { QuickReply } from "@/lib/types";
@@ -87,14 +88,16 @@ export default function RoomReady() {
                 </li>
               ))}
             </ul>
-            <Button size="lg" className="mt-6 w-full" disabled={!allTicked} onClick={() => setSetupDone(true)}>
-              {allTicked ? "My space is ready" : "Tick each item to continue"}
-            </Button>
-            {skip && (
-              <Button size="lg" variant="ghost" className="mt-2 w-full" disabled={f.sending} onClick={() => f.answer(skip.label, skip.value)}>
-                I can&apos;t set this up — skip the check
+            <StickyActions>
+              <Button size="lg" className="w-full" disabled={!allTicked} onClick={() => setSetupDone(true)}>
+                {allTicked ? "My space is ready" : "Tick each item to continue"}
               </Button>
-            )}
+              {skip && (
+                <Button variant="ghost" className="w-full" disabled={f.sending} onClick={() => f.answer(skip.label, skip.value)}>
+                  I can&apos;t set this up — skip the check
+                </Button>
+              )}
+            </StickyActions>
           </>
         )}
 

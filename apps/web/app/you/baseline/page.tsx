@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Button, Disclosure } from "@/components/ui";
+import { StickyActions } from "@/components/StickyActions";
 import { WispLine } from "@/components/WispLine";
 import { API_URL } from "@/lib/api";
 import { STATUS_WORDS, baselineStatus, useBaseline } from "@/lib/baseline";
@@ -112,13 +113,15 @@ export default function MyUsual() {
         )}
       </section>
 
-      <Link
-        href="/you/baseline/enroll"
-        className="mt-5 flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
-      >
-        {n === 0 ? "Record my first healthy-day check" : "Record another healthy-day check"}
-      </Link>
-      <p className="mt-2 text-center text-[0.95rem] text-ink-soft">Only on a day you feel like your usual self.</p>
+      <p className="mt-5 text-center text-[0.95rem] text-ink-soft">Record a healthy-day check only on a day you feel like your usual self.</p>
+      <StickyActions>
+        <Link
+          href="/you/baseline/enroll"
+          className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
+        >
+          {n === 0 ? "Record my first healthy-day check" : "Record another healthy-day check"}
+        </Link>
+      </StickyActions>
 
       {b && (
         <div className="mt-8 border-t border-line pt-4">

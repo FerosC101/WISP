@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { CheckFrame } from "@/components/check/CheckFrame";
+import { StickyActions } from "@/components/StickyActions";
 import { Button, Card } from "@/components/ui";
 import { SAFETY_ORDER, pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
 import type { CaseState, ChatMessage, QuickReply, Snapshot } from "@/lib/types";
@@ -213,9 +214,11 @@ export default function Summary() {
             </details>
           </Card>
 
-          <Button size="lg" className="mt-6 w-full" disabled={f.sending || !confirm} onClick={() => f.answer(confirmLabel, "confirm")}>
-            {confirmLabel} — continue
-          </Button>
+          <StickyActions>
+            <Button size="lg" className="w-full" disabled={f.sending || !confirm} onClick={() => f.answer(confirmLabel, "confirm")}>
+              {confirmLabel} — continue
+            </Button>
+          </StickyActions>
         </section>
       )}
     </CheckFrame>

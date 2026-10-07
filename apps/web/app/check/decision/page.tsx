@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { CheckFrame } from "@/components/check/CheckFrame";
+import { StickyActions } from "@/components/StickyActions";
 import { Button } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
@@ -113,7 +114,7 @@ export default function Decision() {
             <div className="mt-6 wisp-fade-in">
               <p className="text-[1.1rem]">{offer.data.why ?? offer.text.split("\n").slice(1).join(" ")}</p>
               <p className="mt-2 text-ink-soft">It takes about 30 seconds: you sit and stand five times. It&apos;s your choice.</p>
-              <div className="mt-6 flex flex-col gap-3">
+              <StickyActions>
                 {(offer.data.quick_replies ?? []).map((r) => (
                   <Button
                     key={r.value}
@@ -129,16 +130,18 @@ export default function Decision() {
                     {r.value === "skip" ? "Continue without it" : r.label}
                   </Button>
                 ))}
-              </div>
+              </StickyActions>
             </div>
           )}
 
           {revealed && !isOffer && s.disposition && (
             <div className="mt-6 wisp-fade-in">
               <p className="text-[1.1rem]">{noCheckReason(s)}</p>
-              <Button size="lg" className="mt-6 w-full" onClick={() => f.ack("decision")}>
-                See my next step
-              </Button>
+              <StickyActions>
+                <Button size="lg" className="w-full" onClick={() => f.ack("decision")}>
+                  See my next step
+                </Button>
+              </StickyActions>
             </div>
           )}
         </section>

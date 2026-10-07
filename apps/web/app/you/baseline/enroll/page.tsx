@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { StickyActions } from "@/components/StickyActions";
 import { Button } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { post } from "@/lib/api";
@@ -171,9 +172,11 @@ export default function Enroll() {
               </li>
             ))}
           </ul>
-          <Button size="lg" className="mt-6 w-full" disabled={!SAME.every((x) => ticked[x.id])} onClick={() => setStep("arms")}>
-            {SAME.every((x) => ticked[x.id]) ? "I'm ready" : "Tick each item to continue"}
-          </Button>
+          <StickyActions>
+            <Button size="lg" className="w-full" disabled={!SAME.every((x) => ticked[x.id])} onClick={() => setStep("arms")}>
+              {SAME.every((x) => ticked[x.id]) ? "I'm ready" : "Tick each item to continue"}
+            </Button>
+          </StickyActions>
         </section>
       )}
 
