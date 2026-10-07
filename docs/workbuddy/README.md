@@ -55,11 +55,40 @@ Paste [`SKILL.md`](SKILL.md) into WorkBuddy as the agent's instructions (or inst
 
 ## 4. Run a check
 
-1. On the WISP screen choose the persona and press **Start assessment**.
+1. Start an assessment for the patient: Engineering view → Demo → **Start as …**, or on the home screen tap
+   a quick prompt (with WorkBuddy selected the session opens empty and waits for WorkBuddy).
 2. In WorkBuddy say e.g. *"I've felt weak for two days."*
 3. WorkBuddy calls `get_active_session` → asks questions → … → `run_functional_assessment`.
-   The WISP screen switches to the chair-rise steps; the patient presses **I'm seated and ready**.
-4. The recommendation and decision trace appear on the WISP screen.
+   The patient screen switches to the **Quick movement check**; the patient presses **I'm seated — start**.
+4. The recommendation appears on the patient screen; the structured record is at `/explain/<session>`.
+
+## Verifying the live WorkBuddy connection
+
+Status: **not yet run against real WorkBuddy** (no WorkBuddy install was available while building). Use this
+checklist on a machine with WorkBuddy and record the result here.
+
+1. `./scripts/demo.sh --mcp`; in the Engineering view (`/dev`) select **Agent → Tencent WorkBuddy via MCP**.
+2. Add the MCP server to WorkBuddy (above) and paste `SKILL.md` as its instructions. Confirm WorkBuddy lists 13 `wisp` tools.
+3. Engineering view → **Demo 1 → Start as Mdm Tan** (opens an empty WorkBuddy session on the patient screen).
+4. In WorkBuddy, type: *"I've felt weak for two days. I've been eating less."*
+
+| # | WorkBuddy must… | Evidence (Engineering view → Audit log → "WorkBuddy tool calls", or Technical view) | ✓ |
+|---|---|---|---|
+| 1 | understand vague text | `record_case_facts` with `complaint_category=functional`, duration 2 | |
+| 2 | populate structured case state | red flags recorded one by one as the patient answers | |
+| 3 | call `screen_red_flags` | `screen_red_flags → passed` by actor WorkBuddy | |
+| 4 | decide whether sensing is useful | `log_decision → Physical function check` with a reason | |
+| 5 | call the physical assessment | `check_assessment_eligibility → allowed`, then `run_functional_assessment` | |
+| 6 | receive the structured result | `measurement_complete` + `compare_to_baseline → slower_than_usual` | |
+| 7 | call the care-tier engine | `decide_care_tier → T2` | |
+| 8 | communicate the output | WorkBuddy explains "Please be seen today" + reasons + warning signs; `say_to_patient` mirrors it | |
+
+Then repeat with Mr Lim: *"This morning I suddenly felt dizzy and my left hand feels clumsy."* Expected: T1, no
+`run_functional_assessment` call, Technical view shows **SENSING NOT REQUESTED**.
+
+| Date | WorkBuddy version | Transport (HTTP/stdio) | Scenario 1 | Scenario 2 | Notes |
+|---|---|---|---|---|---|
+| | | | | | |
 
 ## Rehearsing without WorkBuddy
 
@@ -68,7 +97,7 @@ Paste [`SKILL.md`](SKILL.md) into WorkBuddy as the agent's instructions (or inst
 
 ```bash
 cd services
-uv run python ../scripts/workbuddy_simulator.py --scenario 1   # press "I'm seated and ready" on screen
+uv run python ../scripts/workbuddy_simulator.py --scenario 1   # press "I'm seated — start" on screen
 uv run python ../scripts/workbuddy_simulator.py --scenario 2   # emergency: no sensing
 ```
 

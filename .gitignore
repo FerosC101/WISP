@@ -20,3 +20,12 @@ data/demo/recordings.json
 
 .DS_Store
 .env*
+
+# Firmware backups and local ESP-IDF builds (may contain Wi-Fi config)
+data/firmware_backup/
+hardware/esp32/build/
+hardware/esp32/wisp_csi_router/build/
+hardware/esp32/wisp_csi_router/managed_components/
+hardware/esp32/wisp_csi_router/sdkconfig
+hardware/esp32/wisp_csi_router/dependencies.lock
+hardware/esp32/esp-csi/

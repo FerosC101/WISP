@@ -140,12 +140,17 @@ export interface DecisionTrace {
   events: AuditEvent[];
 }
 
+export interface QuickReply {
+  label: string;
+  value: string;
+}
+
 export interface ChatMessage {
   id: number;
   ts: string;
   role: "agent" | "patient" | "system";
   text: string;
-  data: { kind?: string; quick_replies?: string[]; question?: string; tier?: Tier; source?: string };
+  data: { kind?: string; quick_replies?: QuickReply[]; question?: string; tier?: Tier; source?: string; why?: string };
 }
 
 export interface PublicProfile {
@@ -154,6 +159,8 @@ export interface PublicProfile {
   age: number;
   lives_alone: boolean;
   usual_gp: string;
+  /** Screen only (never sent to the agent). */
+  usual_gp_details?: { address: string | null; lat: number | null; lng: number | null } | null;
   mobility_aid: string | null;
   normally_stands_unaided: boolean;
   conditions: string[];
@@ -198,4 +205,8 @@ export interface HistoryItem {
   tier: Tier | null;
   title: string | null;
   sensing_used: boolean;
+  agent?: "local_agent" | "workbuddy";
+  functional_status?: string | null;
+  comparison_status?: BaselineComparison["status"] | null;
+  comparison_severity?: BaselineComparison["severity"];
 }

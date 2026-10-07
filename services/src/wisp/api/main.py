@@ -22,10 +22,11 @@ from .. import config
 from ..baseline.compare import summarise_baseline
 from ..demo import seed as demo_seed
 from ..schemas import FunctionalAssessment, utcnow
-from ..sensing.providers import ReplayCSIProvider, build_provider
+from ..sensing.hub import HUB, list_ports
+from ..sensing.providers import ESP32CSIProvider, ReplayCSIProvider, build_provider
 from ..service import CaseFacts, EventBus, ToolError, WispService
 from ..store import Store
-from ..triage.agent import LocalAgent
+from ..triage.agent import TRENDS, LocalAgent
 
 state: dict[str, Any] = {}
 
@@ -45,7 +46,9 @@ def init_state(store: Store | None = None, provider=None) -> None:
             demo_seed.generate_recordings()
         for p in demo_seed.PERSONAS:
             store.put_profile(p)
-    service = WispService(store, provider or build_provider(), EventBus())
+    provider = provider or build_provider()
+    state["replay"] = provider if isinstance(provider, ReplayCSIProvider) else ReplayCSIProvider()
+    service = WispService(store, provider, EventBus())
     state["svc"] = service
     state["agent"] = LocalAgent(service)
 
@@ -61,7 +64,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="WISP local API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=config.CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -69,7 +72,7 @@ app.add_middleware(
 
 @app.exception_handler(ToolError)
 async def tool_error_handler(_, exc: ToolError):
-    status = 404 if exc.code == "invalid_session" else 409 if exc.code in ("order_violation", "sensing_locked", "invalid_state") else 400
+    status = 404 if exc.code in ("invalid_session", "not_found") else 409 if exc.code in ("order_violation", "sensing_locked", "invalid_state") else 400
     return JSONResponse(status_code=status, content={"error": exc.code, "message": str(exc)})
 
 
@@ -108,6 +111,9 @@ class StartSession(BaseModel):
     user_id: str = Field(max_length=40)
     agent: Literal["local_agent", "workbuddy"] = "local_agent"
     previous_session_id: str | None = None
+    language: Literal["en", "zh", "ms", "ta"] = "en"
+    text: str | None = Field(default=None, max_length=1000)  # the patient's first words, typed on the home screen
+    confirm_summary: bool = False  # pause after the safety questions for review (the app's Check flow)
 
 
 @app.post("/api/sessions")
@@ -115,7 +121,10 @@ def start_session(body: StartSession) -> dict:
     s = svc()
     case = s.start_session(body.user_id, agent=body.agent, previous_session_id=body.previous_session_id)
     if body.agent == "local_agent":
-        agent().open(case.session_id)
+        first = (body.text or "").strip()
+        agent().open(case.session_id, lang=body.language, greet=not first, confirm_summary=body.confirm_summary)
+        if first:
+            agent().handle(case.session_id, first)
     else:
         s.say(case.session_id, "system", "Waiting for WorkBuddy to join this assessment…", kind="info")
     return s.snapshot(case.session_id)
@@ -127,9 +136,19 @@ def followup(session_id: str, body: dict = Body(default={})) -> dict:
     s = svc()
     prev = s.case(session_id)
     agent_kind = body.get("agent", "local_agent")
+    lang = body.get("language", "en") if body.get("language") in ("en", "zh", "ms", "ta") else "en"
+    trend = body.get("trend")
+    text = body.get("text")
+    if trend is not None:
+        if agent_kind != "local_agent" or trend not in TRENDS or (text is not None and not isinstance(text, str)):
+            raise HTTPException(400, "Invalid follow-up answer")
+        if trend == "new" and not (text or "").strip():
+            raise HTTPException(400, "Please say what is new.")
     case = s.start_session(prev.user_id, agent=agent_kind, previous_session_id=session_id)
     if agent_kind == "local_agent":
-        agent().open(case.session_id)
+        agent().open(case.session_id, lang=lang, greet=trend is None, confirm_summary=body.get("confirm_summary") is True)
+        if trend is not None:
+            agent().follow_up(case.session_id, trend, text)
     return s.snapshot(case.session_id)
 
 
@@ -140,6 +159,7 @@ def get_session(session_id: str) -> dict:
 
 class Message(BaseModel):
     text: str = Field(min_length=1, max_length=1000)
+    value: str | None = Field(default=None, max_length=40)  # language-independent answer from a quick-reply button
 
 
 @app.post("/api/sessions/{session_id}/messages")
@@ -150,7 +170,28 @@ def post_message(session_id: str, body: Message) -> dict:
         raise HTTPException(404, "Unknown session")
     if meta["agent"] != "local_agent":
         raise HTTPException(409, "This assessment is being run by WorkBuddy")
-    agent().handle(session_id, body.text)
+    agent().handle(session_id, body.text, body.value)
+    return s.snapshot(session_id)
+
+
+class Correction(BaseModel):
+    field: str = Field(max_length=40)
+    value: str = Field(max_length=40)
+
+
+@app.post("/api/sessions/{session_id}/corrections")
+def correct(session_id: str, body: Correction) -> dict:
+    """The patient corrects an answer on the "What WISP understood" screen."""
+    s = svc()
+    meta = s.store.session_meta(session_id)
+    if not meta:
+        raise HTTPException(404, "Unknown session")
+    if meta["agent"] != "local_agent":
+        raise HTTPException(409, "This assessment is being run by WorkBuddy")
+    try:
+        agent().correct(session_id, body.field, body.value)
+    except ToolError as e:
+        raise HTTPException(409 if e.code == "invalid_state" else 400, str(e)) from e
     return s.snapshot(session_id)
 
 
@@ -167,13 +208,27 @@ async def check_stop(session_id: str) -> dict:
 
 
 @app.get("/api/sessions/{session_id}/caregiver-summary")
-def caregiver_summary(session_id: str) -> dict:
-    return svc().caregiver_summary(session_id)
+def caregiver_summary(session_id: str, include_reasons: bool = False) -> dict:
+    return svc().caregiver_summary(session_id, include_reasons)
 
 
 @app.post("/api/sessions/{session_id}/share")
 def share(session_id: str, body: dict = Body(...)) -> dict:
-    return svc().share_summary(session_id, "patient", consent=body.get("consent") is True)
+    return svc().share_summary(session_id, "patient", consent=body.get("consent") is True, include_reasons=body.get("include_reasons") is True)
+
+
+@app.delete("/api/profile/{user_id}/caregiver")
+def remove_caregiver(user_id: str) -> dict:
+    svc().remove_caregiver(user_id)
+    return {"removed": True}
+
+
+@app.get("/api/profile/{user_id}")
+def profile(user_id: str) -> dict:
+    p = svc().profile_for_screen(user_id)
+    if p is None:
+        raise HTTPException(404, "Unknown user")
+    return p
 
 
 @app.get("/api/history")
@@ -192,6 +247,8 @@ def audit(session_id: str | None = None) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- baseline
+_enrolling: dict[str, asyncio.Task] = {}  # running healthy-day checks, so the patient can stop one
+
 @app.get("/api/baselines/{user_id}")
 def get_baseline(user_id: str) -> dict:
     b = svc().store.get_baseline(user_id)
@@ -222,8 +279,20 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
         if not recs:
             raise HTTPException(409, "No baseline recordings configured for this demo user")
         kwargs["recording_id"] = recs[len(sessions) % len(recs)]
+    if user_id in _enrolling and not _enrolling[user_id].done():
+        raise HTTPException(409, "A healthy-day check is already running")
     s.bus.publish(key, {"type": "sensing_state", "state": "ACTIVE"})
-    run = await s.provider.run("5xSTS", user_id=user_id, on_progress=progress, **kwargs)
+    task = asyncio.create_task(s.provider.run("5xSTS", user_id=user_id, on_progress=progress, **kwargs))
+    _enrolling[user_id] = task
+    try:
+        run = await task
+    except asyncio.CancelledError:
+        # Stopped by the patient (or the request went away): nothing is added to their usual pattern.
+        task.cancel()
+        s.bus.publish(key, {"type": "sensing_state", "state": "OFF"})
+        return {"accepted": False, "reason": "stopped", "measurement": None, "baseline": existing.model_dump(mode="json") if existing else None}
+    finally:
+        _enrolling.pop(user_id, None)
     seg = run.segmentation
     s.bus.publish(key, {"type": "sensing_state", "state": "COMPLETE"})
     m = FunctionalAssessment(
@@ -233,7 +302,7 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
         single_person_confidence=seg.single_person_confidence, measurement_confidence=seg.measurement_confidence,
         source=run.source, provider_mode=run.mode, recording_id=run.recording_id, timestamp=utcnow(),
     )
-    m = s.store.save_measurement(m, user_id=user_id, purpose="baseline", debug={"trace": seg.debug, "features": seg.features})
+    m = s.store.save_measurement(m, user_id=user_id, purpose="baseline", debug={"trace": seg.debug, "features": seg.features, "onset_s": seg.onset_s, "offset_s": seg.offset_s, "stand_peaks_s": seg.stand_peaks_s})
     if not seg.success:
         return {"accepted": False, "reason": seg.reason, "measurement": m.model_dump(mode="json", exclude={"signature"}), "baseline": existing.model_dump(mode="json") if existing else None}
     sessions.append(
@@ -245,6 +314,16 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
     b = summarise_baseline(user_id, sessions, any(x["arms_used"] for x in sessions), existing.created_at if existing else now, now)
     s.store.put_baseline(b)
     return {"accepted": True, "measurement": m.model_dump(mode="json", exclude={"signature"}), "baseline": b.model_dump(mode="json")}
+
+
+@app.post("/api/baselines/{user_id}/stop")
+def stop_enrol(user_id: str) -> dict:
+    """The patient stopped a healthy-day check; the reading is discarded."""
+    task = _enrolling.get(user_id)
+    if task is None or task.done():
+        raise HTTPException(409, "No healthy-day check is running")
+    task.cancel()
+    return {"stopped": True}
 
 
 @app.delete("/api/baselines/{user_id}")
@@ -290,9 +369,67 @@ def dev_sensor() -> dict:
     return out
 
 
+@app.get("/api/dev/sensor/ports")
+def dev_sensor_ports() -> dict:
+    return {"ports": list_ports(), "active": HUB.active()}
+
+
+@app.post("/api/dev/sensor/reset-board")
+def dev_sensor_reset(body: dict = Body(...)) -> dict:
+    stream = HUB.get(body.get("port", ""))
+    if stream is None:
+        raise HTTPException(409, "Open the live monitor for this port first")
+    stream.reset_board()
+    return {"reset": True}
+
+
+class SensorWifi(BaseModel):
+    port: str
+    ssid: str = Field(min_length=1, max_length=32)
+    password: str = Field(default="", max_length=63)
+
+
+@app.post("/api/dev/sensor/wifi")
+def dev_sensor_wifi(body: SensorWifi) -> dict:
+    """Provision the WISP CSI firmware's Wi-Fi over USB. Credentials go only to the board."""
+    stream = HUB.get(body.port)
+    if stream is None:
+        raise HTTPException(409, "Open the live monitor for this port first")
+    if body.password and not 8 <= len(body.password.encode()) <= 63:
+        raise HTTPException(400, "Wi-Fi passwords are 8–63 characters (or empty for an open network)")
+    if len(body.ssid.encode()) > 32:
+        raise HTTPException(400, "Network name is too long")
+    ssid = body.ssid
+    seen = [n["ssid"] for n in (stream.firmware_state().get("networks") or [])]
+    match = next((n for n in seen if n != ssid and n.strip().lower() == ssid.strip().lower()), None)
+    if match:
+        ssid = match  # the router's exact name (e.g. with a trailing space)
+    stream.write_line(f"WISP_WIFI {ssid.encode().hex()} {body.password.encode().hex()}")
+    return {"sent": True, "ssid": ssid, "corrected": match is not None}
+
+
+@app.post("/api/dev/sensor/command")
+def dev_sensor_command(body: dict = Body(...)) -> dict:
+    stream = HUB.get(body.get("port", ""))
+    if stream is None:
+        raise HTTPException(409, "Open the live monitor for this port first")
+    cmd = body.get("command")
+    if cmd not in ("WISP_STATUS", "WISP_FORGET", "WISP_SCAN"):
+        raise HTTPException(400, "Unknown command")
+    stream.write_line(cmd)
+    return {"sent": cmd}
+
+
 @app.post("/api/dev/sensor")
 def dev_sensor_update(body: dict = Body(...)) -> dict:
     s = svc()
+    if body.get("provider") == "esp32":
+        port = body.get("port")
+        if not port or port not in {p["port"] for p in list_ports()}:
+            raise HTTPException(400, "Unknown serial port")
+        s.provider = ESP32CSIProvider(port, int(body.get("baud") or config.SERIAL_BAUD))
+    elif body.get("provider") == "replay":
+        s.provider = state["replay"]
     if "live_counts" in body:
         s.live_counts = bool(body["live_counts"])
     if isinstance(s.provider, ReplayCSIProvider):
@@ -448,6 +585,29 @@ async def ws_session(ws: WebSocket, session_id: str):
         await ws.close(code=4404)
         return
     await _pump(ws, session_id, {"type": "snapshot", "snapshot": snap})
+
+
+@app.websocket("/ws/sensor/live")
+async def ws_sensor_live(ws: WebSocket, port: str, baud: int = config.SERIAL_BAUD):
+    """Engineering-view live monitor. Reads the radio only while this socket is open."""
+    if port not in {p["port"] for p in list_ports()}:
+        await ws.close(code=4404)
+        return
+    await ws.accept()
+    try:
+        stream = HUB.acquire(port, baud)
+    except Exception as exc:  # noqa: BLE001
+        await ws.send_json({"type": "error", "message": f"Could not open {port}: {exc}"})
+        await ws.close()
+        return
+    try:
+        while True:
+            await ws.send_json({"type": "frame", "status": stream.status(), "frame": stream.live_frame(), "text": stream.recent_text()})
+            await asyncio.sleep(0.25)
+    except (WebSocketDisconnect, RuntimeError):
+        pass
+    finally:
+        HUB.release(port)
 
 
 @app.websocket("/ws/enrol/{user_id}")

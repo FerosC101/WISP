@@ -1,52 +1,53 @@
 @import "tailwindcss";
 
-/* WISP design tokens: warm, calm, high-contrast. Red is reserved for emergencies. */
+/* WISP identity: warm ivory, deep forest green, soft sage, navy text.
+   Amber = same-day caution. Warm red is reserved for emergencies. */
 @theme {
-  --color-paper: #f8f5ef;
+  --color-ivory: #fbf8f1;
   --color-card: #ffffff;
+  --color-sage: #e9efe7;
+  --color-sage-deep: #d3ded0;
+  --color-forest: #1f4d3a;
+  --color-forest-deep: #163a2c;
   --color-ink: #1b2540;
-  --color-ink-soft: #4a5470;
-  --color-ink-faint: #737b90;
-  --color-line: #e3ddd2;
-  --color-navy: #22305a;
-  --color-blue: #2f6299;
-  --color-blue-bg: #e7eff8;
-  --color-teal: #23706b;
-  --color-teal-bg: #e2f1ef;
-  --color-amber: #9a5200;
-  --color-amber-bg: #fff1d9;
-  --color-red: #b3261e;
-  --color-red-bg: #fdecea;
-  --color-green: #2b6e45;
-  --color-green-bg: #e5f2e9;
-  --color-grey-bg: #efece6;
+  --color-ink-soft: #4a5368;
+  --color-ink-faint: #767d8f;
+  --color-line: #e6e0d4;
+  --color-teal: #1f6f6a;
+  --color-teal-bg: #e1f0ee;
+  --color-amber: #9c5700;
+  --color-amber-bg: #fdf0d9;
+  --color-red: #b3372b;
+  --color-red-bg: #fbe8e4;
+  --color-slate: #4a5368;
+  --color-slate-bg: #eeece7;
 
   --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  --radius-card: 1.25rem;
+  --radius-card: 1.5rem;
 }
 
 html {
-  font-size: 19px;
-  background: var(--color-paper);
+  font-size: 18px;
+  background: var(--color-ivory);
+  -webkit-text-size-adjust: 100%;
 }
 html[data-large="true"] {
-  font-size: 23px;
+  font-size: 22px;
 }
 
 body {
-  background: var(--color-paper);
+  background: var(--color-ivory);
   color: var(--color-ink);
   font-family: var(--font-sans);
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-/* Strong, visible focus for keyboard users. */
 :focus-visible {
-  outline: 3px solid var(--color-blue);
+  outline: 3px solid var(--color-teal);
   outline-offset: 3px;
-  border-radius: 0.5rem;
+  border-radius: 0.6rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -55,16 +56,42 @@ body {
     transition: none !important;
   }
 }
-
-.wisp-pulse {
-  animation: wisp-pulse 2.4s ease-in-out infinite;
+/* The same, chosen in You → Accessibility. */
+html[data-motion="reduce"] * {
+  animation: none !important;
+  transition: none !important;
 }
-@keyframes wisp-pulse {
-  0%,
-  100% {
-    opacity: 1;
+
+/* The WISP line: conversation → evidence → decision → care */
+.wisp-line-flow {
+  stroke-dasharray: 8 10;
+  animation: wisp-flow 1.6s linear infinite;
+}
+@keyframes wisp-flow {
+  to {
+    stroke-dashoffset: -36;
   }
-  50% {
-    opacity: 0.45;
+}
+.wisp-line-draw {
+  stroke-dasharray: 600;
+  stroke-dashoffset: 600;
+  animation: wisp-draw 1.4s ease-out forwards;
+}
+@keyframes wisp-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+.wisp-fade-in {
+  animation: wisp-fade 0.35s ease-out both;
+}
+@keyframes wisp-fade {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
   }
 }

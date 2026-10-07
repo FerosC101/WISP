@@ -2,85 +2,140 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useSyncExternalStore } from "react";
-import { usePrefs } from "@/lib/prefs";
+import { useEffect, useState } from "react";
+import { api } from "@/lib/api";
+import { usePrefs, usePrefsHydrated } from "@/lib/prefs";
+import type { Persona } from "@/lib/types";
+import { WispLogo } from "./WispLine";
 
+// Five primary patient sections. `match` lists the route prefixes each tab owns.
 const NAV = [
-  { href: "/", label: "Home" },
-  { href: "/history", label: "Previous checks" },
-  { href: "/baseline", label: "My usual" },
-  { href: "/privacy", label: "Privacy" },
+  { href: "/today", label: "Today", match: ["/today"], icon: "M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z" },
+  { href: "/check/start", label: "Check", match: ["/check", "/session", "/follow-up"], icon: "M9 12l2 2 4-4M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
+  { href: "/care", label: "Care", match: ["/care", "/caregiver"], icon: "M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z" },
+  { href: "/history", label: "History", match: ["/history"], icon: "M12 7v5l3 2M21 12a9 9 0 1 1-9-9 9 9 0 0 1 9 9z" },
+  { href: "/you", label: "You", match: ["/you", "/baseline", "/privacy"], icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" },
 ];
 
-export function Shell({ children }: { children: React.ReactNode }) {
-  const { largeText, setLargeText, devMode } = usePrefs();
+
+function DemoBar() {
+  const { userId, setUserId } = usePrefs();
   const pathname = usePathname();
-  // Preferences live in localStorage; render defaults until they have loaded.
-  const hydrated = useSyncExternalStore(
-    (cb) => usePrefs.persist.onFinishHydration(cb),
-    () => usePrefs.persist.hasHydrated(),
-    () => false,
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  useEffect(() => {
+    api<Persona[]>("/api/personas").then(setPersonas).catch(() => setPersonas([]));
+  }, []);
+  // The check on screen, wherever the patient is: /session/:id, /history/:id, /explain/:id, or ?s= / ?prev=.
+  // Safe to read window here: the demo bar only renders on the client after hydration.
+  const query = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const sessionId = pathname.match(/^\/(?:session|history|explain)\/(s_[^/]+)/)?.[1] ?? query?.get("s") ?? query?.get("prev") ?? undefined;
+  return (
+    <div className="bg-forest-deep text-white print:hidden">
+      <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-[0.78rem]">
+        <span className="font-mono font-bold tracking-wider">DEMO MODE</span>
+        <label className="flex items-center gap-1.5">
+          <span className="opacity-80">Profile</span>
+          <select value={userId} onChange={(e) => setUserId(e.target.value)} className="rounded bg-white/15 px-1.5 py-0.5 text-white">
+            {personas.map((p) => (
+              <option key={p.user_id} value={p.user_id} className="text-ink">
+                {p.display_name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <Link href={sessionId ? `/explain/${sessionId}` : "/explain"} className="underline underline-offset-2">
+          Technical view{sessionId ? " (this check)" : ""}
+        </Link>
+        <Link href="/dev" className="underline underline-offset-2">
+          Engineering view
+        </Link>
+      </div>
+    </div>
   );
+}
+
+export function Shell({ children }: { children: React.ReactNode }) {
+  const { largeText, setLargeText, reduceMotion, devMode } = usePrefs();
+  const pathname = usePathname();
+  const hydrated = usePrefsHydrated();
+  const technical = pathname.startsWith("/dev") || pathname.startsWith("/explain");
+
   useEffect(() => {
     document.documentElement.dataset.large = String(largeText);
   }, [largeText]);
+  useEffect(() => {
+    document.documentElement.dataset.motion = reduceMotion ? "reduce" : "full";
+  }, [reduceMotion]);
+
+  const isActive = (match: string[]) => match.some((m) => pathname === m || pathname.startsWith(`${m}/`));
 
   return (
     <div className="flex min-h-screen flex-col">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2">
         Skip to main content
       </a>
-      <header className="border-b border-line bg-paper/95">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
-          <Link href="/" className="flex items-baseline gap-2 no-underline" aria-label="WISP home">
-            <span className="text-2xl font-bold tracking-[0.18em] text-navy">WISP</span>
-            <span className="hidden text-sm text-ink-faint md:inline">self-triage &amp; care navigation</span>
+      {hydrated && devMode && <DemoBar />}
+      <header className="border-b border-line/70 print:hidden">
+        <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <Link href="/today" aria-label="WISP home" className="no-underline">
+            <WispLogo />
           </Link>
-          <nav aria-label="Main" className="flex flex-wrap items-center gap-1">
-            {NAV.map((n) => {
-              const active = n.href === "/" ? pathname === "/" : pathname.startsWith(n.href);
-              return (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  aria-current={active ? "page" : undefined}
-                  className={`rounded-full px-3 py-2 text-[0.9rem] ${active ? "bg-navy text-white" : "text-ink-soft hover:bg-grey-bg"}`}
-                >
-                  {n.label}
-                </Link>
-              );
-            })}
-            {hydrated && devMode && (
+          <nav aria-label="Main" className="hidden items-center gap-1 md:flex">
+            {NAV.map((n) => (
               <Link
-                href="/dev"
-                className={`rounded-full px-3 py-2 text-[0.9rem] font-mono ${pathname.startsWith("/dev") ? "bg-ink text-white" : "text-ink-soft hover:bg-grey-bg"}`}
+                key={n.href}
+                href={n.href}
+                aria-current={isActive(n.match) ? "page" : undefined}
+                className={`rounded-full px-4 py-2 text-[0.95rem] ${isActive(n.match) ? "bg-forest text-white" : "text-ink-soft hover:bg-sage"}`}
               >
-                Dev
+                {n.label}
               </Link>
-            )}
-            <button
-              type="button"
-              onClick={() => setLargeText(!largeText)}
-              aria-pressed={hydrated ? largeText : false}
-              className="ml-1 rounded-full border border-line bg-card px-3 py-2 text-[0.9rem] text-ink hover:border-ink-soft"
-            >
-              <span aria-hidden className="mr-1 font-bold">
-                A<span className="text-[1.2em]">A</span>
-              </span>
-              Larger text
-            </button>
+            ))}
           </nav>
+          <button
+            type="button"
+            onClick={() => setLargeText(!largeText)}
+            aria-pressed={hydrated ? largeText : false}
+            className="min-h-11 rounded-full border border-line bg-card px-4 text-[0.9rem] text-ink hover:border-ink-faint"
+          >
+            <span aria-hidden className="mr-1 font-bold">
+              A<span className="text-[1.25em]">A</span>
+            </span>
+            Text size
+          </button>
         </div>
-        {hydrated && devMode && (
-          <div className="bg-ink px-4 py-1 text-center font-mono text-xs tracking-wider text-white">DEMO MODE — developer tools enabled</div>
-        )}
       </header>
-      <main id="main" className="mx-auto w-full max-w-6xl flex-1 px-4 py-6 sm:px-6 sm:py-8">
+
+      <main id="main" className={`mx-auto w-full flex-1 px-4 pb-[calc(6rem+var(--sticky-h,0px)+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-12 ${technical ? "max-w-6xl" : "max-w-3xl"}`}>
         {children}
       </main>
-      <footer className="border-t border-line px-4 py-4 text-center text-sm text-ink-faint">
-        WISP gives care-navigation advice, not a diagnosis. In an emergency, call <strong className="text-ink">995</strong>.
+
+      <footer className="hidden print:hidden border-t border-line px-4 py-5 text-center text-sm text-ink-faint md:block">
+        WISP helps you decide what to do next. It does not diagnose. In an emergency, call <strong className="text-ink">995</strong>.
       </footer>
+
+      {/* Mobile: a screen's primary actions (StickyActions) sit just above the bottom navigation. */}
+      <div className="fixed inset-x-0 bottom-0 z-40 print:hidden md:hidden">
+      <div id="sticky-actions" />
+      <nav aria-label="Main" className="border-t border-line bg-ivory/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
+        <ul className="mx-auto grid max-w-md grid-cols-5">
+          {NAV.map((n) => (
+            <li key={n.href}>
+              <Link
+                href={n.href}
+                aria-current={isActive(n.match) ? "page" : undefined}
+                className={`flex min-h-16 flex-col items-center justify-center gap-1 text-[0.72rem] font-bold ${isActive(n.match) ? "text-forest" : "text-ink-faint"}`}
+              >
+                <svg viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                  <path d={n.icon} />
+                </svg>
+                {n.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      </div>
     </div>
   );
 }

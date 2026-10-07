@@ -1,14 +1,19 @@
 "use client";
 
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { CartesianGrid, Line, LineChart, ReferenceArea, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { LiveSensor } from "@/components/LiveSensor";
 import { Button, Card } from "@/components/ui";
 import { api, post } from "@/lib/api";
+import { beginFlow, stagePath } from "@/lib/checkFlow";
 import { usePrefs } from "@/lib/prefs";
-import type { AuditEvent, FunctionalAssessment } from "@/lib/types";
+import type { AuditEvent, FunctionalAssessment, Persona, Snapshot } from "@/lib/types";
 
 interface SensorInfo {
   name: string;
+  port?: string;
   mode: string;
   available: boolean;
   live_counts: boolean;
@@ -39,7 +44,34 @@ interface Evaluation {
   note: string;
 }
 
-const INK = "#22305a";
+const INK = "#1f4d3a";
+
+/** Real vs recorded at a glance: live data is the only kind that counts as real-world evidence. */
+function ModeBadge({ mode }: { mode: string }) {
+  const m =
+    mode === "live"
+      ? { label: "LIVE", cls: "bg-teal text-white" }
+      : mode === "synthetic_recorded"
+        ? { label: "SYNTHETIC", cls: "bg-slate-bg text-ink-soft border border-dashed border-ink-faint" }
+        : { label: "RECORDED", cls: "bg-amber-bg text-amber" };
+  return <span className={`inline-block rounded px-1.5 py-0.5 font-mono text-[0.62rem] font-bold ${m.cls}`}>{m.label}</span>;
+}
+
+type AuditFilter = "all" | "workbuddy" | "decisions" | "rules" | "patient" | "sensing";
+const AUDIT_FILTERS: { id: AuditFilter; label: string; match: (e: AuditEvent) => boolean }[] = [
+  { id: "all", label: "All events", match: () => true },
+  { id: "workbuddy", label: "WorkBuddy tool calls", match: (e) => e.actor === "workbuddy" && !!e.tool },
+  { id: "decisions", label: "Agent decisions", match: (e) => e.event === "agent_decision" },
+  { id: "rules", label: "Deterministic rules", match: (e) => e.actor === "rule_engine" },
+  { id: "patient", label: "Patient", match: (e) => e.actor === "patient" },
+  { id: "sensing", label: "Sensing", match: (e) => e.actor === "sensing" || e.tool === "run_functional_assessment" },
+];
+
+const DEMOS = [
+  { n: 1, title: "Agent uses sensing", user: "mdm_tan", text: "I've felt weak for two days." },
+  { n: 2, title: "Agent refuses sensing", user: "mr_lim", text: "This morning I suddenly felt dizzy and my left hand feels clumsy." },
+  { n: 3, title: "Dynamic reassessment (day 1)", user: "mdm_siti", text: "I'm tired and don't feel like myself." },
+];
 
 function SignalChart({ title, data, dataKey, detail }: { title: string; data: Record<string, number>[]; dataKey: string; detail: MeasurementDetail["debug"] }) {
   return (
@@ -64,8 +96,17 @@ function SignalChart({ title, data, dataKey, detail }: { title: string; data: Re
   );
 }
 
+const gtValid = (v: string) => v.trim() !== "" && Number.isFinite(Number(v)) && Number(v) >= 2 && Number(v) <= 120;
+
 export default function DevPage() {
-  const { devMode, setDevMode, agentMode, setAgentMode } = usePrefs();
+  const { devMode, setDevMode, agentMode, setAgentMode, userId, setUserId, language } = usePrefs();
+  const router = useRouter();
+  const [personas, setPersonas] = useState<Persona[]>([]);
+  const [auditFilter, setAuditFilter] = useState<AuditFilter>("all");
+  const [auditSession, setAuditSession] = useState("");
+  const [modeFilter, setModeFilter] = useState<"all" | "live" | "recorded">("all");
+  const [gtMethod, setGtMethod] = useState<"stopwatch" | "video">("stopwatch");
+  const [gtMsg, setGtMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [sensor, setSensor] = useState<SensorInfo | null>(null);
   const [measurements, setMeasurements] = useState<FunctionalAssessment[]>([]);
   const [selected, setSelected] = useState<MeasurementDetail | null>(null);
@@ -82,14 +123,29 @@ export default function DevPage() {
       api<FunctionalAssessment[]>("/api/dev/measurements"),
       api<AuditEvent[]>("/api/audit"),
       api<Evaluation>("/api/evaluation/sensor"),
-    ]).then(([s, m, a, e]) => {
+      api<Persona[]>("/api/personas"),
+    ]).then(([s, m, a, e, ps]) => {
+      setPersonas(ps);
       setSensor(s);
       setMeasurements(m.reverse());
-      setAudit(a.slice(-60).reverse());
+      setAudit(a.slice(-600).reverse());
       setEvaluation(e);
     });
   }, [reloadKey]);
 
+  const runDemo = async (user: string, text: string) => {
+    setUserId(user);
+    const snap = await post<Snapshot>("/api/sessions", {
+      user_id: user,
+      agent: agentMode,
+      language,
+      text: agentMode === "workbuddy" ? undefined : text,
+      confirm_summary: agentMode === "local_agent",
+    });
+    if (snap.agent === "workbuddy") return router.push(`/session/${snap.session_id}`);
+    beginFlow(snap.session_id);
+    router.push(stagePath("concern", snap.session_id));
+  };
   const update = async (body: Record<string, unknown>) => setSensor(await post<SensorInfo>("/api/dev/sensor", body));
   const open = async (id: string) => setSelected(await api<MeasurementDetail>(`/api/dev/measurements/${id}`));
 
@@ -100,14 +156,50 @@ export default function DevPage() {
     <div className="space-y-6 font-[system-ui]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="font-mono text-2xl font-bold">Developer / demo diagnostics</h1>
-          <p className="text-sm text-ink-soft">Not part of the patient experience. Raw CSI is only visualised here.</p>
+          <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-teal">Engineering view</p>
+          <h1 className="text-2xl font-bold text-forest">Sensing, agent &amp; demo diagnostics</h1>
+          <p className="text-sm text-ink-soft">Not linked from the patient app. Raw CSI-derived signals are only shown here.</p>
         </div>
         <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={devMode} onChange={(e) => setDevMode(e.target.checked)} className="h-5 w-5" />
-          Developer mode (shows DEMO banner and demo controls)
+          Demo mode (shows the DEMO bar and demo controls in the patient app)
         </label>
       </div>
+
+      <LiveSensor provider={sensor} onProviderChange={load} />
+
+      <Card>
+        <h2 className="font-bold">Demo setup</h2>
+        <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+          <span>Patient profile:</span>
+          {personas.map((p) => (
+            <button
+              key={p.user_id}
+              onClick={() => setUserId(p.user_id)}
+              aria-pressed={userId === p.user_id}
+              className={`rounded-full px-3 py-1.5 ${userId === p.user_id ? "bg-forest text-white" : "border border-line bg-card"}`}
+            >
+              {p.display_name} · {p.age} · baseline {p.baseline_sessions}/3
+            </button>
+          ))}
+        </div>
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {DEMOS.map((d) => (
+            <div key={d.n} className="rounded-2xl border border-line p-4">
+              <p className="font-mono text-xs text-ink-faint">DEMO {d.n}</p>
+              <p className="font-bold">{d.title}</p>
+              <p className="mt-1 text-sm text-ink-soft">“{d.text}”</p>
+              <Button className="mt-3 w-full" variant="secondary" onClick={() => runDemo(d.user, d.text)}>
+                Start as {personas.find((p) => p.user_id === d.user)?.display_name ?? d.user}
+              </Button>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 text-xs text-ink-faint">
+          Demo 3 day 2: after the home-monitoring result, use “Check in now” (Today, Care or the care plan) → “Something new” → “My daughter said I seemed confused
+          last night.” With WorkBuddy selected, the session opens empty and WorkBuddy attaches via get_active_session. <Link className="underline" href="/explain">Technical view index</Link>
+        </p>
+      </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
@@ -115,7 +207,7 @@ export default function DevPage() {
           {sensor && (
             <div className="mt-3 space-y-3 text-sm">
               <p>
-                Provider: <code className="rounded bg-grey-bg px-1">{sensor.name}</code> · mode{" "}
+                Provider: <code className="rounded bg-slate-bg px-1">{sensor.name}</code> · mode{" "}
                 <strong className={sensor.mode === "live" ? "text-teal" : "text-amber"}>{sensor.mode === "live" ? "LIVE SENSOR" : "RECORDED REPLAY"}</strong> ·{" "}
                 {sensor.available ? "available" : "unavailable"}
               </p>
@@ -200,7 +292,7 @@ export default function DevPage() {
             >
               Reset demo data
             </Button>
-            {msg && <span className="self-center text-sm text-green">{msg}</span>}
+            {msg && <span className="self-center text-sm text-forest">{msg}</span>}
           </div>
         </Card>
       </div>
@@ -208,9 +300,21 @@ export default function DevPage() {
       <Card>
         <div className="flex items-baseline justify-between">
           <h2 className="font-bold">Measurements</h2>
-          <button className="text-sm text-blue underline" onClick={load}>
-            Refresh
-          </button>
+          <div className="flex flex-wrap items-center gap-1 text-sm">
+            {(["all", "live", "recorded"] as const).map((f) => (
+              <button
+                key={f}
+                onClick={() => setModeFilter(f)}
+                aria-pressed={modeFilter === f}
+                className={`rounded-full px-3 py-1 ${modeFilter === f ? "bg-forest text-white" : "border border-line"}`}
+              >
+                {f === "all" ? "All" : f === "live" ? "Live only" : "Recorded / synthetic"}
+              </button>
+            ))}
+            <button className="ml-2 text-forest underline" onClick={load}>
+              Refresh
+            </button>
+          </div>
         </div>
         <div className="mt-3 overflow-x-auto">
           <table className="w-full text-left font-mono text-xs">
@@ -228,16 +332,29 @@ export default function DevPage() {
               </tr>
             </thead>
             <tbody>
-              {measurements.slice(0, 25).map((m) => (
-                <tr key={m.measurement_id} className={`cursor-pointer border-t border-line hover:bg-grey-bg ${selected?.measurement.measurement_id === m.measurement_id ? "bg-teal-bg" : ""}`} onClick={() => open(m.measurement_id)}>
+              {measurements
+                .filter((m) => modeFilter === "all" || (modeFilter === "live" ? m.provider_mode === "live" : m.provider_mode !== "live"))
+                .slice(0, 25)
+                .map((m) => (
+                <tr key={m.measurement_id} className={`cursor-pointer border-t border-line hover:bg-slate-bg ${selected?.measurement.measurement_id === m.measurement_id ? "bg-teal-bg" : ""}`} onClick={() => open(m.measurement_id)}>
                   <td className="py-1 pr-3">{m.measurement_id}</td>
-                  <td className="pr-3">{m.session_id}</td>
+                  <td className="pr-3">
+                    {m.session_id.startsWith("s_") ? (
+                      <Link href={`/explain/${m.session_id}`} onClick={(e) => e.stopPropagation()} className="underline">
+                        {m.session_id}
+                      </Link>
+                    ) : (
+                      m.session_id
+                    )}
+                  </td>
                   <td className="pr-3">{m.success ? "✓" : `✗ ${m.reason}`}</td>
                   <td className="pr-3">{m.total_time_seconds ?? "—"}</td>
                   <td className="pr-3">{m.per_rise_seconds.join(", ")}</td>
                   <td className="pr-3">{m.measurement_confidence.toFixed(2)}</td>
                   <td className="pr-3">{m.single_person_confidence.toFixed(2)}</td>
-                  <td className="pr-3">{m.provider_mode}</td>
+                  <td className="pr-3">
+                    <ModeBadge mode={m.provider_mode} />
+                  </td>
                   <td className="pr-3">{m.recording_id}</td>
                 </tr>
               ))}
@@ -248,6 +365,11 @@ export default function DevPage() {
         {selected && (
           <div className="mt-5 grid gap-5 lg:grid-cols-[2fr_1fr]">
             <div className="space-y-3">
+              <p className="flex flex-wrap items-center gap-2 text-sm">
+                <strong className="font-mono">{selected.measurement.measurement_id}</strong>
+                <ModeBadge mode={selected.measurement.provider_mode} />
+                {selected.measurement.provider_mode !== "live" && <span className="text-xs text-amber">Not real-world evidence</span>}
+              </p>
               {series.length > 0 ? (
                 <>
                   <SignalChart title="Motion energy (PCA of CSI amplitude) — shaded: detected test window" data={series} dataKey="energy" detail={selected.debug} />
@@ -268,19 +390,48 @@ export default function DevPage() {
                 ))}
               </dl>
               <h3 className="pt-2 font-bold">Record ground truth</h3>
-              <p className="text-xs text-ink-faint">Stopwatch or phone-video time for this session (seconds).</p>
-              <div className="flex gap-2">
-                <input value={gt} onChange={(e) => setGt(e.target.value)} inputMode="decimal" className="w-28 rounded border border-line px-2 py-1" aria-label="Ground truth seconds" />
+              <p className="text-xs text-ink-faint">Time from the start cue to sitting down after the fifth stand (2–120 s).</p>
+              <div className="flex flex-wrap gap-2">
+                <input
+                  value={gt}
+                  onChange={(e) => {
+                    setGt(e.target.value);
+                    setGtMsg(null);
+                  }}
+                  inputMode="decimal"
+                  placeholder="e.g. 12.4"
+                  className="w-24 rounded border border-line px-2 py-1"
+                  aria-label="Ground truth seconds"
+                  aria-invalid={gt !== "" && !gtValid(gt)}
+                />
+                <select value={gtMethod} onChange={(e) => setGtMethod(e.target.value as "stopwatch" | "video")} className="rounded border border-line bg-card px-2 py-1" aria-label="Method">
+                  <option value="stopwatch">Stopwatch</option>
+                  <option value="video">Phone video</option>
+                </select>
                 <Button
                   variant="secondary"
+                  disabled={!gtValid(gt)}
                   onClick={async () => {
-                    setEvaluation(await post<Evaluation>("/api/evaluation/validation", { measurement_id: selected.measurement.measurement_id, ground_truth_seconds: Number(gt), method: "stopwatch" }));
-                    setGt("");
+                    try {
+                      setEvaluation(
+                        await post<Evaluation>("/api/evaluation/validation", {
+                          measurement_id: selected.measurement.measurement_id,
+                          ground_truth_seconds: Number(gt),
+                          method: gtMethod,
+                        }),
+                      );
+                      setGtMsg({ ok: true, text: `Saved ${Number(gt).toFixed(1)} s (${gtMethod}) for ${selected.measurement.measurement_id}.` });
+                      setGt("");
+                    } catch (e) {
+                      setGtMsg({ ok: false, text: (e as Error).message });
+                    }
                   }}
                 >
                   Save
                 </Button>
               </div>
+              {gt !== "" && !gtValid(gt) && <p className="text-xs text-red">Enter seconds between 2 and 120.</p>}
+              {gtMsg && <p role="status" className={`text-xs ${gtMsg.ok ? "text-forest" : "text-red"}`}>{gtMsg.text}</p>}
             </div>
           </div>
         )}
@@ -298,7 +449,7 @@ export default function DevPage() {
               ["Median abs err (s)", evaluation.median_abs_error_seconds ?? "—"],
               ["Mean confidence", evaluation.mean_confidence ?? "—"],
             ].map(([k, v]) => (
-              <div key={String(k)} className="rounded-lg bg-grey-bg px-3 py-2">
+              <div key={String(k)} className="rounded-lg bg-slate-bg px-3 py-2">
                 <dt className="text-xs text-ink-faint">{k}</dt>
                 <dd className="font-mono text-lg font-bold">{v}</dd>
               </div>
@@ -311,16 +462,68 @@ export default function DevPage() {
       )}
 
       <Card>
-        <h2 className="font-bold">Audit log (latest 60)</h2>
-        <ol className="mt-3 max-h-96 space-y-1 overflow-y-auto font-mono text-xs">
-          {audit.map((e) => (
-            <li key={e.id} className="border-b border-line pb-1">
-              <span className="text-ink-faint">{new Date(e.timestamp).toLocaleTimeString()}</span> {e.session_id} <strong>{e.actor}</strong> {e.event}
-              {e.tool && <> · {e.tool}</>}
-              {e.result && <span className="text-teal"> → {e.result}</span>}
-            </li>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="font-bold">Audit log</h2>
+          <button className="text-sm text-forest underline" onClick={load}>
+            Refresh
+          </button>
+        </div>
+        <div className="mt-2 flex flex-wrap gap-1 text-sm" role="radiogroup" aria-label="Audit filter">
+          {AUDIT_FILTERS.map((f) => (
+            <button
+              key={f.id}
+              role="radio"
+              aria-checked={auditFilter === f.id}
+              onClick={() => setAuditFilter(f.id)}
+              className={`rounded-full px-3 py-1 ${auditFilter === f.id ? "bg-forest text-white" : "border border-line"}`}
+            >
+              {f.label}
+            </button>
           ))}
-        </ol>
+          <select value={auditSession} onChange={(e) => setAuditSession(e.target.value)} className="ml-auto rounded border border-line bg-card px-2 py-1 font-mono text-xs" aria-label="Session">
+            <option value="">All sessions</option>
+            {[...new Set(audit.map((e) => e.session_id))].map((sid) => (
+              <option key={sid} value={sid}>
+                {sid}
+              </option>
+            ))}
+          </select>
+        </div>
+        {(() => {
+          const match = AUDIT_FILTERS.find((f) => f.id === auditFilter)!.match;
+          const rows = audit.filter((e) => match(e) && (!auditSession || e.session_id === auditSession));
+          return (
+            <>
+              <p className="mt-2 text-xs text-ink-faint">
+                {rows.length} event{rows.length === 1 ? "" : "s"}
+                {rows.length > 120 ? " · showing the latest 120" : ""}
+              </p>
+              <ol className="mt-1 max-h-[28rem] space-y-1 overflow-y-auto font-mono text-xs">
+                {rows.slice(0, 120).map((e) => (
+                  <li key={e.id} className="border-b border-line pb-1">
+                    <span className="text-ink-faint">{new Date(e.timestamp).toLocaleTimeString()}</span>{" "}
+                    {e.session_id.startsWith("s_") ? (
+                      <Link href={`/explain/${e.session_id}`} className="underline">
+                        {e.session_id}
+                      </Link>
+                    ) : (
+                      e.session_id
+                    )}{" "}
+                    <strong>{e.actor}</strong> {e.event}
+                    {e.tool && <> · {e.tool}</>}
+                    {e.result && <span className="text-teal"> → {e.result}</span>}
+                    {Object.keys(e.data ?? {}).length > 0 && (
+                      <details className="mt-0.5">
+                        <summary className="cursor-pointer text-ink-faint">data</summary>
+                        <pre className="whitespace-pre-wrap break-all rounded bg-slate-bg p-2">{JSON.stringify(e.data, null, 1)}</pre>
+                      </details>
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </>
+          );
+        })()}
       </Card>
     </div>
   );

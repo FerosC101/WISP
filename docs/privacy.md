@@ -21,8 +21,8 @@
 | Measurements | Local SQLite, HMAC-signed | Summary only to agent |
 | Profile | Local; agent sees a minimal subset (no medication list) | — |
 | Conversation | WISP DB + WorkBuddy (if used) + optional LLM extraction endpoint | Shown in Privacy page |
-| Caregiver summary | Only with explicit per-share consent; delivery simulated in the prototype | No sensor data |
+| Caregiver summary | Only with explicit per-share consent after a preview of the exact text; by default just the recommendation (the reasons, which repeat symptoms, only if the person chooses); the trusted person can be removed; delivery simulated in the prototype | No sensor data, timings, medicines or conditions |
 
 Sensing activates only inside an assessment the patient started, only after the
-deterministic gates pass, and only after the patient presses **I'm seated and ready**.
+deterministic gates pass, and only after the patient presses **I'm seated — start**.
 The UI always shows the state: **Physical sensing OFF / ACTIVE / COMPLETE / LOCKED**.

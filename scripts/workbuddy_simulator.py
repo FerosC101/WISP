@@ -87,7 +87,7 @@ async def main() -> None:
             if screen["care_floor"] != screen["care_ceiling"]:
                 await call(client, "log_decision", session_id=sid, selected_action="Physical function check",
                            why=f"A functional measurement could distinguish {screen['care_floor']} from {screen['care_ceiling']}.")
-            await say(client, sid, "A short chair-rise check would help me compare today with your usual. Do you feel steady enough to try?")
+            await say(client, sid, "A short movement check could help. It takes about 30 seconds. Do you feel steady enough to try?")
             await call(client, "record_case_facts", session_id=sid, feels_safe_to_stand=True, others_present=False)
             el = await call(client, "check_assessment_eligibility", session_id=sid)
             assert el["allowed"], el["reason"]
@@ -101,12 +101,12 @@ async def main() -> None:
             if args.auto_ready:
                 asyncio.create_task(press_ready())
             else:
-                print("\n>>> Press “I'm seated and ready” on the WISP screen <<<")
+                print("\n>>> Press “I'm seated — start” on the WISP screen <<<")
             m = await call(client, "run_functional_assessment", session_id=sid, grant_id=el["grant_id"], type="5xSTS")
             if m.get("success"):
                 await call(client, "record_case_facts", session_id=sid, arms_used=True)
             else:
-                await say(client, sid, "I couldn't get a clear reading, so I won't use that result.")
+                await say(client, sid, "I couldn't get a reliable reading, so I won't use that result.")
             await call(client, "compare_to_baseline", session_id=sid)
             d = await call(client, "decide_care_tier", session_id=sid)
             await say(client, sid, f"{d['title']}. {d['action']}")

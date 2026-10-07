@@ -12,6 +12,8 @@ WISP is a self-triage and care-navigation agent for older adults with vague comp
 
 Technically: WISP is a self-triage agent that decides whether a short contactless functional assessment could materially improve a care recommendation, performs that assessment only when safe and relevant, compares the result against the patient's personal baseline, and incorporates it into an explained, rule-governed disposition.
 
+The patient experience is deliberately simple: *How are you feeling?* → a short conversation → safety questions → an optional quick movement check → a clear next step with reasons and warning signs. The complexity (agent, safety rules, sensing, baseline, audit) sits underneath and is shown only in the Technical and Engineering views.
+
 Every check ends in one of five care decisions — **Emergency (T1) · Same-day care (T2) · Primary care soon (T3) · Self-care with monitoring (T4) · Cannot safely assess (ABSTAIN)** — with what to do, where, when, why, and which warning signs would change the advice.
 
 ## 2. Problem statement
@@ -24,7 +26,7 @@ Older adults living alone in Singapore often notice something is "off" but can o
 |---|---|
 | Intelligent self-triage | Conversational intake + deterministic red-flag screen + rule-governed tiers |
 | Care navigation | Singapore-specific actions (995 / A&E / GP or polyclinic today / within days / home monitoring with re-check) |
-| "Grandma knows best" | Personal baseline: compared with *her* usual chair-rise, not population averages |
+| "Grandma knows best" | Personal baseline: compared with *her* usual movement, not population averages |
 | Trust & safety | Asymmetric urgency rule, abstention, auditable Decision Trace, consent-based sharing |
 
 ## 4. Core innovation
@@ -46,6 +48,14 @@ PATIENT SCREEN (Next.js) ◀────── WebSocket: chat · check steps ·
 ```
 
 Details: [docs/architecture.md](docs/architecture.md).
+
+**Three views, never mixed:**
+
+| View | Where | For |
+|---|---|---|
+| **Patient** (default) | `/` home, conversation, *Quick movement check*, recommendation, History, My usual, Privacy | The person checking in. No tool names, care floors, confidences or signals. "How WISP decided" explains in plain language. |
+| **Technical view** | `/explain/<session>` (link in the DEMO bar) | Judges: concern → safety screen → care range → missing info → options → selected action + why → tool called → sensor result → baseline → care-tier change → final disposition with rule IDs, plus a tool-call timeline by actor. Structured record, not model chain-of-thought. |
+| **Engineering view** | `/dev` (not linked from patient navigation) | Sensor source, live vs replay, synthetic vs real, measurement table, CSI-derived plots, ground truth, audit log, WorkBuddy tool calls, demo launchers. |
 
 ```
 apps/web/                 Next.js 16 + TypeScript + Tailwind v4 patient UI
@@ -73,7 +83,9 @@ WorkBuddy is the agent; WISP's tools are the safety-constrained hands.
 - WorkBuddy **understands vague language**, records structured facts (`record_case_facts`), notices what's missing, **chooses** whether a physical check is worth it (`log_decision`), calls the tools, and explains the result.
 - WISP's deterministic tools own emergency screening, sensing authorisation, care floors/ceilings and the final tier. WorkBuddy cannot skip, reorder or fabricate them.
 
-Setup, MCP config and the agent skill: [docs/workbuddy/](docs/workbuddy/README.md). An offline built-in agent calls the same tools, so the demo works without network access.
+Setup, MCP config, the agent skill and a step-by-step **live-connection checklist**: [docs/workbuddy/](docs/workbuddy/README.md). An offline built-in agent calls the same tools, so the demo still works without network access.
+
+> **Status:** the MCP server is verified end-to-end with a scripted MCP client (stdio and streamable HTTP). It has **not yet been run against real Tencent WorkBuddy** — complete the checklist in `docs/workbuddy/README.md` and record the result there.
 
 ## 7. MCP tools
 
@@ -87,7 +99,9 @@ Two ESP32 boards running Espressif `esp-csi` (`csi_send` / `csi_recv`), receiver
 
 The agent never sees CSI: it receives `{total_time_seconds, rise_count, per_rise_seconds, confidences, source, timestamp, session_id, verified}`.
 
-See [hardware/esp32/README.md](hardware/esp32/README.md).
+See [hardware/esp32/README.md](hardware/esp32/README.md). Real trials with stopwatch ground truth: `scripts/collect_trials.py` → `evaluation/sensor_accuracy/real_report.py`.
+
+> **Status:** the ESP32 serial parser and live provider are implemented and unit-tested, but **no real ESP32 capture has been processed yet** (no hardware was attached while building). All sensing results so far are on synthetic CSI.
 
 ## 9. Local installation
 
@@ -106,7 +120,9 @@ cd apps/web && npm install && cd ..
 WISP_SENSOR_MODE=esp32 WISP_SERIAL_PORT=/dev/cu.usbserial-XXXX ./scripts/demo.sh   # live ESP32
 ```
 
-Open http://localhost:3000. Developer tools (sensor source, "someone walks through", replay speed, CSI plots, audit log, ground-truth entry): http://localhost:3000/dev.
+Open http://localhost:3000. For demos, open http://localhost:3000/dev (Engineering view) and tick **Demo mode**: a thin DEMO bar then offers the profile switcher (Mdm Tan / Mr Lim / Mdm Siti), the Technical view and the Engineering view.
+
+Safety questions can be asked in **English, 中文, Bahasa Melayu or தமிழ்** (selector on the home screen). Answer buttons send language-independent values, so the rules never parse translated text. Translations are drafts pending native-speaker review.
 
 Optional LLM extraction via any OpenAI-compatible endpoint (e.g. Tencent Hunyuan): `WISP_LLM_BASE_URL`, `WISP_LLM_API_KEY`, `WISP_LLM_MODEL`. Merged conservatively — it can add warning signs, never remove them.
 
@@ -114,10 +130,10 @@ Optional LLM extraction via any OpenAI-compatible endpoint (e.g. Tencent Hunyuan
 
 | # | Persona | Says | WISP does | Result |
 |---|---|---|---|---|
-| 1 | Mdm Tan, 78 | "I've felt weak for two days." (+ eating less) | Screen passes → **chooses** 5xSTS → clearly slower than her usual, needed arms | **T2 Please be seen today** · impact: Primary care soon → Same-day care |
+| 1 | Mdm Tan, 78 | "I've felt weak for two days." (+ eating less) | Screen passes → "A short movement check could help" → **chooses** 5xSTS → clearly slower than her usual, needed arms | **T2 Please be seen today** · impact: Primary care soon → Same-day care |
 | 2 | Mr Lim, 72 | "This morning I suddenly felt dizzy and my left hand feels clumsy." | Red flag → **SENSING NOT REQUESTED**, sensing locked | **T1 Call 995** |
 | 3 | Mdm Siti, 80 | "I'm tired and don't feel like myself." → next day: "My daughter said I seemed confused last night." | Day 1: 5xSTS within range, re-check scheduled. Day 2: red flag | **T4 → T1**; yesterday's normal result is context only |
-| 4 | Mdm Tan | (someone walks through during the check) | Measurement rejected: "I couldn't get a clear reading, so I won't use that result." | **ABSTAIN** — speak to your doctor today |
+| 4 | Mdm Tan | (someone walks through during the check) | Measurement rejected: "I couldn't get a reliable reading, so I won't use that result." | **ABSTAIN** — speak to your doctor today |
 
 Script: [docs/demo.md](docs/demo.md). All four run end-to-end in `services/tests/test_scenarios.py` and were exercised through the browser UI.
 
@@ -141,7 +157,7 @@ Raw physical sensing stays local. WorkBuddy receives only the functional summary
 ## 14. Evaluation
 
 ```bash
-cd services && uv run pytest                          # 109 tests
+cd services && uv run pytest                          # 112 tests
 cd services && uv run python ../evaluation/run_all.py # → evaluation/results/report.md
 ```
 
@@ -154,7 +170,7 @@ Latest run (all synthetic — small samples, stated honestly):
 | Red-flag extraction from free text (rules only; each flag is *also* asked directly) | 14/15 detected, 0 false positives; missed a Malay-only statement |
 | 5xSTS timing on synthetic CSI (80 single-person sessions) | MAE 0.21 s (bias −0.21 s), 7 false rejections |
 | Passer-by rejection on synthetic CSI (60 sessions) | 30/60 (50 %) |
-| Real participants with stopwatch / video ground truth | **0 so far** — log them on the Dev page; MAE/median error/failures/confidence are computed automatically |
+| Real participants with stopwatch / video ground truth | **0 so far** — collect with `scripts/collect_trials.py`; `real_report.py` reports participants, trials, detections, rejections, MAE, median error and confidence distribution from recorded rows only |
 
 No population-level fairness or real-world sensing accuracy is claimed.
 
@@ -162,7 +178,9 @@ No population-level fairness or real-world sensing accuracy is claimed.
 
 - Rule thresholds are prototype values and have not been clinically validated.
 - Sensor results to date are on synthetic CSI; the pipeline must be re-tuned and validated on real ESP32 captures.
-- A single Wi-Fi link detects a second moving person only about half the time on synthetic data; mitigated by asking the patient and by the start-cue protocol.
+- Automatic multi-person detection is **experimental**: a single Wi-Fi link catches a passer-by only about half the time on synthetic data. The primary safeguard is asking "Is anyone else moving around in the room?" before the check.
+- Tencent WorkBuddy has not yet been connected live; the ESP32 has not yet captured a real session.
+- Translations of the safety questions need native-speaker review; recommendation screens are English only.
 - Arm use is self-reported.
 - English-centric rule extraction; non-English input recovers through follow-up questions, or through LLM extraction if configured.
 - Clinic availability is not live; care links open map searches and the profile's usual GP.
@@ -172,6 +190,6 @@ No population-level fairness or real-world sensing accuracy is claimed.
 
 - Real-participant validation (stopwatch/video ground truth) and threshold tuning; second receiver link for better multi-person rejection.
 - Additional providers behind the same `run_functional_assessment` interface: phone accelerometer, camera, mmWave, wearable.
-- Clinician review of the rule tables; integration with HealthHub / clinic booking.
-- Multilingual intake (Mandarin, Malay, Tamil) and voice.
+- Clinician review using [docs/clinical_review.md](docs/clinical_review.md); integration with HealthHub / clinic booking.
+- Fully multilingual conversation and recommendations (safety questions are already structured in four languages).
 - Real caregiver notifications with consent management.

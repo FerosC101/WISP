@@ -111,8 +111,13 @@ def sensor_synthetic() -> dict:
 
 
 def sensor_real() -> dict:
-    rows = list(csv.DictReader((EVAL / "sensor_accuracy" / "ground_truth_log.csv").open()))
-    return {"n": len(rows), "note": "Log real sessions in ground_truth_log.csv or via the Dev page; the API reports MAE at /api/evaluation/sensor."}
+    import sys
+
+    sys.path.insert(0, str(EVAL / "sensor_accuracy"))
+    from real_report import summarise, to_markdown
+
+    s = summarise(EVAL / "sensor_accuracy" / "trials.csv")
+    return {**s, "markdown": to_markdown(s)}
 
 
 def md_report(t, f, rf, ss, sr) -> str:
@@ -139,7 +144,7 @@ def md_report(t, f, rf, ss, sr) -> str:
           f"- Second person crossing the room: {ss['interference_rejected']}/{ss['interference_sessions']} rejected "
           f"({ss['interference_rejected'] / ss['interference_sessions']:.0%}). Undetected crossings are a known limitation of a single Wi-Fi link.",
           "", "## 5. Sensor accuracy with real participants", "",
-          f"Real sessions with ground truth logged: **{sr['n']}**. {sr['note']}", ""]
+          sr["markdown"], ""]
     return "\n".join(L)
 
 
@@ -153,7 +158,7 @@ async def main() -> None:
     (OUT / "results.json").write_text(json.dumps({"triage": t, "fairness": f, "red_flags": rf, "sensor_synthetic": ss, "sensor_real": sr}, indent=2, default=str))
     (OUT / "report.md").write_text(md_report(t, f, rf, ss, sr))
     print(f"Triage {t['passed']}/{t['n']} · fairness flips {f['flips']}/{f['n']} · red-flag misses {rf['missed']}/{rf['expected_flags']} · "
-          f"synthetic MAE {ss['mae_s']}s, interference rejected {ss['interference_rejected']}/{ss['interference_sessions']}")
+          f"synthetic MAE {ss['mae_s']}s, interference rejected {ss['interference_rejected']}/{ss['interference_sessions']} · real trials {sr['n_trials']}")
     for r in t["rows"]:
         if not r["pass"]:
             print("FAIL", r["id"], r["expected_tier"], r["got_tier"], r["got_sensing"])

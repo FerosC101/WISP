@@ -1,6 +1,6 @@
 # WISP evaluation report
 
-Generated 2026-10-04 20:05. Sample sizes are small and stated for every result.
+Generated 2026-10-05 00:10. Sample sizes are small and stated for every result.
 
 ## 1. Triage vignettes (end-to-end conversations)
 
@@ -73,4 +73,4 @@ Free-text extraction is a backstop: every warning sign is also asked as a direct
 
 ## 5. Sensor accuracy with real participants
 
-Real sessions with ground truth logged: **0**. Log real sessions in ground_truth_log.csv or via the Dev page; the API reports MAE at /api/evaluation/sensor.
+No trials recorded in `trials.csv` yet. Collect them with `scripts/collect_trials.py`.

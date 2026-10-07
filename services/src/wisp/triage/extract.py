@@ -20,7 +20,8 @@ NUM_WORDS = {"one": 1, "a": 1, "an": 1, "two": 2, "three": 3, "four": 4, "five":
 
 FUNCTIONAL = re.compile(
     r"\b(weak|weaker|weakness|tired|tiredness|fatigue|fatigued|exhausted|slow|slower|sluggish|lethargic|no energy|low energy|"
-    r"less energy|strength|not (feel )?(like )?myself|not myself|not quite right|unsteady|wobbly|drained|run down|no strength)\b",
+    r"less energy|strength|not (feel )?(like )?myself|not myself|not quite right|unsteady|wobbly|drained|run down|no strength|"
+    r"dizzy|dizziness|light-?headed|feels? off|something('s| is)? off|off today)\b",
     re.I,
 )
 OUT_OF_SCOPE = re.compile(r"\b(tooth|toothache|rash|itch|itchy|ear|sore throat|cough|eye drops|prescription|refill|insurance|appointment only)\b", re.I)
@@ -91,7 +92,9 @@ def summarise_complaint(text: str) -> str | None:
         parts.append("tired")
     if re.search(r"\b(slow|slower|sluggish)\b", t):
         parts.append("slower than usual")
-    if re.search(r"not (feel )?(like )?myself|not quite right", t):
+    if re.search(r"\b(dizzy|dizziness|light-?headed)\b", t):
+        parts.append("dizzy")
+    if re.search(r"not (feel )?(like )?myself|not quite right|feels? off|something('s| is)? off", t):
         parts.append("not like yourself")
     if not parts:
         return None

@@ -24,7 +24,7 @@ SAFE_ANSWERS = {
     "onset": "Gradually", "duration": "2–3 days", "chest_pain": "No", "severe_breathlessness": "No",
     "one_sided_weakness": "No", "speech_difficulty": "No", "confusion": "No", "loss_of_consciousness": "No",
     "sudden_vision_change": "No", "fall": "No", "eating": "Yes", "fluids": "Yes",
-    "steady": "Yes, I feel steady", "others": "No, I'm alone", "arms": "No",
+    "offer": "Do the check", "steady": "Yes, I'm ready", "others": "No, I'm alone", "arms": "No",
 }
 
 
@@ -110,14 +110,14 @@ async def test_scenario_4_interference_abstains(agent, service, provider):
     await finish_check(agent, service, sid)
     d = service.store.get_disposition(sid)
     assert d.tier == Tier.ABSTAIN
-    assert any("couldn't get a clear reading" in m["text"] for m in service.store.messages(sid))
+    assert any("couldn't get a reliable reading" in m["text"] for m in service.store.messages(sid))
 
 
 async def test_unsteady_patient_is_not_tested(agent, service):
     sid = service.start_session("mdm_tan").session_id
     agent.open(sid)
     agent.handle(sid, "I feel weak and slow.")
-    await converse(agent, service, sid, {**SAFE_ANSWERS, "steady": "No, I don't feel steady"})
+    await converse(agent, service, sid, {**SAFE_ANSWERS, "steady": "No"})
     d = service.store.get_disposition(sid)
     assert d.tier == Tier.T2 and service.case(sid).measurement_id is None
 
@@ -149,3 +149,40 @@ def test_extraction_negation_and_reported_by_family():
     ex = extract_rules("This morning I suddenly felt dizzy and my left hand feels clumsy")
     assert ex.red_flags.get("sudden_onset") and ex.red_flags.get("one_sided_weakness")
     assert extract_rules("I've felt weak for two days").duration_days == 2
+
+
+async def test_offer_explains_why_and_can_be_skipped(agent, service):
+    sid = service.start_session("mdm_tan").session_id
+    agent.open(sid, greet=False)
+    agent.handle(sid, "I feel weak.")
+    assert await converse(agent, service, sid, SAFE_ANSWERS, until="offer") == "offer"
+    offer = [m for m in service.store.messages(sid) if m["data"].get("kind") == "offer"][-1]
+    assert "home monitoring" in offer["data"]["why"] and "doctor" in offer["data"]["why"]
+    assert [r["value"] for r in offer["data"]["quick_replies"]] == ["do_check", "skip"]
+    agent.handle(sid, "Skip", "skip")
+    d = service.store.get_disposition(sid)
+    assert d.tier == Tier.T3 and service.case(sid).measurement_id is None
+
+
+async def test_safety_questions_in_mandarin_use_button_values(agent, service):
+    """Translated labels are never parsed: the rules only see the button values."""
+    from wisp.triage.i18n import T
+
+    sid = service.start_session("mdm_tan").session_id
+    agent.open(sid, lang="zh", greet=False)
+    agent.handle(sid, "I feel weak since yesterday")
+    q = [m for m in service.store.messages(sid) if m["data"].get("question") == "onset"][-1]
+    assert q["text"] == T["q_onset"]["zh"] and q["data"]["quick_replies"][0]["label"] == T["sudden"]["zh"]
+    agent.handle(sid, T["gradual"]["zh"], "gradual")
+    agent.handle(sid, T["yes"]["zh"], "yes")  # chest pain
+    d = service.store.get_disposition(sid)
+    assert d.tier == Tier.T1 and service.case(sid).sensing_locked
+    assert any(m["text"] == T["emergency_now"]["zh"] for m in service.store.messages(sid))
+
+
+def test_every_language_has_every_safety_string():
+    from wisp.triage.i18n import LANGUAGES, T
+
+    for key, entry in T.items():
+        for lang in LANGUAGES:
+            assert entry.get(lang), f"missing {lang} for {key}"
