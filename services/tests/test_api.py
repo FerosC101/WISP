@@ -7,6 +7,7 @@ from fastapi.testclient import TestClient
 
 from wisp import config
 from wisp.api import main as api_main
+from wisp.schemas import AuditEvent
 
 
 @pytest.fixture
@@ -57,3 +58,64 @@ def test_patient_chat_flow(client):
     assert snap["disposition"]["tier"] == "T1"
     assert snap["case"]["sensing_locked"] is True
     assert client.post(f"/api/sessions/{sid}/messages", json={"text": ""}).status_code == 422
+
+
+def test_corrections_endpoint(client):
+    # Not reviewing yet: corrections are refused.
+    sid = client.post("/api/sessions", json={"user_id": "mdm_tan", "text": "I feel weak", "confirm_summary": True}).json()["session_id"]
+    assert client.post(f"/api/sessions/{sid}/corrections", json={"field": "duration", "value": "d_week"}).status_code == 409
+    answers = ["gradual", "d_days"] + ["no"] * 8 + ["yes"]
+    for v in answers:
+        snap = client.post(f"/api/sessions/{sid}/messages", json={"text": v, "value": v}).json()
+    assert snap["messages"][-1]["data"]["question"] == "confirm"
+    assert client.post(f"/api/sessions/{sid}/corrections", json={"field": "chest_pain", "value": "maybe"}).status_code == 400
+    snap = client.post(f"/api/sessions/{sid}/corrections", json={"field": "chest_pain", "value": "yes"}).json()
+    assert snap["disposition"]["tier"] == "T1"
+    # WorkBuddy sessions cannot be corrected through the patient endpoint.
+    wb = client.post("/api/sessions", json={"user_id": "mdm_siti", "agent": "workbuddy"}).json()["session_id"]
+    assert client.post(f"/api/sessions/{wb}/corrections", json={"field": "duration", "value": "d_week"}).status_code == 409
+
+
+def test_clinic_location_reaches_the_screen_not_the_agent(client):
+    snap = client.post("/api/sessions", json={"user_id": "mdm_tan"}).json()
+    details = snap["profile"]["usual_gp_details"]
+    assert details["address"] and details["lat"] is not None
+    client.post("/api/sessions", json={"user_id": "mdm_siti", "agent": "workbuddy"})
+    sid = client.post("/api/tools/get_active_session", json={"user_id": "mdm_siti"}, headers=H).json()["session_id"]
+    agent_view = client.post("/api/tools/get_health_profile", json={"session_id": sid}, headers=H).json()
+    assert "usual_gp_details" not in agent_view and agent_view["usual_gp"]
+
+
+def test_follow_up_endpoint_validates_trend(client):
+    sid = client.post("/api/sessions", json={"user_id": "mdm_tan", "text": "I feel weak"}).json()["session_id"]
+    before = len(client.get("/api/history?user_id=mdm_tan").json())
+    assert client.post(f"/api/sessions/{sid}/followup", json={"trend": "fine"}).status_code == 400
+    assert client.post(f"/api/sessions/{sid}/followup", json={"trend": "new", "text": " "}).status_code == 400
+    assert len(client.get("/api/history?user_id=mdm_tan").json()) == before  # nothing created
+    snap = client.post(f"/api/sessions/{sid}/followup", json={"trend": "same", "confirm_summary": True}).json()
+    assert snap["case"]["previous_session_id"] == sid
+    assert snap["messages"][-1]["data"]["question"] == "onset"
+
+
+def test_history_includes_semantic_movement_result_only(client):
+    client.post("/api/sessions", json={"user_id": "mdm_tan", "text": "I feel weak"})
+    item = client.get("/api/history?user_id=mdm_tan").json()[0]
+    assert {"agent", "functional_status", "comparison_status", "comparison_severity"} <= item.keys()
+    assert not any("time" in k and "created" not in k for k in item)  # no timings in the timeline feed
+
+
+def test_profile_for_own_screen_includes_medications_but_agent_view_does_not(client):
+    me = client.get("/api/profile/mdm_tan").json()
+    assert me["medications"] == ["amlodipine"] and me["usual_gp_details"]["address"]
+    assert client.get("/api/profile/nobody").status_code == 404
+    client.post("/api/sessions", json={"user_id": "mdm_tan", "agent": "workbuddy"})
+    sid = client.post("/api/tools/get_active_session", json={"user_id": "mdm_tan"}, headers=H).json()["session_id"]
+    agent_view = client.post("/api/tools/get_health_profile", json={"session_id": sid}, headers=H).json()
+    assert "medications" not in agent_view
+
+
+def test_global_audit_returns_the_latest_events(store):
+    for i in range(30):
+        store.log(AuditEvent(session_id=f"s_{i:012d}", actor="system", event=f"e{i}"))
+    latest = store.audit(limit=10)
+    assert [e.event for e in latest] == [f"e{i}" for i in range(20, 30)]  # newest 10, oldest first

@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import asyncio
 import re
+from datetime import datetime, timezone
 
 from ..rules.care_tier import complaint_sentence
 from ..rules.ranges import symptom_range
@@ -37,6 +38,17 @@ RED_FLAG_QUESTIONS = [
 ]
 
 DURATIONS = {"d_today": 0.5, "d_yesterday": 1, "d_days": 2.5, "d_week": 7, "d_longer": 14}
+
+# How a follow-up check-in starts: the patient's answer to "compared with last time?"
+TRENDS = {
+    "better": "I'm feeling better than last time.",
+    "same": "I feel about the same as last time.",
+    "worse": "I'm feeling worse than last time.",
+    "new": "Something new has happened.",
+}
+
+# Fields the patient may correct on the "What WISP understood" screen.
+CORRECTABLE = {"duration", "onset", "eating", "fluids", "fall", *RED_FLAG_QUESTIONS}
 
 # How each tier is described to the patient when explaining why a check could help.
 PATIENT_TIER_PHRASE = {
@@ -108,13 +120,17 @@ class LocalAgent:
         return self.svc.record_case_facts(sid, CaseFacts(**facts), ACTOR)
 
     # ------------------------------------------------------------------ entry points
-    def open(self, sid: str, *, lang: str = "en", greet: bool = True) -> None:
-        """Start the agent. With greet=False the patient's first message follows immediately."""
-        self._set(sid, pending="complaint", stage="intake", lang=lang)
+    def open(self, sid: str, *, lang: str = "en", greet: bool = True, confirm_summary: bool = False) -> None:
+        """Start the agent. With greet=False the patient's first message follows immediately.
+
+        With confirm_summary=True the agent pauses after the safety questions so the
+        patient can review and correct what it understood (the app's Check flow).
+        """
+        self._set(sid, pending="complaint", stage="intake", lang=lang, confirm=confirm_summary)
         case = self.svc.case(sid)
         profile = self.svc.get_health_profile(sid, ACTOR)
         name = profile["display_name"]
-        if case.previous_session_id:
+        if case.previous_session_id and greet:
             prev = self.svc.get_previous_assessments(sid, ACTOR, limit=1)
             if prev:
                 p = prev[0]
@@ -128,6 +144,49 @@ class LocalAgent:
                 return
         if greet:
             self.tell(sid, f"Hello {name}. How are you feeling today? Tell me in your own words.", kind="question", question="complaint")
+
+    def follow_up(self, sid: str, trend: str, text: str | None = None) -> None:
+        """Start a follow-up check-in from a structured "compared with last time" answer.
+
+        Better / same / worse carry over the previous complaint (worse also records
+        getting_worse, which the rules treat as a concerning finding). Something new is
+        handled as a new complaint. Either way every safety question is asked again in
+        this session, and the previous result is context only: it never lowers urgency.
+        """
+        if trend not in TRENDS:
+            raise ToolError("Unknown trend", "invalid_input")
+        text = (text or "").strip()[:1000] or None
+        if trend == "new" and not text:
+            raise ToolError("Please say what is new.", "invalid_input")
+        case = self.svc.case(sid)
+        prev = self.svc.case(case.previous_session_id) if case.previous_session_id else None
+        if prev is None or prev.user_id != case.user_id:
+            raise ToolError("No previous check to follow up", "invalid_state")
+        self.svc.say(sid, "patient", f"{TRENDS[trend]} {text}" if text else TRENDS[trend])
+        self.svc.audit(sid, "patient", "follow_up_answer", result=trend, added_words=bool(text))
+        if trend == "new":
+            return self._on_complaint(sid, text, extract(text))
+
+        elapsed = max(1.0, (datetime.now(timezone.utc) - prev.created_at).total_seconds() / 86400)
+        facts: dict = {
+            "complaint_text": prev.complaint_text,
+            "complaint_summary": prev.complaint_summary,
+            "complaint_category": prev.complaint_category,
+            "modifiers": {"getting_worse": True} if trend == "worse" else {},
+        }
+        if prev.duration_days is not None:
+            facts["duration_days"] = min(3650, round(prev.duration_days + elapsed, 1))
+        if prev.onset == "gradual":
+            facts["onset"] = "gradual"
+        if text:  # anything else they mentioned, read like any typed message
+            ex = extract(text)
+            facts["red_flags"] = ex.red_flags
+            facts["modifiers"] = {**ex.modifiers, **facts["modifiers"]}
+        self.record(sid, **{k: v for k, v in facts.items() if v is not None})
+        if self._emergency_if_needed(sid):
+            return
+        self._acknowledge(sid)
+        self._next(sid)
 
     def handle(self, sid: str, text: str, value: str | None = None) -> None:
         text = text.strip()[:1000]
@@ -393,7 +452,63 @@ class LocalAgent:
             return self.ask(sid, "fall", t("q_fall", lang), self.yes_no(sid))
         if case.modifiers.reduced_intake is None:
             return self.ask(sid, "eating", t("q_eating", lang), self.yes_no(sid))
+        if self._state(sid).get("confirm"):
+            return self.ask(sid, "confirm", t("q_confirm", lang), [reply("confirm", lang)], kind="confirm")
         self._after_screen(sid)
+
+    def _on_confirm(self, sid: str, ans, text, ex) -> None:
+        if ans in ("confirm", "yes"):
+            self._after_screen(sid)
+        else:
+            self._reask(sid)
+
+    def correct(self, sid: str, field: str, value: str) -> None:
+        """Apply a patient's correction from the summary screen, then continue.
+
+        Only allowed while the agent is waiting for the patient to confirm the summary.
+        Corrections go through record_case_facts like any answer: a newly reported
+        warning sign escalates at once, and a reported one cannot be withdrawn.
+        """
+        if self._state(sid).get("pending") != "confirm":
+            raise ToolError("Answers can only be changed while reviewing the summary.", "invalid_state")
+        if field not in CORRECTABLE:
+            raise ToolError(f"'{field}' cannot be changed here", "invalid_input")
+        rec = lambda **facts: self.svc.record_case_facts(sid, CaseFacts(**facts), "patient")  # noqa: E731
+        if field == "duration":
+            if value not in DURATIONS:
+                raise ToolError("Unknown duration", "invalid_input")
+            rec(duration_days=DURATIONS[value])
+        elif field == "onset":
+            if value not in ("sudden", "gradual"):
+                raise ToolError("Onset must be sudden or gradual", "invalid_input")
+            rec(onset=value)
+        elif field == "eating":  # "Have you been eating and drinking as usual?"
+            if value not in ("yes", "no"):
+                raise ToolError("Answer must be yes or no", "invalid_input")
+            rec(modifiers={"reduced_intake": value == "no"} | ({"unable_to_keep_fluids": False} if value == "yes" else {}))
+        elif field == "fluids":  # "Can you drink water and keep it down?"
+            if value not in ("yes", "no"):
+                raise ToolError("Answer must be yes or no", "invalid_input")
+            rec(modifiers={"reduced_intake": True, "unable_to_keep_fluids": value == "no"})
+        elif field == "fall":
+            if value == "no":
+                rec(red_flags={"recent_fall_with_injury": False}, modifiers={"fall_without_injury": False})
+            elif value == "yes_no_injury":
+                rec(red_flags={"recent_fall_with_injury": False}, modifiers={"fall_without_injury": True})
+            elif value == "yes_injury":
+                rec(red_flags={"recent_fall_with_injury": True})
+            else:
+                raise ToolError("Unknown fall answer", "invalid_input")
+        else:  # a warning-sign question
+            if value not in ("yes", "no"):
+                raise ToolError("Answer must be yes or no", "invalid_input")
+            rec(red_flags={field: value == "yes"})
+        if self._emergency_if_needed(sid):
+            return
+        if field == "eating" and value == "no" and self.svc.case(sid).modifiers.unable_to_keep_fluids is None:
+            # Eating less now: ask the follow-up the original answer skipped.
+            return self.ask(sid, "fluids", t("q_fluids", self._lang(sid)), self.yes_no(sid, unsure=False))
+        self._next(sid)  # back to the confirm step
 
     def _emergency_if_needed(self, sid: str) -> bool:
         rf = self.svc.screen_red_flags(sid, ACTOR)

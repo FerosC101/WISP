@@ -28,5 +28,8 @@ LLM_MODEL = os.environ.get("WISP_LLM_MODEL", "hunyuan-turbos-latest")
 # Shared secret between the MCP server process and the API (local only).
 MCP_TOKEN = os.environ.get("WISP_MCP_TOKEN", "wisp-local-dev-token")
 
+# Browser origins allowed to call the API (comma-separated). The e2e suite runs the web app on another port.
+CORS_ORIGINS = [o.strip() for o in os.environ.get("WISP_CORS_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000").split(",") if o.strip()]
+
 GRANT_TTL_SECONDS = 600
 PATIENT_READY_TIMEOUT_SECONDS = 180

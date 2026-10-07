@@ -37,7 +37,7 @@ export default function SessionPage() {
     return (
       <div className="py-16 text-center">
         <p className="text-lg">We couldn&apos;t open this check.</p>
-        <Link href="/" className="mt-6 inline-block font-bold text-forest underline">
+        <Link href="/today" className="mt-6 inline-block font-bold text-forest underline">
           Back to home
         </Link>
       </div>

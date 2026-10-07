@@ -54,6 +54,9 @@ function Record({ s }: { s: Snapshot }) {
   const last = decisions[decisions.length - 1];
   const fr = t.functional_result;
   const sensingCalls = t.tool_calls.filter((c) => c.tool === "run_functional_assessment");
+  const followUp = t.events.find((e) => e.event === "follow_up_answer");
+  const corrections = t.events.filter((e) => e.tool === "record_case_facts" && e.actor === "patient");
+  const shares = t.events.filter((e) => e.tool === "share_summary");
   let n = 0;
 
   return (
@@ -64,6 +67,13 @@ function Record({ s }: { s: Snapshot }) {
           <p className="mt-1 text-[0.85rem] text-ink-soft">
             Previous check: {t.previous.title ?? "—"}
             {t.previous.functional_label && ` · ${t.previous.functional_label}`}. {t.previous.note}
+          </p>
+        )}
+        {followUp && (
+          <p className="mt-1 text-[0.85rem]">
+            Follow-up answer: <strong>{followUp.result}</strong>
+            {followUp.data.added_words ? " (+ own words, screened for red flags)" : ""}
+            <Tag actor="patient" />
           </p>
         )}
       </Step>
@@ -80,6 +90,19 @@ function Record({ s }: { s: Snapshot }) {
         <Tag actor="rule_engine" />
       </Step>
 
+      {corrections.length > 0 && (
+        <Step n={++n} title="Patient corrections (summary screen)">
+          <ul className="space-y-1 font-mono text-[0.8rem]">
+            {corrections.map((e) => (
+              <li key={e.id} className="break-all">
+                {JSON.stringify((e.data as { facts?: unknown }).facts ?? {})}
+                <Tag actor="patient" />
+              </li>
+            ))}
+          </ul>
+          <p className="mt-1 text-[0.85rem] text-ink-soft">Each correction re-ran the red-flag screen (ORD-5). A reported red flag cannot be withdrawn.</p>
+        </Step>
+      )}
       <Step n={++n} title="Possible care range">
         {t.possible_range?.floor ? (
           <>
@@ -211,6 +234,26 @@ function Record({ s }: { s: Snapshot }) {
           <span className="text-ink-faint">Pending</span>
         )}
       </Step>
+      {shares.length > 0 && (
+        <Step n={++n} title="Sharing with trusted person">
+          <ul className="space-y-1 text-[0.9rem]">
+            {shares.map((e) => (
+              <li key={e.id}>
+                {e.result === "shared_with_consent" ? (
+                  <>
+                    Shared with {String(e.data.to)} after preview + explicit consent
+                    {e.data.include_reasons === true ? " · reasons included" : e.data.include_reasons === false ? " · recommendation only" : ""} · delivery{" "}
+                    {String(e.data.delivery)}
+                  </>
+                ) : (
+                  <>Declined by patient</>
+                )}
+                <Tag actor={e.actor} />
+              </li>
+            ))}
+          </ul>
+        </Step>
+      )}
     </ol>
   );
 }
@@ -219,7 +262,19 @@ function Timeline({ events }: { events: AuditEvent[] }) {
   // Re-screening after every answer is routine; only show screens that changed the state.
   const routine = (e: AuditEvent) => e.tool === "screen_red_flags" && e.result === "incomplete";
   const shown = events.filter(
-    (e) => !routine(e) && (e.tool || ["agent_decision", "sensing_locked", "assessment_selected", "patient_ready_for_check", "sensing_active"].includes(e.event)),
+    (e) =>
+      !routine(e) &&
+      (e.tool ||
+        [
+          "agent_decision",
+          "sensing_locked",
+          "assessment_selected",
+          "patient_ready_for_check",
+          "sensing_active",
+          "follow_up_answer",
+          "check_skipped_by_patient",
+          "check_stopped_by_patient",
+        ].includes(e.event)),
   );
   return (
     <ol className="space-y-2 font-mono text-[0.74rem]">
@@ -235,6 +290,12 @@ function Timeline({ events }: { events: AuditEvent[] }) {
       ))}
     </ol>
   );
+}
+
+/** The v3 patient screen for this session. */
+function patientHref(s: Snapshot) {
+  if (s.agent === "workbuddy") return `/session/${s.session_id}`;
+  return s.disposition ? `/history/${s.session_id}` : `/check/concern?s=${s.session_id}`;
 }
 
 export default function ExplainPage() {
@@ -258,7 +319,7 @@ export default function ExplainPage() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SensingIndicator state={s.case.sensing_state} />
-          <Link href={`/session/${s.session_id}`} className="rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-forest">
+          <Link href={patientHref(s)} className="rounded-full border border-line bg-card px-4 py-2 text-sm font-bold text-forest">
             Patient view
           </Link>
         </div>

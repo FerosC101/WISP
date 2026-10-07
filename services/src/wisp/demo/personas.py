@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from ..schemas import Caregiver, UserProfile
+from ..schemas import Caregiver, ProviderDetails, UserProfile
 
 PERSONAS: list[UserProfile] = [
     UserProfile(
@@ -12,6 +12,7 @@ PERSONAS: list[UserProfile] = [
         sex="female",
         lives_alone=True,
         usual_gp="Demo Family Clinic (Toa Payoh)",
+        usual_gp_details=ProviderDetails(address="Toa Payoh town centre (demo address)", lat=1.3343, lng=103.85),
         normally_stands_unaided=True,
         conditions=["hypertension"],
         medications=["amlodipine"],
@@ -24,6 +25,7 @@ PERSONAS: list[UserProfile] = [
         sex="male",
         lives_alone=False,
         usual_gp="Demo Polyclinic (Bedok)",
+        usual_gp_details=ProviderDetails(address="Bedok town centre (demo address)", lat=1.324, lng=103.93),
         normally_stands_unaided=True,
         conditions=["type 2 diabetes", "high cholesterol"],
         caregiver=Caregiver(name="Mrs Lim", relationship="wife"),
@@ -36,6 +38,7 @@ PERSONAS: list[UserProfile] = [
         preferred_language="ms",
         lives_alone=True,
         usual_gp="Demo Family Clinic (Jurong West)",
+        usual_gp_details=ProviderDetails(address="Jurong West town centre (demo address)", lat=1.34, lng=103.707),
         normally_stands_unaided=True,
         conditions=["osteoarthritis (knees)"],
         caregiver=Caregiver(name="Nurul", relationship="daughter"),

@@ -26,7 +26,7 @@ from ..sensing.hub import HUB, list_ports
 from ..sensing.providers import ESP32CSIProvider, ReplayCSIProvider, build_provider
 from ..service import CaseFacts, EventBus, ToolError, WispService
 from ..store import Store
-from ..triage.agent import LocalAgent
+from ..triage.agent import TRENDS, LocalAgent
 
 state: dict[str, Any] = {}
 
@@ -64,7 +64,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="WISP local API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
+    allow_origins=config.CORS_ORIGINS,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -72,7 +72,7 @@ app.add_middleware(
 
 @app.exception_handler(ToolError)
 async def tool_error_handler(_, exc: ToolError):
-    status = 404 if exc.code == "invalid_session" else 409 if exc.code in ("order_violation", "sensing_locked", "invalid_state") else 400
+    status = 404 if exc.code in ("invalid_session", "not_found") else 409 if exc.code in ("order_violation", "sensing_locked", "invalid_state") else 400
     return JSONResponse(status_code=status, content={"error": exc.code, "message": str(exc)})
 
 
@@ -113,6 +113,7 @@ class StartSession(BaseModel):
     previous_session_id: str | None = None
     language: Literal["en", "zh", "ms", "ta"] = "en"
     text: str | None = Field(default=None, max_length=1000)  # the patient's first words, typed on the home screen
+    confirm_summary: bool = False  # pause after the safety questions for review (the app's Check flow)
 
 
 @app.post("/api/sessions")
@@ -121,7 +122,7 @@ def start_session(body: StartSession) -> dict:
     case = s.start_session(body.user_id, agent=body.agent, previous_session_id=body.previous_session_id)
     if body.agent == "local_agent":
         first = (body.text or "").strip()
-        agent().open(case.session_id, lang=body.language, greet=not first)
+        agent().open(case.session_id, lang=body.language, greet=not first, confirm_summary=body.confirm_summary)
         if first:
             agent().handle(case.session_id, first)
     else:
@@ -136,9 +137,18 @@ def followup(session_id: str, body: dict = Body(default={})) -> dict:
     prev = s.case(session_id)
     agent_kind = body.get("agent", "local_agent")
     lang = body.get("language", "en") if body.get("language") in ("en", "zh", "ms", "ta") else "en"
+    trend = body.get("trend")
+    text = body.get("text")
+    if trend is not None:
+        if agent_kind != "local_agent" or trend not in TRENDS or (text is not None and not isinstance(text, str)):
+            raise HTTPException(400, "Invalid follow-up answer")
+        if trend == "new" and not (text or "").strip():
+            raise HTTPException(400, "Please say what is new.")
     case = s.start_session(prev.user_id, agent=agent_kind, previous_session_id=session_id)
     if agent_kind == "local_agent":
-        agent().open(case.session_id, lang=lang)
+        agent().open(case.session_id, lang=lang, greet=trend is None, confirm_summary=body.get("confirm_summary") is True)
+        if trend is not None:
+            agent().follow_up(case.session_id, trend, text)
     return s.snapshot(case.session_id)
 
 
@@ -164,6 +174,27 @@ def post_message(session_id: str, body: Message) -> dict:
     return s.snapshot(session_id)
 
 
+class Correction(BaseModel):
+    field: str = Field(max_length=40)
+    value: str = Field(max_length=40)
+
+
+@app.post("/api/sessions/{session_id}/corrections")
+def correct(session_id: str, body: Correction) -> dict:
+    """The patient corrects an answer on the "What WISP understood" screen."""
+    s = svc()
+    meta = s.store.session_meta(session_id)
+    if not meta:
+        raise HTTPException(404, "Unknown session")
+    if meta["agent"] != "local_agent":
+        raise HTTPException(409, "This assessment is being run by WorkBuddy")
+    try:
+        agent().correct(session_id, body.field, body.value)
+    except ToolError as e:
+        raise HTTPException(409 if e.code == "invalid_state" else 400, str(e)) from e
+    return s.snapshot(session_id)
+
+
 @app.post("/api/sessions/{session_id}/check/ready")
 def check_ready(session_id: str) -> dict:
     svc().patient_ready(session_id)
@@ -177,13 +208,27 @@ async def check_stop(session_id: str) -> dict:
 
 
 @app.get("/api/sessions/{session_id}/caregiver-summary")
-def caregiver_summary(session_id: str) -> dict:
-    return svc().caregiver_summary(session_id)
+def caregiver_summary(session_id: str, include_reasons: bool = False) -> dict:
+    return svc().caregiver_summary(session_id, include_reasons)
 
 
 @app.post("/api/sessions/{session_id}/share")
 def share(session_id: str, body: dict = Body(...)) -> dict:
-    return svc().share_summary(session_id, "patient", consent=body.get("consent") is True)
+    return svc().share_summary(session_id, "patient", consent=body.get("consent") is True, include_reasons=body.get("include_reasons") is True)
+
+
+@app.delete("/api/profile/{user_id}/caregiver")
+def remove_caregiver(user_id: str) -> dict:
+    svc().remove_caregiver(user_id)
+    return {"removed": True}
+
+
+@app.get("/api/profile/{user_id}")
+def profile(user_id: str) -> dict:
+    p = svc().profile_for_screen(user_id)
+    if p is None:
+        raise HTTPException(404, "Unknown user")
+    return p
 
 
 @app.get("/api/history")
@@ -202,6 +247,8 @@ def audit(session_id: str | None = None) -> list[dict]:
 
 
 # --------------------------------------------------------------------------- baseline
+_enrolling: dict[str, asyncio.Task] = {}  # running healthy-day checks, so the patient can stop one
+
 @app.get("/api/baselines/{user_id}")
 def get_baseline(user_id: str) -> dict:
     b = svc().store.get_baseline(user_id)
@@ -232,8 +279,20 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
         if not recs:
             raise HTTPException(409, "No baseline recordings configured for this demo user")
         kwargs["recording_id"] = recs[len(sessions) % len(recs)]
+    if user_id in _enrolling and not _enrolling[user_id].done():
+        raise HTTPException(409, "A healthy-day check is already running")
     s.bus.publish(key, {"type": "sensing_state", "state": "ACTIVE"})
-    run = await s.provider.run("5xSTS", user_id=user_id, on_progress=progress, **kwargs)
+    task = asyncio.create_task(s.provider.run("5xSTS", user_id=user_id, on_progress=progress, **kwargs))
+    _enrolling[user_id] = task
+    try:
+        run = await task
+    except asyncio.CancelledError:
+        # Stopped by the patient (or the request went away): nothing is added to their usual pattern.
+        task.cancel()
+        s.bus.publish(key, {"type": "sensing_state", "state": "OFF"})
+        return {"accepted": False, "reason": "stopped", "measurement": None, "baseline": existing.model_dump(mode="json") if existing else None}
+    finally:
+        _enrolling.pop(user_id, None)
     seg = run.segmentation
     s.bus.publish(key, {"type": "sensing_state", "state": "COMPLETE"})
     m = FunctionalAssessment(
@@ -243,7 +302,7 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
         single_person_confidence=seg.single_person_confidence, measurement_confidence=seg.measurement_confidence,
         source=run.source, provider_mode=run.mode, recording_id=run.recording_id, timestamp=utcnow(),
     )
-    m = s.store.save_measurement(m, user_id=user_id, purpose="baseline", debug={"trace": seg.debug, "features": seg.features})
+    m = s.store.save_measurement(m, user_id=user_id, purpose="baseline", debug={"trace": seg.debug, "features": seg.features, "onset_s": seg.onset_s, "offset_s": seg.offset_s, "stand_peaks_s": seg.stand_peaks_s})
     if not seg.success:
         return {"accepted": False, "reason": seg.reason, "measurement": m.model_dump(mode="json", exclude={"signature"}), "baseline": existing.model_dump(mode="json") if existing else None}
     sessions.append(
@@ -255,6 +314,16 @@ async def enrol_session(user_id: str, body: dict = Body(default={})) -> dict:
     b = summarise_baseline(user_id, sessions, any(x["arms_used"] for x in sessions), existing.created_at if existing else now, now)
     s.store.put_baseline(b)
     return {"accepted": True, "measurement": m.model_dump(mode="json", exclude={"signature"}), "baseline": b.model_dump(mode="json")}
+
+
+@app.post("/api/baselines/{user_id}/stop")
+def stop_enrol(user_id: str) -> dict:
+    """The patient stopped a healthy-day check; the reading is discarded."""
+    task = _enrolling.get(user_id)
+    if task is None or task.done():
+        raise HTTPException(409, "No healthy-day check is running")
+    task.cancel()
+    return {"stopped": True}
 
 
 @app.delete("/api/baselines/{user_id}")

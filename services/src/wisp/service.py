@@ -153,7 +153,7 @@ class WispService:
             "session_id": session_id,
             "version": version,
             "agent": meta.get("agent"),
-            "profile": _public_profile(profile) if profile else None,
+            "profile": _public_profile(profile, for_screen=True) if profile else None,
             "case": case.model_dump(mode="json"),
             "messages": messages,
             "trace": trace.model_dump(mode="json"),
@@ -196,6 +196,14 @@ class WispService:
         p = self.profile(case)
         self.audit(session_id, actor, "tool_call", "get_health_profile", "ok")
         return _public_profile(p)
+
+    def profile_for_screen(self, user_id: str) -> dict | None:
+        """The person's own profile for their You screens. Unlike the agent's view it includes
+        medications and clinic details, because it is shown only to the person themselves."""
+        p = self.store.get_profile(user_id)
+        if p is None:
+            return None
+        return {**_public_profile(p, for_screen=True), "sex": p.sex, "medications": p.medications, "preferred_language": p.preferred_language}
 
     def get_previous_assessments(self, session_id: str, actor: Actor, limit: int = 3) -> list[dict]:
         case = self.case(session_id)
@@ -499,38 +507,58 @@ class WispService:
         self.publish(session_id)
         return {"recheck_id": rid, "due_at": d.recheck.due_at.isoformat(), "reason": d.recheck.reason}
 
-    def caregiver_summary(self, session_id: str) -> dict:
+    def caregiver_summary(self, session_id: str, include_reasons: bool = False) -> dict:
+        """Exactly what a trusted person would receive.
+
+        By default only the recommendation: the reasons repeat the person's symptoms, so
+        they are included only if the person chooses. Never sensor data, timings,
+        medicines or conditions.
+        """
         case = self.case(session_id)
         p = self.profile(case)
         d = self.store.get_disposition(session_id)
         if d is None:
             raise ToolError("No recommendation yet", "invalid_state")
-        reasons = [r for r in d.reasons if not r.startswith("A normal movement check")]
-        text = (
-            f"{p.display_name} completed a WISP self-triage check.\n\n"
-            f"Recommendation:\n{d.title}. {d.action}\n\n"
-            "Reasons:\n" + "\n".join(f"- {r}" for r in reasons) + "\n\n"
-            "This is not a diagnosis. Raw sensing data is not shared."
-        )
-        return {"caregiver": p.caregiver.model_dump() if p.caregiver else None, "summary": text, "tier": d.tier.value}
+        parts = [f"{p.display_name} completed a WISP self-triage check.", f"WISP's advice:\n{d.title}. {d.action}"]
+        if include_reasons:
+            reasons = [r for r in d.reasons if not r.startswith("A normal movement check")]
+            parts.append(f"What WISP told {p.display_name}:\n" + "\n".join(f"- {r}" for r in reasons))
+        parts.append("This is not a diagnosis. No sensor data is shared.")
+        return {
+            "caregiver": p.caregiver.model_dump() if p.caregiver else None,
+            "summary": "\n\n".join(parts),
+            "tier": d.tier.value,
+            "include_reasons": include_reasons,
+            "shared": [{"to": x["to"], "consented_at": x["consented_at"]} for x in self.store.shares(session_id)],
+        }
 
-    def share_summary(self, session_id: str, actor: Actor, consent: bool) -> dict:
-        s = self.caregiver_summary(session_id)
+    def remove_caregiver(self, user_id: str) -> None:
+        """The person removes their trusted person. Nothing can be shared until someone is added again."""
+        p = self.store.get_profile(user_id)
+        if p is None:
+            raise ToolError("Unknown user", "not_found")
+        self.store.put_profile(p.model_copy(update={"caregiver": None}))
+
+    def share_summary(self, session_id: str, actor: Actor, consent: bool, include_reasons: bool = False) -> dict:
+        s = self.caregiver_summary(session_id, include_reasons)
         if not s["caregiver"]:
             raise ToolError("No caregiver on file", "invalid_state")
         if consent is not True:
             self.audit(session_id, actor, "tool_call", "share_summary", "declined_by_patient")
             return {"shared": False}
-        record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "simulated"}
+        record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "simulated", "include_reasons": include_reasons}
         self.store.add_share(session_id, record)
-        self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="simulated")
+        self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="simulated", include_reasons=include_reasons)
         self.publish(session_id)
         return {"shared": True, **record}
 
 
-def _public_profile(p) -> dict:
-    """Minimum profile needed for personalisation (no medications list sent to the agent)."""
-    return {
+def _public_profile(p, *, for_screen: bool = False) -> dict:
+    """Minimum profile needed for personalisation (no medications list sent to the agent).
+
+    The clinic's address and location are for the patient's own screen (Find care), not the agent.
+    """
+    out = {
         "user_id": p.user_id,
         "display_name": p.display_name,
         "age": p.age,
@@ -541,6 +569,9 @@ def _public_profile(p) -> dict:
         "conditions": p.conditions,
         "caregiver": {"name": p.caregiver.name, "relationship": p.caregiver.relationship} if p.caregiver else None,
     }
+    if for_screen:
+        out["usual_gp_details"] = p.usual_gp_details.model_dump() if p.usual_gp_details else None
+    return out
 
 
 def _agent_view(m: FunctionalAssessment) -> dict:

@@ -32,6 +32,7 @@ T: dict[str, dict[str, str]] = {
     "alone": {"en": "No, I'm alone", "zh": "没有，只有我一个人", "ms": "Tidak, saya seorang diri", "ta": "இல்லை, நான் தனியாக இருக்கிறேன்"},
     "someone": {"en": "Yes, someone is here", "zh": "有，还有别人", "ms": "Ya, ada orang lain", "ta": "ஆம், வேறு ஒருவர் இருக்கிறார்"},
     "clear": {"en": "It's clear now", "zh": "现在没人走动了", "ms": "Sekarang sudah tiada orang", "ta": "இப்போது யாரும் நகரவில்லை"},
+    "confirm": {"en": "That's right", "zh": "没错", "ms": "Betul", "ta": "சரி"},
     "share_yes": {"en": "Yes, share it", "zh": "好，分享", "ms": "Ya, kongsi", "ta": "ஆம், பகிரவும்"},
     "share_no": {"en": "No, thank you", "zh": "不用了，谢谢", "ms": "Tidak, terima kasih", "ta": "வேண்டாம், நன்றி"},
     # ---------------------------------------------------------------- conversation
@@ -221,6 +222,12 @@ T: dict[str, dict[str, str]] = {
         "zh": "你想把简短的总结分享给{name}吗？",
         "ms": "Adakah anda mahu berkongsi ringkasan pendek dengan {name}?",
         "ta": "{name} உடன் ஒரு சிறிய சுருக்கத்தைப் பகிர விரும்புகிறீர்களா?",
+    },
+    "q_confirm": {
+        "en": "Here's what I understood. Is that right?",
+        "zh": "这是我理解的情况。对吗？",
+        "ms": "Ini yang saya faham. Betul?",
+        "ta": "நான் புரிந்துகொண்டது இதுதான். சரியா?",
     },
     "reask": {
         "en": "Sorry, I didn't quite catch that. Please tap one of the answers.",
