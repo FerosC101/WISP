@@ -205,4 +205,8 @@ export interface HistoryItem {
   tier: Tier | null;
   title: string | null;
   sensing_used: boolean;
+  agent?: "local_agent" | "workbuddy";
+  functional_status?: string | null;
+  comparison_status?: BaselineComparison["status"] | null;
+  comparison_severity?: BaselineComparison["severity"];
 }

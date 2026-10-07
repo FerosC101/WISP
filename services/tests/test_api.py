@@ -94,3 +94,10 @@ def test_follow_up_endpoint_validates_trend(client):
     snap = client.post(f"/api/sessions/{sid}/followup", json={"trend": "same", "confirm_summary": True}).json()
     assert snap["case"]["previous_session_id"] == sid
     assert snap["messages"][-1]["data"]["question"] == "onset"
+
+
+def test_history_includes_semantic_movement_result_only(client):
+    client.post("/api/sessions", json={"user_id": "mdm_tan", "text": "I feel weak"})
+    item = client.get("/api/history?user_id=mdm_tan").json()[0]
+    assert {"agent", "functional_status", "comparison_status", "comparison_severity"} <= item.keys()
+    assert not any("time" in k and "created" not in k for k in item)  # no timings in the timeline feed

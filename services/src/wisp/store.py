@@ -146,7 +146,7 @@ class Store:
         return CareDisposition.model_validate_json(r["disposition_json"]) if r and r["disposition_json"] else None
 
     def list_sessions(self, user_id: str | None = None, limit: int = 50) -> list[dict]:
-        sql = "SELECT session_id, user_id, created_at, previous_session_id, disposition_json, case_json FROM sessions"
+        sql = "SELECT session_id, user_id, created_at, previous_session_id, agent, disposition_json, case_json FROM sessions"
         args: tuple = ()
         if user_id:
             sql += " WHERE user_id=?"
@@ -166,6 +166,11 @@ class Store:
                     "tier": disp["tier"] if disp else None,
                     "title": disp["title"] if disp else None,
                     "sensing_used": disp["sensing_used"] if disp else False,
+                    "agent": r["agent"],
+                    # Semantic movement result for the timeline (never timings).
+                    "functional_status": case.get("functional_status"),
+                    "comparison_status": (case.get("comparison") or {}).get("status"),
+                    "comparison_severity": (case.get("comparison") or {}).get("severity"),
                 }
             )
         return out

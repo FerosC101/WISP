@@ -29,7 +29,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 12 | P1 | Improve Find Care | ✅ |
 | 13 | P1 | Build a Doctor Visit Summary | ✅ |
 | 14 | P1 | Turn follow-up into its own flow | ✅ |
-| 15 | P1 | Upgrade History | ⬜ |
+| 15 | P1 | Upgrade History | ✅ |
 | 16 | P1 | Expand "My Usual" | ⬜ |
 | 17 | P1 | Create a proper "You" section | ⬜ |
 | 18 | P1 | Redesign caregiver sharing | ⬜ |
@@ -392,11 +392,37 @@ Verified in the browser at 390 px:
 - Worse, skipping the words → safety restarts at "Question 3 of 11" (onset and duration carried over) → summary shows "Also mentioned: Getting worse".
 - `tsc` and `eslint` are clean.
 
-### 15. P1 — Upgrade History ⬜
-- [ ] Health timeline instead of plain records
-- [ ] Complaint, recommendation, movement check used / not used, follow-up status
-- [ ] Healthy-day baseline entries
-- [ ] Click into full check details
+### 15. P1 — Upgrade History ✅
+- [x] Health timeline instead of plain records
+- [x] Complaint, recommendation, movement check used / not used, follow-up status
+- [x] Healthy-day baseline entries
+- [x] Click into full check details
+
+What changed, backend:
+- `/api/history` items also carry `agent`, `functional_status`, `comparison_status` and `comparison_severity`. These are semantic labels only, never timings. Test: `test_history_includes_semantic_movement_result_only`. Total 136 passed.
+
+What changed, frontend:
+- `/history` is a day-grouped vertical timeline with filters: Everything / Checks / Healthy days.
+- Check cards show:
+  - "Check" or "Follow-up of ‹day›", with the time.
+  - The complaint in the patient's words, and the outcome in its tier colour.
+  - A movement chip: within your usual / a little slower / slower than usual / couldn't be compared / reading not reliable / stopped early / skipped / no movement check (`lib/movementWords.ts`, same wording as the result screen).
+  - "Check-in planned", and "Followed up: ‹outcome›" on the original check.
+- Unfinished checks show "Continue this check" (back into the Check flow; WorkBuddy ones open the conversation).
+- Planned check-ins have "Check in now". Healthy-day entries link to My usual.
+- New `/history/[session]` detail page:
+  - Date and type; the outcome in its tier colour.
+  - "What you told WISP": how long, other changes, warning signs, movement check.
+  - Follow-ups: the earlier check and later follow-ups, with their outcomes.
+  - The patient-friendly "How WISP decided".
+  - Links to the care plan, visit summary and conversation.
+
+Verified in the browser at 390 px (Mdm Siti):
+- The timeline shows the T4 check with "Movement within your usual" and "Followed up: emergency help", the T1 follow-up with "No movement check", unfinished check-ins with "Continue this check", and three healthy-day entries.
+- The detail page for the T4 check shows all sections. Its follow-up link resumes an unfinished check-in.
+- `tsc` and `eslint` are clean.
+
+Testing note: restarting the API had left stale uvicorn instances running alongside the new one (they wait for open WebSockets). I stopped them all so exactly one instance runs the current code.
 
 ### 16. P1 — Expand "My Usual" ⬜
 - [ ] Baseline progress: 1/3, 2/3, 3/3 healthy-day checks
@@ -436,6 +462,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 15: History timeline (filters, movement result, follow-up links, continue unfinished, healthy-day entries) and a `/history/[session]` detail page. History API adds semantic movement fields (136 tests pass).
 - 2026-10-07 — ✅ Task 14: follow-up flow (`/follow-up`, `/follow-up/changes`) with better / same / worse / something new, last-time vs today on the result, and backend `follow_up()` that re-asks every safety question (FU-1, 9 new tests, 135 pass).
 - 2026-10-07 — ✅ Task 13: Doctor visit summary with 5xSTS timings vs usual range, symptom answers, conditions and recommendation, a synthetic-data notice, and show-to-doctor / print / share.
 - 2026-10-07 — ✅ Task 12: Find Care with best / other / emergency groups, the usual clinic's demo address (screen only, not sent to the agent), opt-in on-device distance, and explicit "WISP can't see hours or slots".
