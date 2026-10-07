@@ -507,29 +507,46 @@ class WispService:
         self.publish(session_id)
         return {"recheck_id": rid, "due_at": d.recheck.due_at.isoformat(), "reason": d.recheck.reason}
 
-    def caregiver_summary(self, session_id: str) -> dict:
+    def caregiver_summary(self, session_id: str, include_reasons: bool = False) -> dict:
+        """Exactly what a trusted person would receive.
+
+        By default only the recommendation: the reasons repeat the person's symptoms, so
+        they are included only if the person chooses. Never sensor data, timings,
+        medicines or conditions.
+        """
         case = self.case(session_id)
         p = self.profile(case)
         d = self.store.get_disposition(session_id)
         if d is None:
             raise ToolError("No recommendation yet", "invalid_state")
-        reasons = [r for r in d.reasons if not r.startswith("A normal movement check")]
-        text = (
-            f"{p.display_name} completed a WISP self-triage check.\n\n"
-            f"Recommendation:\n{d.title}. {d.action}\n\n"
-            "Reasons:\n" + "\n".join(f"- {r}" for r in reasons) + "\n\n"
-            "This is not a diagnosis. Raw sensing data is not shared."
-        )
-        return {"caregiver": p.caregiver.model_dump() if p.caregiver else None, "summary": text, "tier": d.tier.value}
+        parts = [f"{p.display_name} completed a WISP self-triage check.", f"WISP's advice:\n{d.title}. {d.action}"]
+        if include_reasons:
+            reasons = [r for r in d.reasons if not r.startswith("A normal movement check")]
+            parts.append(f"What WISP told {p.display_name}:\n" + "\n".join(f"- {r}" for r in reasons))
+        parts.append("This is not a diagnosis. No sensor data is shared.")
+        return {
+            "caregiver": p.caregiver.model_dump() if p.caregiver else None,
+            "summary": "\n\n".join(parts),
+            "tier": d.tier.value,
+            "include_reasons": include_reasons,
+            "shared": [{"to": x["to"], "consented_at": x["consented_at"]} for x in self.store.shares(session_id)],
+        }
 
-    def share_summary(self, session_id: str, actor: Actor, consent: bool) -> dict:
-        s = self.caregiver_summary(session_id)
+    def remove_caregiver(self, user_id: str) -> None:
+        """The person removes their trusted person. Nothing can be shared until someone is added again."""
+        p = self.store.get_profile(user_id)
+        if p is None:
+            raise ToolError("Unknown user", "not_found")
+        self.store.put_profile(p.model_copy(update={"caregiver": None}))
+
+    def share_summary(self, session_id: str, actor: Actor, consent: bool, include_reasons: bool = False) -> dict:
+        s = self.caregiver_summary(session_id, include_reasons)
         if not s["caregiver"]:
             raise ToolError("No caregiver on file", "invalid_state")
         if consent is not True:
             self.audit(session_id, actor, "tool_call", "share_summary", "declined_by_patient")
             return {"shared": False}
-        record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "simulated"}
+        record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "simulated", "include_reasons": include_reasons}
         self.store.add_share(session_id, record)
         self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="simulated")
         self.publish(session_id)

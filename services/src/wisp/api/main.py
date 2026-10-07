@@ -72,7 +72,7 @@ app.add_middleware(
 
 @app.exception_handler(ToolError)
 async def tool_error_handler(_, exc: ToolError):
-    status = 404 if exc.code == "invalid_session" else 409 if exc.code in ("order_violation", "sensing_locked", "invalid_state") else 400
+    status = 404 if exc.code in ("invalid_session", "not_found") else 409 if exc.code in ("order_violation", "sensing_locked", "invalid_state") else 400
     return JSONResponse(status_code=status, content={"error": exc.code, "message": str(exc)})
 
 
@@ -208,13 +208,19 @@ async def check_stop(session_id: str) -> dict:
 
 
 @app.get("/api/sessions/{session_id}/caregiver-summary")
-def caregiver_summary(session_id: str) -> dict:
-    return svc().caregiver_summary(session_id)
+def caregiver_summary(session_id: str, include_reasons: bool = False) -> dict:
+    return svc().caregiver_summary(session_id, include_reasons)
 
 
 @app.post("/api/sessions/{session_id}/share")
 def share(session_id: str, body: dict = Body(...)) -> dict:
-    return svc().share_summary(session_id, "patient", consent=body.get("consent") is True)
+    return svc().share_summary(session_id, "patient", consent=body.get("consent") is True, include_reasons=body.get("include_reasons") is True)
+
+
+@app.delete("/api/profile/{user_id}/caregiver")
+def remove_caregiver(user_id: str) -> dict:
+    svc().remove_caregiver(user_id)
+    return {"removed": True}
 
 
 @app.get("/api/profile/{user_id}")

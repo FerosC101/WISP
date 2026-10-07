@@ -311,6 +311,9 @@ class Store:
     def add_share(self, session_id: str, data: dict) -> None:
         self._exec("INSERT INTO shares (session_id, json) VALUES (?, ?)", (session_id, json.dumps(data, default=str)))
 
+    def shares(self, session_id: str) -> list[dict]:
+        return [json.loads(r["json"]) for r in self._all("SELECT json FROM shares WHERE session_id=? ORDER BY id", (session_id,))]
+
     def add_validation(self, measurement_id: str, gt: float, method: str, participant: str | None, notes: str | None) -> None:
         self._exec(
             "INSERT INTO sensor_validation (measurement_id, ground_truth_seconds, method, participant, notes, created_at) VALUES (?,?,?,?,?,?)",

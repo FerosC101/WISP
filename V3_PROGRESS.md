@@ -32,7 +32,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 15 | P1 | Upgrade History | ✅ |
 | 16 | P1 | Expand "My Usual" | ✅ |
 | 17 | P1 | Create a proper "You" section | ✅ |
-| 18 | P1 | Redesign caregiver sharing | ⬜ |
+| 18 | P1 | Redesign caregiver sharing | ✅ |
 | 19 | P1 | Preserve separate Technical View | ⬜ |
 | 20 | P1 | Preserve and polish Engineering View | ⬜ |
 | 21 | P1 | Improve mobile UX | ⬜ |
@@ -489,11 +489,34 @@ Verified in the browser at 390 px:
 - The delete confirmation opens and "Keep my data" cancels it. I did not delete the demo data.
 - `tsc` and `eslint` are clean.
 
-### 18. P1 — Redesign caregiver sharing ⬜
-- [ ] Preview exactly what will be shared
-- [ ] Explicit consent
-- [ ] No raw CSI, no unnecessary private information
-- [ ] Option to remove trusted person
+### 18. P1 — Redesign caregiver sharing ✅
+- [x] Preview exactly what will be shared
+- [x] Explicit consent
+- [x] No raw CSI, no unnecessary private information
+- [x] Option to remove trusted person
+
+What changed, backend:
+- `caregiver_summary(include_reasons=False)`: by default only the recommendation and what to do. The reasons repeat the person's symptoms, so they're opt-in. When included they're labelled "What WISP told ‹name›" (they're written as "You've been…"). Never sensor data, timings, medicines or conditions.
+- The response also lists previous shares.
+- `share_summary(include_reasons)` stores the exact text that was sent (identical to the preview) and needs `consent` to be literally `true`.
+- `DELETE /api/profile/{user}/caregiver` (`WispService.remove_caregiver`). Afterwards nothing can be shared (409), and the built-in agent no longer offers to share. `not_found` maps to 404.
+- `docs/privacy.md` updated.
+- Tests: `tests/test_sharing.py` (minimal by default and no symptoms/medicines; with-reasons variant; consent-only and exact-preview record; removal blocks sharing and the agent's offer; unknown user 404). Total 142 passed.
+
+What changed, frontend:
+- `components/care/ShareSummary.tsx` (`/care/share`):
+  - The recipient card, and an "Include the reasons" switch (off by default).
+  - "Exactly what Daniel will receive" (the live preview), and a "Never shared" list.
+  - An "I agree to send this message to Daniel" tick. Send stays disabled until it's ticked, and changing the preview un-ticks it.
+  - "Don't share", and an "Already shared" history.
+- The end-of-check share question no longer shares without a preview. `/check/complete` shows **Preview and share** (→ `/care/share`) or **No, thank you**, and hides the prompt once a share decision exists.
+- `/you/caregivers`: "Remove ‹name›" with inline confirmation. "No one added" explains that adding isn't available in the prototype. The sharing rules are listed.
+
+Verified in the browser at 390 px:
+- Mdm Tan's T2 check: minimal preview by default. "Include the reasons" shows the "What WISP told Mdm Tan" lines and resets agreement. Send is disabled until agreed. Sending → "Sent to Daniel", history shows it, and the API records 1 share.
+- Mr Lim: removing Mrs Lim → "No one added", and the API caregiver is null. I restored his demo profile afterwards.
+- Mdm Siti's finished check: the prompt offers "Preview and share" (→ `/care/share?s=…`), and "No, thank you" dismisses it.
+- `tsc` and `eslint` are clean.
 
 ### 19. P1 — Preserve separate Technical View ⬜
 - [ ] Structured decision record: safety result, care range, missing evidence, selected action, tool calls, baseline result, rule triggered, final tier
@@ -514,6 +537,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 18: Sharing redesign (minimal by default, opt-in reasons, exact preview, explicit agree tick, history, remove trusted person). No sharing without a preview anywhere (3 new tests, 142 pass).
 - 2026-10-07 — ✅ Task 17: You section with hub, health profile, trusted people, language, accessibility (new Less motion) and privacy with inline delete. Backend `GET /api/profile/{user}` for the person's own screen (139 tests pass).
 - 2026-10-07 — ✅ Task 16: My usual at `/you/baseline` (progress tracker, status, last updated, seconds behind details, inline delete) and an `/you/baseline/enroll` journey. Backend: healthy-day checks can be stopped and are then discarded (2 new tests, 138 pass).
 - 2026-10-07 — ✅ Task 15: History timeline (filters, movement result, follow-up links, continue unfinished, healthy-day entries) and a `/history/[session]` detail page. History API adds semantic movement fields (136 tests pass).

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { api } from "./api";
 import { usePrefs } from "./prefs";
 import type { PublicProfile } from "./types";
@@ -16,7 +16,7 @@ export function useProfile() {
   const { userId } = usePrefs();
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [error, setError] = useState<string | null>(null);
-  useEffect(() => {
+  const reload = useCallback(() => {
     api<MyProfile>(`/api/profile/${userId}`)
       .then((p) => {
         setProfile(p);
@@ -24,5 +24,6 @@ export function useProfile() {
       })
       .catch((e: Error) => setError(e.message));
   }, [userId]);
-  return { profile, error };
+  useEffect(reload, [reload]);
+  return { profile, error, reload };
 }

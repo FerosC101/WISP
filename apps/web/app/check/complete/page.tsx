@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CheckFrame } from "@/components/check/CheckFrame";
-import { QuestionScreen } from "@/components/check/QuestionScreen";
+import { Button } from "@/components/ui";
 import { Recommendation } from "@/components/Recommendation";
 import { pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
 import { PATIENT_OUTCOME, TIER_STYLE, dayLabel } from "@/lib/tiers";
@@ -42,7 +42,11 @@ export default function Complete() {
   const router = useRouter();
   const f = useCheckFlow("complete");
   const s = f.snapshot;
-  const share = s && pendingQuestion(s)?.data.question === "share";
+  const shareQ = s ? pendingQuestion(s) : null;
+  const share = shareQ?.data.question === "share";
+  const noThanks = shareQ?.data.quick_replies?.find((r) => r.value === "share_no");
+  // Shared (or declined) from the Care section already: don't ask again here.
+  const alreadyDecided = !!s?.trace.events.some((e) => e.tool === "share_summary");
 
   return (
     <CheckFrame stage="complete" loading={!f.ready || !s?.disposition} error={f.error}>
@@ -60,9 +64,21 @@ export default function Complete() {
             </span>
             <span aria-hidden className="text-2xl text-ink-faint">›</span>
           </Link>
-          {share && (
+          {share && !alreadyDecided && (
             <div className="mt-6 rounded-(--radius-card) border border-line bg-card p-5">
-              <QuestionScreen snapshot={s} sending={f.sending} onAnswer={f.answer} allowText={false} showContext={false} />
+              <p className="text-[1.2rem] font-bold">Would you like to share a short summary with {s.profile?.caregiver?.name ?? "your trusted person"}?</p>
+              <p className="mt-1 text-ink-soft">You&apos;ll see exactly what will be sent first.</p>
+              <div className="mt-4 flex flex-col gap-3">
+                <Link
+                  href={`/care/share?s=${s.session_id}`}
+                  className="flex min-h-14 items-center justify-center rounded-2xl bg-forest px-6 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
+                >
+                  Preview and share
+                </Link>
+                <Button size="lg" variant="secondary" disabled={f.sending} onClick={() => f.answer(noThanks?.label ?? "No, thank you", "share_no")}>
+                  No, thank you
+                </Button>
+              </div>
             </div>
           )}
         </>
