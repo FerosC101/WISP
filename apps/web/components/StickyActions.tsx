@@ -1,6 +1,6 @@
 "use client";
 
-import { type ReactNode, useCallback, useState, useSyncExternalStore } from "react";
+import { type ReactNode, useCallback, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 const noop = () => () => {};
@@ -8,18 +8,24 @@ const noop = () => () => {};
 /**
  * A screen's primary actions. On mobile they are pinned just above the bottom
  * navigation (Shell's #sticky-actions slot) so they are always visible without
- * scrolling; a spacer of the same height keeps content from hiding behind them.
- * On wider screens they sit in the normal flow.
+ * scrolling. The bar's height is published as `--sticky-h`, which Shell adds to
+ * <main>'s bottom padding, so everything on the page (wherever it sits relative
+ * to this component) can still be scrolled clear of the bar. On wider screens the
+ * actions sit in the normal flow.
  */
 export function StickyActions({ children }: { children: ReactNode }) {
   const client = useSyncExternalStore(noop, () => true, () => false);
-  const [height, setHeight] = useState(0);
   const measure = useCallback((el: HTMLDivElement | null) => {
     if (!el) return;
-    const ro = new ResizeObserver(() => setHeight(el.offsetHeight));
+    const root = document.documentElement;
+    const update = () => root.style.setProperty("--sticky-h", `${el.offsetHeight}px`);
+    const ro = new ResizeObserver(update);
     ro.observe(el);
-    setHeight(el.offsetHeight);
-    return () => ro.disconnect();
+    update();
+    return () => {
+      ro.disconnect();
+      root.style.setProperty("--sticky-h", "0px");
+    };
   }, []);
   const slot = client ? document.getElementById("sticky-actions") : null;
 
@@ -33,7 +39,6 @@ export function StickyActions({ children }: { children: ReactNode }) {
           </div>,
           slot,
         )}
-      <div aria-hidden className="md:hidden" style={{ height }} />
     </>
   );
 }

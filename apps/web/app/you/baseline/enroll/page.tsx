@@ -9,7 +9,7 @@ import { WispLine } from "@/components/WispLine";
 import { post } from "@/lib/api";
 import { type Baseline, STATUS_WORDS, baselineStatus } from "@/lib/baseline";
 import { unreliableWhy } from "@/lib/movementWords";
-import { usePrefs } from "@/lib/prefs";
+import { useUserId } from "@/lib/prefs";
 
 type Step = "feeling" | "not-today" | "setup" | "arms" | "measuring" | "result";
 
@@ -78,7 +78,7 @@ function Measuring({ onStop, stopping }: { onStop: () => void; stopping: boolean
 }
 
 export default function Enroll() {
-  const { userId } = usePrefs();
+  const userId = useUserId();
   const [step, setStep] = useState<Step>("feeling");
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [armsUsed, setArmsUsed] = useState(false);
@@ -87,6 +87,7 @@ export default function Enroll() {
   const [stopping, setStopping] = useState(false);
 
   async function measure(arms: boolean) {
+    if (!userId) return;
     setArmsUsed(arms);
     setStep("measuring");
     setError(null);
@@ -101,6 +102,7 @@ export default function Enroll() {
   }
 
   async function stop() {
+    if (!userId) return;
     setStopping(true);
     try {
       await post(`/api/baselines/${userId}/stop`);

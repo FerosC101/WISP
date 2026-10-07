@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { useStartCheck } from "@/components/StartCheck";
 import { api } from "@/lib/api";
 import { movementPhrase } from "@/lib/movementWords";
-import { usePrefs } from "@/lib/prefs";
+import { useUserId } from "@/lib/prefs";
 import { PATIENT_OUTCOME, TIER_STYLE, dayLabel, timeLabel } from "@/lib/tiers";
 import type { HistoryItem } from "@/lib/types";
 import { useMe } from "@/lib/useMe";
@@ -33,13 +33,15 @@ const FILTERS: { id: Filter; label: string }[] = [
 ];
 
 export default function History() {
-  const { userId } = usePrefs();
+  const userId = useUserId();
   const { me } = useMe();
   const check = useStartCheck(me);
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
 
   useEffect(() => {
+    if (!userId) return;
+    let current = true;
     Promise.all([
       api<HistoryItem[]>(`/api/history?user_id=${userId}`),
       api<Recheck[]>(`/api/rechecks?user_id=${userId}`),
@@ -58,9 +60,12 @@ export default function History() {
         for (const r of rechecks) if (r.status === "scheduled") out.push({ kind: "planned", at: r.due_at, recheck: r });
         (base.baseline?.sessions ?? []).forEach((s, i) => out.push({ kind: "baseline", at: s.date, id: s.measurement_id, n: i + 1 }));
         out.sort((a, b) => b.at.localeCompare(a.at));
-        setEntries(out);
+        if (current) setEntries(out);
       })
-      .catch(() => setEntries([]));
+      .catch(() => current && setEntries([]));
+    return () => {
+      current = false;
+    };
   }, [userId]);
 
   const shown = (entries ?? []).filter((e) => filter === "all" || (filter === "checks" ? e.kind !== "baseline" : e.kind === "baseline"));

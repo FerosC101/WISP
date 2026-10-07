@@ -42,17 +42,19 @@ export const STATUS_WORDS: Record<BaselineStatus, { title: string; detail: strin
   varies: { title: "Varies a little", detail: "Your healthy-day checks differ a bit. Another one on a good day will help." },
 };
 
-export function useBaseline(userId: string) {
-  const [data, setData] = useState<BaselineResp | null>(null);
+export function useBaseline(userId: string | null) {
+  const [state, setState] = useState<{ for: string; data: BaselineResp } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const reload = useCallback(() => {
+    if (!userId) return;
     api<BaselineResp>(`/api/baselines/${userId}`)
       .then((r) => {
-        setData(r);
+        setState({ for: userId, data: r });
         setError(null);
       })
       .catch((e: Error) => setError(e.message));
   }, [userId]);
   useEffect(reload, [reload]);
-  return { data, error, reload };
+  // Never show another person's baseline while the selection changes.
+  return { data: state && state.for === userId ? state.data : null, error, reload };
 }

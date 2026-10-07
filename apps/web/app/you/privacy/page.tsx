@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { Button, Disclosure } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { API_URL, api } from "@/lib/api";
-import { usePrefs } from "@/lib/prefs";
+import { useUserId } from "@/lib/prefs";
 
 interface Privacy {
   raw_csi: { live_files: string[]; saved_for_debugging: boolean };
@@ -21,13 +21,14 @@ function Box({ children, tone }: { children: React.ReactNode; tone: "local" | "c
 }
 
 export default function PrivacyPage() {
-  const { userId } = usePrefs();
+  const userId = useUserId();
   const [p, setP] = useState<Privacy | null>(null);
   const [deleted, setDeleted] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function deleteAll() {
+    if (!userId) return;
     setDeleting(true);
     try {
       await fetch(`${API_URL}/api/users/${userId}/data`, { method: "DELETE" });
@@ -39,6 +40,7 @@ export default function PrivacyPage() {
   }
 
   useEffect(() => {
+    if (!userId) return;
     api<Privacy>(`/api/privacy/${userId}`).then(setP);
   }, [userId, deleted]);
 

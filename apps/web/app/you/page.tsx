@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { STATUS_WORDS, baselineStatus, useBaseline } from "@/lib/baseline";
-import { LANGUAGE_NAMES, usePrefs } from "@/lib/prefs";
+import { LANGUAGE_NAMES, usePrefs, useUserId } from "@/lib/prefs";
 import { useProfile } from "@/lib/useProfile";
 
 function Item({ href, title, detail }: { href: string; title: string; detail: string }) {
@@ -29,7 +29,8 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export default function You() {
-  const { userId, language, largeText, reduceMotion } = usePrefs();
+  const { language, largeText, reduceMotion } = usePrefs();
+  const userId = useUserId();
   const { profile, error } = useProfile();
   const { data: baseline } = useBaseline(userId);
   const caregiver = profile?.caregiver;

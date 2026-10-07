@@ -7,7 +7,7 @@ import { StickyActions } from "@/components/StickyActions";
 import { WispLine } from "@/components/WispLine";
 import { API_URL } from "@/lib/api";
 import { STATUS_WORDS, baselineStatus, useBaseline } from "@/lib/baseline";
-import { usePrefs } from "@/lib/prefs";
+import { useUserId } from "@/lib/prefs";
 import { dayLabel } from "@/lib/tiers";
 
 const dateLabel = (iso: string) => {
@@ -16,7 +16,7 @@ const dateLabel = (iso: string) => {
 };
 
 export default function MyUsual() {
-  const { userId } = usePrefs();
+  const userId = useUserId();
   const { data, error, reload } = useBaseline(userId);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -38,6 +38,7 @@ export default function MyUsual() {
   const ready = status === "stable" || status === "varies";
 
   async function remove() {
+    if (!userId) return;
     setDeleting(true);
     try {
       await fetch(`${API_URL}/api/baselines/${userId}`, { method: "DELETE" });
@@ -117,7 +118,7 @@ export default function MyUsual() {
       <StickyActions>
         <Link
           href="/you/baseline/enroll"
-          className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
+          className="flex min-h-14 w-full items-center justify-center rounded-2xl bg-forest px-7 text-center text-[1.08rem] font-bold text-white hover:bg-forest-deep"
         >
           {n === 0 ? "Record my first healthy-day check" : "Record another healthy-day check"}
         </Link>

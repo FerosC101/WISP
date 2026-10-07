@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
-import { usePrefs } from "@/lib/prefs";
+import { usePrefs, usePrefsHydrated } from "@/lib/prefs";
 import type { Persona } from "@/lib/types";
 import { WispLogo } from "./WispLine";
 
@@ -17,13 +17,6 @@ const NAV = [
   { href: "/you", label: "You", match: ["/you", "/baseline", "/privacy"], icon: "M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0" },
 ];
 
-function useHydrated() {
-  return useSyncExternalStore(
-    (cb) => usePrefs.persist.onFinishHydration(cb),
-    () => usePrefs.persist.hasHydrated(),
-    () => false,
-  );
-}
 
 function DemoBar() {
   const { userId, setUserId } = usePrefs();
@@ -64,7 +57,7 @@ function DemoBar() {
 export function Shell({ children }: { children: React.ReactNode }) {
   const { largeText, setLargeText, reduceMotion, devMode } = usePrefs();
   const pathname = usePathname();
-  const hydrated = useHydrated();
+  const hydrated = usePrefsHydrated();
   const technical = pathname.startsWith("/dev") || pathname.startsWith("/explain");
 
   useEffect(() => {
@@ -113,7 +106,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      <main id="main" className={`mx-auto w-full flex-1 px-4 pb-[calc(6rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-12 ${technical ? "max-w-6xl" : "max-w-3xl"}`}>
+      <main id="main" className={`mx-auto w-full flex-1 px-4 pb-[calc(6rem+var(--sticky-h,0px)+env(safe-area-inset-bottom))] pt-6 sm:px-6 md:pb-12 ${technical ? "max-w-6xl" : "max-w-3xl"}`}>
         {children}
       </main>
 
