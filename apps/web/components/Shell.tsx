@@ -34,7 +34,7 @@ function DemoBar() {
   }, []);
   const sessionId = pathname.match(/^\/session\/([^/]+)/)?.[1];
   return (
-    <div className="bg-forest-deep text-white">
+    <div className="bg-forest-deep text-white print:hidden">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-[0.78rem]">
         <span className="font-mono font-bold tracking-wider">DEMO MODE</span>
         <label className="flex items-center gap-1.5">
@@ -76,7 +76,7 @@ export function Shell({ children }: { children: React.ReactNode }) {
         Skip to main content
       </a>
       {hydrated && devMode && <DemoBar />}
-      <header className="border-b border-line/70">
+      <header className="border-b border-line/70 print:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3 sm:px-6">
           <Link href="/today" aria-label="WISP home" className="no-underline">
             <WispLogo />
@@ -111,12 +111,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
 
-      <footer className="hidden border-t border-line px-4 py-5 text-center text-sm text-ink-faint md:block">
+      <footer className="hidden print:hidden border-t border-line px-4 py-5 text-center text-sm text-ink-faint md:block">
         WISP helps you decide what to do next. It does not diagnose. In an emergency, call <strong className="text-ink">995</strong>.
       </footer>
 
       {/* Mobile: bottom navigation with large touch targets */}
-      <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ivory/95 backdrop-blur md:hidden">
+      <nav aria-label="Main" className="print:hidden fixed inset-x-0 bottom-0 z-40 border-t border-line bg-ivory/95 backdrop-blur md:hidden">
         <ul className="mx-auto grid max-w-md grid-cols-5">
           {NAV.map((n) => (
             <li key={n.href}>

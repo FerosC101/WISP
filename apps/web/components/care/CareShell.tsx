@@ -51,10 +51,10 @@ export function CareShell({
   }
   return (
     <div className="mx-auto max-w-xl">
-      <Link href={careHref("/care", sid)} className="inline-flex min-h-11 items-center font-bold text-forest">
+      <Link href={careHref("/care", sid)} className="inline-flex min-h-11 items-center font-bold text-forest print:hidden">
         ‹ Your care
       </Link>
-      <nav aria-label="Care sections" className="-mx-4 mb-5 mt-1 overflow-x-auto px-4">
+      <nav aria-label="Care sections" className="-mx-4 mb-5 mt-1 overflow-x-auto px-4 print:hidden">
         <ul className="flex w-max gap-2">
           {SECTIONS.map((x) => {
             const active = pathname === x.path;

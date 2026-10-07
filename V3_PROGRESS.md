@@ -27,7 +27,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 10 | P1 | Expand Care into a real section | ✅ |
 | 11 | P1 | Build a Care Plan screen | ✅ |
 | 12 | P1 | Improve Find Care | ✅ |
-| 13 | P1 | Build a Doctor Visit Summary | ⬜ |
+| 13 | P1 | Build a Doctor Visit Summary | ✅ |
 | 14 | P1 | Turn follow-up into its own flow | ⬜ |
 | 15 | P1 | Upgrade History | ⬜ |
 | 16 | P1 | Expand "My Usual" | ⬜ |
@@ -332,11 +332,36 @@ Verified:
   - The A&E detail page reads correctly.
 - `tsc` and `eslint` are clean.
 
-### 13. P1 — Build a Doctor Visit Summary ⬜
-- [ ] Complaint, duration, important symptoms
-- [ ] Functional assessment result, baseline comparison
-- [ ] WISP recommendation
-- [ ] Patient can show the screen or share it
+### 13. P1 — Build a Doctor Visit Summary ✅
+- [x] Complaint, duration, important symptoms
+- [x] Functional assessment result, baseline comparison
+- [x] WISP recommendation
+- [x] Patient can show the screen or share it
+
+What changed:
+- `lib/visitSummary.ts` → `buildVisitSummary(snapshot, baseline)` and `summaryText()`. The summary is clinician-facing, so it can include numbers the patient screens hide.
+- Sections:
+  - Main concern (the patient's words).
+  - Duration and onset.
+  - Important symptoms: warning signs reported / also reported / unsure about / denied.
+  - Movement check: 5xSTS total time, rise count, per-rise times, arm use. If not done, it says why (declined / emergency sign / no baseline / not needed). If unusable, it says why.
+  - Compared with their usual: the comparison label, plus the usual range, median, number of healthy-day checks and last updated.
+  - Known conditions.
+  - WISP's recommendation with its reasons.
+- Honesty: a prominent amber notice whenever the movement data isn't live ("recorded SYNTHETIC sensor session (demo)"), plus a disclaimer (prototype, not a diagnosis, thresholds not clinically validated, arm use self-reported). Both are kept in the shared/copied text.
+- `/care/visit-summary` offers:
+  - **Show to my doctor:** a full-screen, large-text dialog with Close and Escape.
+  - **Print or save PDF:** `window.print`. The app header, tabs, demo bar, footer and Care navigation are `print:hidden`.
+  - **Share:** the Web Share API, falling back to copying the text.
+
+Verified in the browser at 390 px:
+- T2 measured check: all sections, including "15.8 s for 5 rises", "Usual range 11.3 s–11.8 s (median 11.5 s) from 3 healthy-day checks", and the SYNTHETIC notice.
+- No-check T3: "Not done (patient chose not to)".
+- T1: "Not done (emergency warning sign reported)".
+- Unreliable reading: the notice and reason are shown.
+- Share fallback copied the full text with the notice and showed "Copied…". The doctor view fills the screen, focuses Close and closes on Escape.
+- Not clicked: Print, because the browser print dialog would block automation. Print-hiding is done with Tailwind `print:` classes.
+- `tsc` and `eslint` are clean.
 
 ### 14. P1 — Turn follow-up into its own flow ⬜
 - [ ] Better / Same / Worse / Something new
@@ -388,6 +413,7 @@ Verified:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 13: Doctor visit summary with 5xSTS timings vs usual range, symptom answers, conditions and recommendation, a synthetic-data notice, and show-to-doctor / print / share.
 - 2026-10-07 — ✅ Task 12: Find Care with best / other / emergency groups, the usual clinic's demo address (screen only, not sent to the agent), opt-in on-device distance, and explicit "WISP can't see hours or slots".
 - 2026-10-06 — ✅ Task 11: Care Plan timeline (Now / Today / Next / If worse) built from the disposition, with action buttons and done-ticks. Checked for all five tiers.
 - 2026-10-06 — ✅ Task 10: Care is now a section: hub plus recommendation, plan, find care, provider detail, visit summary, share and follow-up. `/caregiver/[id]` redirects to `/care/share`.
