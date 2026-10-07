@@ -96,3 +96,10 @@ def test_something_new_needs_words(agent, service):
         agent.follow_up(sid, "new", "  ")
     with pytest.raises(ToolError):
         agent.follow_up(sid, "fine")
+
+
+def test_follow_up_answer_is_audited_for_the_technical_view(agent, service):
+    prev = finished_check(agent, service)
+    sid = follow(agent, service, prev, "worse", "my legs feel heavier")
+    ev = [e for e in service.store.audit(sid) if e.event == "follow_up_answer"]
+    assert len(ev) == 1 and ev[0].actor == "patient" and ev[0].result == "worse" and ev[0].data["added_words"] is True

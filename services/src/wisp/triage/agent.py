@@ -163,6 +163,7 @@ class LocalAgent:
         if prev is None or prev.user_id != case.user_id:
             raise ToolError("No previous check to follow up", "invalid_state")
         self.svc.say(sid, "patient", f"{TRENDS[trend]} {text}" if text else TRENDS[trend])
+        self.svc.audit(sid, "patient", "follow_up_answer", result=trend, added_words=bool(text))
         if trend == "new":
             return self._on_complaint(sid, text, extract(text))
 

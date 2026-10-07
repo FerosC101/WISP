@@ -33,7 +33,7 @@ Status: ⬜ not started · 🟡 in progress · ✅ done · ⏸ blocked
 | 16 | P1 | Expand "My Usual" | ✅ |
 | 17 | P1 | Create a proper "You" section | ✅ |
 | 18 | P1 | Redesign caregiver sharing | ✅ |
-| 19 | P1 | Preserve separate Technical View | ⬜ |
+| 19 | P1 | Preserve separate Technical View | ✅ |
 | 20 | P1 | Preserve and polish Engineering View | ⬜ |
 | 21 | P1 | Improve mobile UX | ⬜ |
 
@@ -518,9 +518,27 @@ Verified in the browser at 390 px:
 - Mdm Siti's finished check: the prompt offers "Preview and share" (→ `/care/share?s=…`), and "No, thank you" dismisses it.
 - `tsc` and `eslint` are clean.
 
-### 19. P1 — Preserve separate Technical View ⬜
-- [ ] Structured decision record: safety result, care range, missing evidence, selected action, tool calls, baseline result, rule triggered, final tier
-- [ ] Do not expose chain-of-thought
+### 19. P1 — Preserve separate Technical View ✅
+- [x] Structured decision record: safety result, care range, missing evidence, selected action, tool calls, baseline result, rule triggered, final tier
+- [x] Do not expose chain-of-thought
+
+v2's `/explain/[id]` already covered every listed item (concern, safety screen, care range with floor/ceiling, missing information, options considered, selected action and why, tool called, sensor result, baseline result, care-tier change, final disposition with rule hits, tool-call timeline). It's labelled "not model chain-of-thought" and shows only the structured `trace`. This task kept it working with v3.
+
+What changed:
+- New v3 events are now in the record:
+  - The **follow-up answer** (better/same/worse/new, and whether own words were added and screened).
+  - **Patient corrections** from the summary screen (the facts changed, with the ORD-5 note).
+  - **Sharing** (shared after preview + consent, with reasons or recommendation only, or declined).
+- The timeline now also shows `follow_up_answer`, `check_skipped_by_patient` and `check_stopped_by_patient`.
+- Backend: `follow_up()` audits `follow_up_answer` (actor patient, result = trend, `added_words`). The share audit records `include_reasons`. New test `test_follow_up_answer_is_audited_for_the_technical_view`. Total 143 passed.
+- "Patient view" now opens the v3 screen: `/history/[id]` when finished, the Check flow when unfinished, or the conversation for WorkBuddy. It used to open the v2 chat page.
+- The demo bar's "Technical view (this check)" finds the check on v3 screens: `/history/:id`, `/explain/:id`, `?s=` (Check and Care) and `?prev=` (Follow-up), as well as `/session/:id`.
+
+Verified:
+- A follow-up built through the API (worse + own words → a duration correction → declined via the agent → shared with reasons) shows all three new record sections, `follow_up_answer → worse` in the timeline, and Patient view → `/history/…`.
+- With demo mode on, the Technical-view link points at the right session on `/care/plan?s=`, `/check/complete?s=` and `/follow-up?prev=`. Demo mode was switched back off.
+- `tsc` and `eslint` are clean.
+- Known limit: the demo bar reads `?s=` on each route change, so switching between two Care pages for different checks without a path change could show the previous check's link until the next navigation.
 
 ### 20. P1 — Preserve and polish Engineering View ⬜
 - [ ] Live ESP32 connection, real vs recorded data
@@ -537,6 +555,7 @@ Verified in the browser at 390 px:
 
 ## Log
 
+- 2026-10-07 — ✅ Task 19: Technical view kept and extended with follow-up answer, patient corrections and sharing decisions; links to and from it work from all v3 screens (143 tests pass).
 - 2026-10-07 — ✅ Task 18: Sharing redesign (minimal by default, opt-in reasons, exact preview, explicit agree tick, history, remove trusted person). No sharing without a preview anywhere (3 new tests, 142 pass).
 - 2026-10-07 — ✅ Task 17: You section with hub, health profile, trusted people, language, accessibility (new Less motion) and privacy with inline delete. Backend `GET /api/profile/{user}` for the person's own screen (139 tests pass).
 - 2026-10-07 — ✅ Task 16: My usual at `/you/baseline` (progress tracker, status, last updated, seconds behind details, inline delete) and an `/you/baseline/enroll` journey. Backend: healthy-day checks can be stopped and are then discarded (2 new tests, 138 pass).

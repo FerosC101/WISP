@@ -32,7 +32,10 @@ function DemoBar() {
   useEffect(() => {
     api<Persona[]>("/api/personas").then(setPersonas).catch(() => setPersonas([]));
   }, []);
-  const sessionId = pathname.match(/^\/session\/([^/]+)/)?.[1];
+  // The check on screen, wherever the patient is: /session/:id, /history/:id, /explain/:id, or ?s= / ?prev=.
+  // Safe to read window here: the demo bar only renders on the client after hydration.
+  const query = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+  const sessionId = pathname.match(/^\/(?:session|history|explain)\/(s_[^/]+)/)?.[1] ?? query?.get("s") ?? query?.get("prev") ?? undefined;
   return (
     <div className="bg-forest-deep text-white print:hidden">
       <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-1 px-4 py-1.5 text-[0.78rem]">

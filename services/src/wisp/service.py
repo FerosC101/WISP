@@ -548,7 +548,7 @@ class WispService:
             return {"shared": False}
         record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "simulated", "include_reasons": include_reasons}
         self.store.add_share(session_id, record)
-        self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="simulated")
+        self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="simulated", include_reasons=include_reasons)
         self.publish(session_id)
         return {"shared": True, **record}
 
