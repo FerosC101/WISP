@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { EmptyState, PageIntro } from "@/components/kit";
 import { useStartCheck } from "@/components/StartCheck";
+import { buttonClass } from "@/components/ui";
+import { WispLine } from "@/components/WispLine";
 import { api } from "@/lib/api";
 import { movementPhrase } from "@/lib/movementWords";
 import { useUserId } from "@/lib/prefs";
@@ -21,7 +24,14 @@ interface BaselineResp {
 }
 
 type Entry =
-  | { kind: "check"; at: string; item: HistoryItem; recheck?: Recheck; followUps: HistoryItem[]; parent?: HistoryItem }
+  | {
+      kind: "check";
+      at: string;
+      item: HistoryItem;
+      recheck?: Recheck;
+      followUps: HistoryItem[];
+      parent?: HistoryItem;
+    }
   | { kind: "baseline"; at: string; id: string; n: number }
   | { kind: "planned"; at: string; recheck: Recheck };
 
@@ -58,7 +68,14 @@ export default function History() {
           parent: item.previous_session_id ? byId.get(item.previous_session_id) : undefined,
         }));
         for (const r of rechecks) if (r.status === "scheduled") out.push({ kind: "planned", at: r.due_at, recheck: r });
-        (base.baseline?.sessions ?? []).forEach((s, i) => out.push({ kind: "baseline", at: s.date, id: s.measurement_id, n: i + 1 }));
+        (base.baseline?.sessions ?? []).forEach((s, i) =>
+          out.push({
+            kind: "baseline",
+            at: s.date,
+            id: s.measurement_id,
+            n: i + 1,
+          }),
+        );
         out.sort((a, b) => b.at.localeCompare(a.at));
         if (current) setEntries(out);
       })
@@ -79,10 +96,9 @@ export default function History() {
 
   return (
     <div className="mx-auto max-w-xl pt-2 sm:pt-8">
-      <h1 className="text-[2rem] font-bold text-forest">History</h1>
-      <p className="mt-1 text-ink-soft">Your checks, what WISP advised, and your healthy-day checks.</p>
+      <PageIntro label="History" title="Your check-ins" lead="How you've been, what WISP suggested, and your healthy-day checks." />
 
-      <div role="radiogroup" aria-label="Show" className="mt-4 flex flex-wrap gap-2">
+      <div role="radiogroup" aria-label="Show" className="mt-6 flex flex-wrap gap-2">
         {FILTERS.map((f) => (
           <button
             key={f.id}
@@ -90,25 +106,44 @@ export default function History() {
             role="radio"
             aria-checked={filter === f.id}
             onClick={() => setFilter(f.id)}
-            className={`min-h-11 rounded-full px-4 font-bold ${filter === f.id ? "bg-forest text-white" : "border border-line bg-card text-ink-soft"}`}
+            className={`min-h-11 rounded-full px-4 font-semibold transition-colors ${filter === f.id ? "bg-forest text-white" : "border border-line bg-card text-ink-soft hover:border-forest/40"}`}
           >
             {f.label}
           </button>
         ))}
       </div>
 
+      {entries === null && (
+        <div className="py-14" aria-busy>
+          <WispLine variant="flow" className="mx-auto h-8 w-48 text-sage-mid" />
+        </div>
+      )}
+
       {entries !== null && shown.length === 0 && (
-        <p className="mt-8 text-ink-soft">{filter === "usual" ? "No healthy-day checks yet." : "No checks yet."}</p>
+        <EmptyState
+          scene={filter === "usual" ? "healthy" : "rest"}
+          title={filter === "usual" ? "No healthy-day checks yet" : "No check-ins yet"}
+          body={
+            filter === "usual"
+              ? "A few short checks on days you feel well help WISP learn what's usual for you."
+              : "When something feels off, a check-in takes a few minutes. It will appear here afterwards."
+          }
+          action={
+            <Link href={filter === "usual" ? "/you/baseline" : "/check/start"} className={buttonClass("primary", "lg")}>
+              {filter === "usual" ? "Learn about My usual" : "Start a check-in"}
+            </Link>
+          }
+        />
       )}
 
       <div className="mt-6 space-y-7">
         {groups.map((g) => (
           <section key={g.label} aria-label={g.label}>
-            <h2 className="mb-2 text-[0.75rem] font-bold uppercase tracking-[0.16em] text-ink-faint">{g.label}</h2>
-            <ol className="space-y-2.5 border-l-2 border-sage-deep pl-4">
+            <h2 className="mb-2.5 font-serif text-[1.2rem] text-forest">{g.label}</h2>
+            <ol className="space-y-3 border-l-2 border-dashed border-sage-mid/70 pl-5">
               {g.items.map((e, i) => (
                 <li key={i} className="relative">
-                  <span aria-hidden className={`absolute -left-[1.42rem] top-5 h-3 w-3 rounded-full border-2 border-ivory ${dotFor(e)}`} />
+                  <span aria-hidden className={`absolute -left-[1.72rem] top-5 h-3.5 w-3.5 rounded-full border-[3px] border-ivory ${dotFor(e)}`} />
                   <EntryCard e={e} onCheckIn={check.startFollowUp} busy={check.busy} />
                 </li>
               ))}
@@ -129,10 +164,15 @@ function dotFor(e: Entry) {
 function EntryCard({ e, onCheckIn, busy }: { e: Entry; onCheckIn: (sid: string) => void; busy: boolean }) {
   if (e.kind === "planned") {
     return (
-      <div className="rounded-2xl border border-dashed border-forest/40 bg-sage/50 px-4 py-3">
-        <p className="font-bold">Planned check-in · {timeLabel(e.at)}</p>
+      <div className="rounded-w-md border border-dashed border-forest/40 bg-sage/50 px-4 py-3">
+        <p className="font-semibold">Planned check-in · {timeLabel(e.at)}</p>
         <p className="text-[0.92rem] text-ink-soft">WISP will ask how you&apos;re doing.</p>
-        <button type="button" disabled={busy} onClick={() => onCheckIn(e.recheck.session_id)} className="mt-1 min-h-11 font-bold text-forest underline underline-offset-4">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => onCheckIn(e.recheck.session_id)}
+          className="mt-1 min-h-11 font-semibold text-forest underline underline-offset-4"
+        >
           Check in now
         </button>
       </div>
@@ -140,9 +180,12 @@ function EntryCard({ e, onCheckIn, busy }: { e: Entry; onCheckIn: (sid: string) 
   }
   if (e.kind === "baseline") {
     return (
-      <Link href="/you/baseline" className="block rounded-2xl border border-line bg-card px-4 py-3 hover:border-forest/40">
-        <p className="font-bold">
-          Healthy-day check <span className="ml-1 text-[0.85rem] font-normal text-ink-faint">{timeLabel(e.at)}</span>
+      <Link
+        href="/you/baseline"
+        className="block rounded-w-md border border-line bg-card px-4 py-3 shadow-(--shadow-soft) transition-colors hover:border-forest/40"
+      >
+        <p className="font-semibold">
+          Healthy-day check <span className="ml-1 text-[0.92rem] font-normal text-ink-faint">{timeLabel(e.at)}</span>
         </p>
         <p className="text-[0.92rem] text-ink-soft">Added to your usual pattern</p>
       </Link>
@@ -156,22 +199,18 @@ function EntryCard({ e, onCheckIn, busy }: { e: Entry; onCheckIn: (sid: string) 
   const followUp = e.followUps.find((f) => f.tier);
 
   return (
-    <Link href={href} className="block rounded-2xl border border-line bg-card px-4 py-3 hover:border-forest/40">
-      <p className="text-[0.8rem] font-bold uppercase tracking-[0.12em] text-ink-faint">
+    <Link href={href} className="block rounded-w-md border border-line bg-card px-4 py-3 shadow-(--shadow-soft) transition-colors hover:border-forest/40">
+      <p className="text-[0.92rem] text-ink-soft">
         {e.parent ? `Follow-up of ${dayLabel(e.parent.created_at).toLowerCase()}` : "Check"} · {timeLabel(h.created_at)}
       </p>
-      <p className="mt-0.5 text-[1.05rem] font-bold">{h.complaint ? `“${h.complaint}”` : "Check-in"}</p>
-      <p className={`mt-0.5 font-bold ${h.tier ? TIER_STYLE[h.tier].fg : "text-ink-faint"}`}>→ {h.tier ? PATIENT_OUTCOME[h.tier] : "Not finished"}</p>
-      <div className="mt-2 flex flex-wrap gap-2 text-[0.82rem]">
+      <p className="mt-0.5 text-[1.05rem] font-semibold">{h.complaint ? `“${h.complaint}”` : "Check-in"}</p>
+      <p className={`mt-0.5 font-semibold ${h.tier ? TIER_STYLE[h.tier].fg : "text-ink-faint"}`}>→ {h.tier ? PATIENT_OUTCOME[h.tier] : "Not finished"}</p>
+      <div className="mt-2 flex flex-wrap gap-2 text-[0.9rem]">
         {finished && <span className={`rounded-full px-2.5 py-0.5 ${move.used ? "bg-teal-bg text-teal" : "bg-slate-bg text-ink-soft"}`}>{move.text}</span>}
         {e.recheck?.status === "scheduled" && <span className="rounded-full bg-sage px-2.5 py-0.5 text-forest">Check-in planned</span>}
-        {followUp?.tier && (
-          <span className="rounded-full bg-sage px-2.5 py-0.5 text-forest">
-            Followed up: {PATIENT_OUTCOME[followUp.tier].toLowerCase()}
-          </span>
-        )}
+        {followUp?.tier && <span className="rounded-full bg-sage px-2.5 py-0.5 text-forest">Followed up: {PATIENT_OUTCOME[followUp.tier].toLowerCase()}</span>}
       </div>
-      {!finished && <p className="mt-2 text-[0.95rem] font-bold text-forest underline underline-offset-4">Continue this check</p>}
+      {!finished && <p className="mt-2 text-[0.95rem] font-semibold text-forest underline underline-offset-4">Continue this check</p>}
     </Link>
   );
 }

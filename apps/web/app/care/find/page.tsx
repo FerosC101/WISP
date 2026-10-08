@@ -8,7 +8,7 @@ function LocationPrompt({ loc, hasCoords }: { loc: ReturnType<typeof useMyLocati
   if (!hasCoords) return null;
   if (loc.state === "ok") return <p className="mt-4 text-[0.95rem] text-ink-soft">Distances use your location. It stays on this device.</p>;
   return (
-    <div className="mt-4 rounded-2xl bg-sage px-4 py-3">
+    <div className="mt-4 rounded-w-md bg-sage px-4 py-3">
       <button type="button" onClick={loc.ask} disabled={loc.state === "asking"} className="min-h-11 font-bold text-forest underline underline-offset-4">
         {loc.state === "asking" ? "Finding your location…" : "Show how far away your clinic is"}
       </button>
@@ -40,11 +40,11 @@ export default function FindCare() {
         );
         return (
           <>
-            <h1 className="text-[1.9rem] font-bold leading-tight text-forest">Find care</h1>
+            <h1 className="text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">Find care</h1>
             <p className="mt-2 text-[1.05rem]">{d.action}</p>
 
             {d.tier === "T1" && (
-              <a href="tel:995" className="mt-5 flex min-h-16 items-center justify-center rounded-2xl bg-red text-[1.3rem] font-bold text-white">
+              <a href="tel:995" className="mt-5 flex min-h-16 items-center justify-center rounded-w-md bg-red text-[1.3rem] font-bold text-white">
                 Call 995
               </a>
             )}
@@ -53,7 +53,7 @@ export default function FindCare() {
 
             {best && (
               <section aria-labelledby="best-title" className="mt-5">
-                <h2 id="best-title" className="text-[0.78rem] font-bold uppercase tracking-[0.16em] text-forest">
+                <h2 id="best-title" className="font-serif text-[1.2rem] font-semibold text-forest">
                   Best for you now
                 </h2>
                 <ul className="mt-2">{card(best, true)}</ul>
@@ -61,7 +61,7 @@ export default function FindCare() {
             )}
             {others.length > 0 && (
               <section aria-labelledby="other-title" className="mt-5">
-                <h2 id="other-title" className="text-[0.78rem] font-bold uppercase tracking-[0.16em] text-ink-faint">
+                <h2 id="other-title" className="font-serif text-[1.2rem] font-semibold text-forest">
                   Other options
                 </h2>
                 <ul className="mt-2 space-y-3">{others.map((p) => card(p))}</ul>
@@ -69,15 +69,16 @@ export default function FindCare() {
             )}
             {emergencyFallback && ae && (
               <section aria-labelledby="ae-title" className="mt-5">
-                <h2 id="ae-title" className="text-[0.78rem] font-bold uppercase tracking-[0.16em] text-red">
+                <h2 id="ae-title" className="font-serif text-[1.2rem] font-semibold text-red-deep">
                   In an emergency
                 </h2>
                 <ul className="mt-2">{card(ae)}</ul>
               </section>
             )}
 
-            <p className="mt-5 rounded-2xl border border-line bg-card px-4 py-3 text-[0.95rem] text-ink-soft">
-              WISP can&apos;t see opening hours, waiting times or appointment slots, and it doesn&apos;t book for you. Please call before you go.
+            <p className="mt-5 rounded-w-md border border-line bg-card px-4 py-3 text-[0.95rem] text-ink-soft">
+              WISP can&apos;t see opening hours, waiting times or appointment slots, and it doesn&apos;t book for you. Please call before you go. Clinic
+              details here are demo listings for this prototype.
             </p>
           </>
         );

@@ -156,8 +156,8 @@ export default function DevPage() {
     <div className="space-y-6 font-[system-ui]">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-teal">Engineering view</p>
-          <h1 className="text-2xl font-bold text-forest">Sensing, agent &amp; demo diagnostics</h1>
+          <p className="label text-teal">Engineering view</p>
+          <h1 className="mt-1 text-[1.8rem] leading-tight text-forest">Sensing, agent &amp; demo diagnostics</h1>
           <p className="text-sm text-ink-soft">Not linked from the patient app. Raw CSI-derived signals are only shown here.</p>
         </div>
         <label className="flex items-center gap-2 text-sm">
@@ -169,7 +169,7 @@ export default function DevPage() {
       <LiveSensor provider={sensor} onProviderChange={load} />
 
       <Card>
-        <h2 className="font-bold">Demo setup</h2>
+        <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Demo setup</h2>
         <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
           <span>Patient profile:</span>
           {personas.map((p) => (
@@ -185,7 +185,7 @@ export default function DevPage() {
         </div>
         <div className="mt-4 grid gap-3 md:grid-cols-3">
           {DEMOS.map((d) => (
-            <div key={d.n} className="rounded-2xl border border-line p-4">
+            <div key={d.n} className="rounded-w-md border border-line p-4">
               <p className="font-mono text-xs text-ink-faint">DEMO {d.n}</p>
               <p className="font-bold">{d.title}</p>
               <p className="mt-1 text-sm text-ink-soft">“{d.text}”</p>
@@ -203,7 +203,7 @@ export default function DevPage() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
-          <h2 className="font-bold">Sensor source</h2>
+          <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Sensor source</h2>
           {sensor && (
             <div className="mt-3 space-y-3 text-sm">
               <p>
@@ -260,7 +260,7 @@ export default function DevPage() {
         </Card>
 
         <Card>
-          <h2 className="font-bold">Agent</h2>
+          <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Agent</h2>
           <div className="mt-3 space-y-2 text-sm">
             {(["local_agent", "workbuddy"] as const).map((m) => (
               <label key={m} className="flex items-start gap-2">
@@ -299,7 +299,7 @@ export default function DevPage() {
 
       <Card>
         <div className="flex items-baseline justify-between">
-          <h2 className="font-bold">Measurements</h2>
+          <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Measurements</h2>
           <div className="flex flex-wrap items-center gap-1 text-sm">
             {(["all", "live", "recorded"] as const).map((f) => (
               <button
@@ -439,7 +439,7 @@ export default function DevPage() {
 
       {evaluation && (
         <Card>
-          <h2 className="font-bold">Sensor validation (ground truth recorded in this deployment)</h2>
+          <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Sensor validation (ground truth recorded in this deployment)</h2>
           <p className="mt-1 text-xs text-ink-faint">{evaluation.note}</p>
           <dl className="mt-3 grid grid-cols-2 gap-3 text-sm sm:grid-cols-5">
             {[
@@ -463,7 +463,7 @@ export default function DevPage() {
 
       <Card>
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-bold">Audit log</h2>
+          <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Audit log</h2>
           <button className="text-sm text-forest underline" onClick={load}>
             Refresh
           </button>

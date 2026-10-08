@@ -2,6 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { CheckFrame } from "@/components/check/CheckFrame";
+import { Icon } from "@/components/Icon";
+import { Illustration } from "@/components/Illustration";
 import { Button, Disclosure } from "@/components/ui";
 import { SAFETY_ORDER, currentTurn, pendingQuestion, safetyStep, useCheckFlow } from "@/lib/checkFlow";
 import type { QuickReply } from "@/lib/types";
@@ -20,10 +22,10 @@ function AnswerButton({ r, icons, disabled, onClick }: { r: QuickReply; icons: b
       type="button"
       disabled={disabled}
       onClick={onClick}
-      className="flex min-h-16 w-full items-center gap-4 rounded-2xl border-2 border-line bg-card px-5 text-left text-[1.2rem] font-bold text-ink transition-colors hover:border-forest/60 hover:bg-sage/40 disabled:opacity-60"
+      className="flex min-h-[4.25rem] w-full items-center gap-4 rounded-w-md border-[1.5px] border-line bg-card px-5 text-left text-[1.2rem] font-semibold text-ink shadow-(--shadow-soft) transition-colors duration-200 hover:border-forest/50 hover:bg-sage/40 disabled:opacity-60"
     >
       {icon && (
-        <span aria-hidden className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-sage text-forest">
+        <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sage text-forest">
           <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
             <path d={icon} />
           </svg>
@@ -56,26 +58,47 @@ export default function Safety() {
   return (
     <CheckFrame stage="safety" loading={!f.ready || !s || !q} error={f.error}>
       <section aria-labelledby="safety-q">
-        <p
+        {step === 1 && (
+          <div className="mb-6 flex items-center gap-4 rounded-w-lg bg-sage/70 p-3 pr-4">
+            <Illustration scene="calm" decorative className="w-28 shrink-0 rounded-w-md" />
+            <div>
+              <p className="font-serif text-[1.3rem] font-semibold leading-tight text-forest">Let&apos;s do a quick safety check.</p>
+              <p className="mt-1 text-[0.98rem] text-ink-soft">I need to check a few important things before we continue.</p>
+            </div>
+          </div>
+        )}
+
+        <div
           role="progressbar"
           aria-label="Safety questions"
           aria-valuemin={1}
           aria-valuemax={total}
           aria-valuenow={step}
-          className="text-[0.95rem] font-bold text-ink-soft"
+          aria-valuetext={`Question ${step} of ${total}`}
+          className="flex items-center gap-3"
         >
-          Question {step} of {total}
-        </p>
+          <span aria-hidden className="flex flex-1 items-center">
+            {Array.from({ length: total }).map((_, i) => (
+              <span key={i} className="flex flex-1 items-center last:flex-none">
+                <span className={`h-2.5 w-2.5 shrink-0 rounded-full ${i < step ? "bg-forest" : "border-[1.5px] border-sage-deep bg-ivory"}`} />
+                {i < total - 1 && <span className={`h-[2px] flex-1 ${i < step - 1 ? "bg-forest" : "bg-sage-deep"}`} />}
+              </span>
+            ))}
+          </span>
+          <span className="shrink-0 text-[0.95rem] font-medium text-ink-soft">
+            Question {step} of {total}
+          </span>
+        </div>
 
-        {context.length > 0 && (
-          <div className="mt-4 rounded-2xl bg-sage px-4 py-3 text-[1rem] text-ink">
+        {context.length > 0 && step === 1 && (
+          <div className="mt-5 rounded-w-md border-l-4 border-sage-mid bg-card px-4 py-3 text-[1rem] text-ink-soft">
             {context.map((m) => (
               <p key={m.id}>{m.text}</p>
             ))}
           </div>
         )}
 
-        <h1 id="safety-q" ref={heading} tabIndex={-1} className="mt-5 text-[1.9rem] font-bold leading-tight text-forest focus:outline-none">
+        <h1 id="safety-q" ref={heading} tabIndex={-1} className={`mt-6 leading-[1.18] text-forest focus:outline-none ${(q?.text.length ?? 0) > 60 ? "text-[1.65rem] sm:text-[2rem]" : "text-[1.95rem] sm:text-[2.2rem]"}`}>
           {q?.text}
         </h1>
 
@@ -85,7 +108,7 @@ export default function Safety() {
           ))}
         </div>
         {replies.some((r) => r.value === "unsure") && (
-          <p className="mt-3 text-[0.95rem] text-ink-soft">If you&apos;re not sure, that&apos;s fine. WISP will play it safe.</p>
+          <p className="mt-3 text-[0.98rem] text-ink-soft">If you&apos;re not sure, that&apos;s fine. WISP will take the safer path.</p>
         )}
 
         <form
@@ -107,7 +130,7 @@ export default function Safety() {
                 maxLength={1000}
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Type your answer…"
-                className="min-h-14 min-w-0 flex-1 rounded-2xl border border-line bg-card px-4 text-[1.05rem] placeholder:text-ink-faint"
+                className="min-h-14 min-w-0 flex-1 rounded-w-md border-[1.5px] border-line bg-card px-4 text-[1.05rem] placeholder:text-ink-faint"
               />
               <Button type="submit" size="lg" disabled={f.sending || !text.trim()}>
                 Send
@@ -116,11 +139,14 @@ export default function Safety() {
           </Disclosure>
         </form>
 
-        <p className="mt-8 rounded-2xl bg-red-bg px-4 py-3 text-[0.98rem] text-red">
-          Feeling very unwell right now?{" "}
-          <a href="tel:995" className="font-bold underline underline-offset-4">
-            Call 995
-          </a>
+        <p className="mt-8 flex items-center gap-3 rounded-w-md bg-red-bg px-4 py-3 text-[1rem] text-red-deep">
+          <Icon name="phone" className="h-5 w-5" />
+          <span>
+            Feeling very unwell right now?{" "}
+            <a href="tel:995" className="font-bold underline underline-offset-4">
+              Call 995
+            </a>
+          </span>
         </p>
       </section>
     </CheckFrame>

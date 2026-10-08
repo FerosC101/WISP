@@ -15,14 +15,14 @@ export default function HealthProfile() {
       {p && (
         <div className="space-y-3">
           <Card aria-label="About you">
-            <p className="mb-2 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">About you</p>
+            <p className="mb-2 label text-ink-faint">About you</p>
             <dl className="divide-y divide-line">
               <Row label="Age" value={p.age} />
               <Row label="Home" value={p.lives_alone ? "Lives alone" : "Lives with others"} />
             </dl>
           </Card>
           <Card aria-label="Health conditions">
-            <p className="mb-2 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Health conditions</p>
+            <p className="mb-2 label text-ink-faint">Health conditions</p>
             {p.conditions.length ? (
               <ul className="list-disc space-y-1 pl-5 text-[1.05rem]">
                 {p.conditions.map((c) => (
@@ -34,7 +34,7 @@ export default function HealthProfile() {
             )}
           </Card>
           <Card aria-label="Medicines">
-            <p className="mb-2 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Medicines</p>
+            <p className="mb-2 label text-ink-faint">Medicines</p>
             {p.medications.length ? (
               <ul className="list-disc space-y-1 pl-5 text-[1.05rem]">
                 {p.medications.map((m) => (
@@ -47,14 +47,14 @@ export default function HealthProfile() {
             <p className="mt-2 text-[0.9rem] text-ink-soft">Your medicine list stays on this device. It isn&apos;t sent to WISP&apos;s assistant.</p>
           </Card>
           <Card aria-label="Mobility">
-            <p className="mb-2 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Mobility</p>
+            <p className="mb-2 label text-ink-faint">Mobility</p>
             <dl className="divide-y divide-line">
               <Row label="Getting up from a chair" value={p.normally_stands_unaided ? "Usually on your own" : "Usually with help"} />
               <Row label="Walking aid" value={p.mobility_aid ? capitalise(p.mobility_aid) : "None"} />
             </dl>
           </Card>
           <Card aria-label="Usual GP">
-            <p className="mb-2 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Usual GP</p>
+            <p className="mb-2 label text-ink-faint">Usual GP</p>
             <p className="text-[1.08rem] font-bold">{p.usual_gp}</p>
             {p.usual_gp_details?.address && <p className="text-ink-soft">{p.usual_gp_details.address}</p>}
             <a

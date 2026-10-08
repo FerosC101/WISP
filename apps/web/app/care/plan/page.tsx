@@ -5,17 +5,10 @@ import { useState } from "react";
 import { CareShell } from "@/components/care/CareShell";
 import { useStartCheck } from "@/components/StartCheck";
 import { useCareSession } from "@/lib/care";
-import { type PlanAction, type PlanStep, buildPlan } from "@/lib/carePlan";
+import { type PlanAction, type PlanStep, buildPlan, loadPlanDone as loadDone } from "@/lib/carePlan";
 import type { Persona } from "@/lib/types";
 
 // Ticks are a per-device convenience, so they live in this browser only.
-function loadDone(sid: string): Record<string, boolean> {
-  try {
-    return JSON.parse(localStorage.getItem(`wisp-plan-${sid}`) ?? "{}");
-  } catch {
-    return {};
-  }
-}
 function saveDone(sid: string, done: Record<string, boolean>) {
   try {
     localStorage.setItem(`wisp-plan-${sid}`, JSON.stringify(done));
@@ -25,7 +18,7 @@ function saveDone(sid: string, done: Record<string, boolean>) {
 }
 
 function ActionButton({ a, onFollowUp, busy }: { a: PlanAction; onFollowUp: (sid: string) => void; busy: boolean }) {
-  const cls = `mt-3 inline-flex min-h-12 items-center justify-center rounded-2xl px-5 font-bold ${
+  const cls = `mt-3 inline-flex min-h-12 items-center justify-center rounded-w-md px-5 font-bold ${
     a.emphasis === "emergency"
       ? "w-full bg-red text-[1.2rem] text-white min-h-16"
       : a.emphasis === "primary"
@@ -65,7 +58,7 @@ function Step({
   busy: boolean;
 }) {
   return (
-    <li className={`rounded-2xl border border-line bg-card p-4 ${done ? "opacity-70" : ""}`}>
+    <li className={`rounded-w-md border border-line bg-card p-4 ${done ? "opacity-70" : ""}`}>
       <div className="flex items-start gap-3">
         {step.checkable ? (
           <label className="-m-2.5 flex h-11 w-11 shrink-0 cursor-pointer items-center justify-center">
@@ -90,7 +83,7 @@ function Phase({ title, tone, children }: { title: string; tone: "now" | "later"
     <section aria-label={title} className="relative pl-7">
       <span aria-hidden className={`absolute left-0 top-1.5 h-3.5 w-3.5 rounded-full ${dot}`} />
       <span aria-hidden className="absolute bottom-0 left-[6px] top-6 w-0.5 bg-line" />
-      <h2 className={`text-[0.78rem] font-bold uppercase tracking-[0.16em] ${tone === "worse" ? "text-red" : "text-ink-faint"}`}>{title}</h2>
+      <h2 className={`label ${tone === "worse" ? "text-red" : "text-ink-faint"}`}>{title}</h2>
       <div className="mt-2 pb-6">{children}</div>
     </section>
   );
@@ -125,7 +118,7 @@ function PlanBody({ snapshot, me }: { snapshot: NonNullable<ReturnType<typeof us
         {plan.today.length > 0 && <Phase title="Today" tone="later">{steps(plan.today)}</Phase>}
         {plan.next.length > 0 && <Phase title="Next" tone="later">{steps(plan.next)}</Phase>}
         <Phase title="If symptoms get worse" tone="worse">
-          <div className="rounded-2xl border border-red/30 bg-card p-4">
+          <div className="rounded-w-md border border-red/30 bg-card p-4">
             {plan.worse.advice.map((a) => (
               <p key={a} className="mb-3 font-bold">
                 {a}
@@ -140,14 +133,14 @@ function PlanBody({ snapshot, me }: { snapshot: NonNullable<ReturnType<typeof us
                 </li>
               ))}
             </ul>
-            <a href="tel:995" className="mt-4 flex min-h-14 items-center justify-center rounded-2xl bg-red text-[1.1rem] font-bold text-white">
+            <a href="tel:995" className="mt-4 flex min-h-14 items-center justify-center rounded-w-md bg-red text-[1.1rem] font-bold text-white">
               Call 995
             </a>
           </div>
         </Phase>
       </div>
       {check.error && (
-        <p role="alert" className="rounded-xl bg-amber-bg px-4 py-3 text-amber">
+        <p role="alert" className="rounded-w-sm bg-amber-bg px-4 py-3 text-amber">
           {check.error}
         </p>
       )}

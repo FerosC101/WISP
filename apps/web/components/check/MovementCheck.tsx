@@ -4,6 +4,9 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { post } from "@/lib/api";
 import type { SensingProgress, Snapshot } from "@/lib/types";
+import { Icon } from "../Icon";
+import { Illustration } from "../Illustration";
+import { buttonClass } from "../ui";
 import { WispLine } from "../WispLine";
 
 /**
@@ -63,79 +66,82 @@ export function MovementCheck({ snapshot, progress }: { snapshot: Snapshot; prog
       aria-modal="true"
       aria-labelledby="move-title"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex flex-col bg-forest-deep text-white focus:outline-none"
+      className="fixed inset-0 z-50 flex flex-col overflow-y-auto bg-ivory text-ink focus:outline-none"
     >
-      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 pb-6 pt-8">
+      <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-7">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-white/70">Quick movement check</p>
+          <p className="font-serif text-[1.15rem] font-semibold text-forest">Quick movement check</p>
           {recorded && (
-            <span className="rounded-md border border-dashed border-white/40 px-2 py-0.5 font-mono text-[0.62rem] font-bold uppercase tracking-wider text-white/70">
-              {snapshot.sensor.mode === "synthetic_recorded" ? "Recorded · synthetic" : "Recorded session"}
+            <span className="rounded-w-sm border border-dashed border-ink-faint/60 bg-slate-bg px-2 py-0.5 text-[0.75rem] font-medium text-ink-soft">
+              {snapshot.sensor.mode === "synthetic_recorded" ? "Recorded demo session" : "Recorded session"}
             </span>
           )}
         </div>
 
-        <div className="flex flex-1 flex-col items-center justify-center text-center" aria-live="assertive">
+        <div className="flex flex-1 flex-col items-center justify-center py-6 text-center" aria-live="assertive">
           {waiting ? (
             <>
-              <h1 id="move-title" className="text-[2rem] font-bold leading-tight">
-                Sit back in your chair
+              <Illustration scene="rise" className="w-full rounded-w-lg" />
+              <h1 id="move-title" className="mt-6 text-[1.9rem] leading-[1.15] text-forest">
+                Stand up and sit down five times at your normal pace.
               </h1>
-              <ul className="mt-6 space-y-2 text-left text-[1.15rem] text-white/90">
-                <li>· Feet flat on the floor</li>
-                <li>· Arms crossed over your chest, if you can</li>
-                <li>· Then stand up and sit down five times, at your normal pace</li>
+              <ul className="mt-4 space-y-1.5 text-left text-[1.06rem] text-ink-soft">
+                <li className="flex gap-2.5">
+                  <Icon name="chair" className="mt-0.5 h-5 w-5 text-teal" />
+                  Sit back first, feet flat on the floor
+                </li>
+                <li className="flex gap-2.5">
+                  <Icon name="you" className="mt-0.5 h-5 w-5 text-teal" />
+                  Cross your arms over your chest, if you can
+                </li>
               </ul>
-              <WispLine className="mt-10 h-8 w-56 text-white/50" />
             </>
           ) : counting ? (
             <>
-              <h1 id="move-title" className="text-[1.5rem] text-white/85">
+              <h1 id="move-title" className="text-[1.5rem] text-ink-soft">
                 Sit still…
               </h1>
-              <p className="mt-4 text-[6rem] font-bold leading-none">{countdown}</p>
+              <p className="mt-4 font-serif text-[6rem] font-semibold leading-none text-forest">{countdown}</p>
             </>
           ) : (
             <>
-              <h1 id="move-title" className="text-[2rem] font-bold leading-tight">
+              <WispLine variant="breathe" className="h-20 w-full max-w-xs text-sage-mid" strokeWidth={3.5} />
+              <h1 id="move-title" className="mt-8 text-[1.9rem] leading-[1.15] text-forest">
                 Stand up and sit down five times
               </h1>
-              <WispLine variant="flow" className="my-10 h-14 w-full max-w-xs text-teal-bg" />
               {showCount ? (
-                <div aria-label={`${rises} of 5`} role="img" className="flex gap-3">
-                  {[0, 1, 2, 3, 4].map((i) => (
-                    <span key={i} className={`h-5 w-5 rounded-full transition-colors ${i < rises ? "bg-white" : "border-2 border-white/40"}`} />
-                  ))}
+                <div className="mt-6 flex flex-col items-center gap-2">
+                  <div aria-hidden className="flex gap-3">
+                    {[0, 1, 2, 3, 4].map((i) => (
+                      <span key={i} className={`h-5 w-5 rounded-full transition-colors ${i < rises ? "bg-forest" : "border-2 border-sage-deep bg-card"}`} />
+                    ))}
+                  </div>
+                  <p className="text-[1.1rem] font-semibold text-forest">{rises} of 5</p>
                 </div>
               ) : (
-                <p className="text-[1.2rem] font-bold text-white/85">Take your time. WISP is following your movement.</p>
+                <p className="mt-4 text-[1.15rem] text-ink-soft">Checking your movement… take your time.</p>
               )}
-              <p className="mt-6 text-white/75">After the fifth time, sit back down and stay seated.</p>
+              <p className="mt-6 text-ink-soft">After the fifth time, sit back down and stay seated.</p>
             </>
           )}
         </div>
 
         <div className="flex flex-col gap-3">
           {waiting && (
-            <button
-              type="button"
-              disabled={busy}
-              onClick={() => act("ready")}
-              className="min-h-16 rounded-2xl bg-white text-[1.2rem] font-bold text-forest-deep hover:bg-sage disabled:opacity-60"
-            >
-              I&apos;m seated — start
+            <button type="button" disabled={busy} onClick={() => act("ready")} className={buttonClass("primary", "lg", "min-h-16 w-full text-[1.15rem]")}>
+              I&apos;m ready
             </button>
           )}
           <button
             type="button"
             disabled={busy}
             onClick={() => act("stop")}
-            className="min-h-14 rounded-2xl border-2 border-white/60 text-[1.1rem] font-bold text-white hover:bg-white/10 disabled:opacity-60"
+            className={buttonClass("secondary", "lg", waiting ? "w-full" : "w-full border-red/50 text-red-deep")}
           >
-            {waiting ? "Skip the check" : "Stop"}
+            {waiting ? "Skip the check" : "Stop the check"}
           </button>
-          <p className="text-center text-[0.9rem] text-white/70">
-            {waiting ? "Sensing turns on when you press start." : "Stop if you feel dizzy, breathless, or in pain."}
+          <p className="text-center text-[0.95rem] text-ink-soft">
+            {waiting ? "Sensing turns on only when you press start." : "Stop anytime if you feel dizzy, breathless or in pain."}
           </p>
         </div>
       </div>

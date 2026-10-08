@@ -24,7 +24,7 @@ export interface VisitSummary {
   disclaimer: string;
 }
 
-const FLAG_LABEL: Record<string, string> = {
+export const FLAG_LABEL: Record<string, string> = {
   sudden_onset: "Sudden onset",
   chest_pain: "Chest pain",
   severe_breathlessness: "Severe breathlessness",
@@ -129,7 +129,7 @@ export function buildVisitSummary(s: Snapshot, baseline: BaselineInfo | null): V
           : "Movement data is from a recorded sensor session, not a live measurement."
         : null,
     disclaimer:
-      "WISP is a self-triage prototype. This is not a diagnosis. Its thresholds have not been clinically validated. Contactless Wi-Fi sensing; arm use is self-reported.",
+      "Prototype indicator, not a diagnosis. WISP is a self-triage prototype. Its thresholds have not been clinically validated. Contactless Wi-Fi sensing; arm use is self-reported.",
   };
 }
 

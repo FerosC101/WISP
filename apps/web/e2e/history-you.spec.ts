@@ -25,7 +25,7 @@ test("History: timeline with movement result, follow-up link, healthy days and c
 
   await page.getByRole("link", { name: /Home monitoring/ }).click();
   await expect(page).toHaveURL(new RegExp(`/history/${prev}`));
-  await expect(page.getByRole("region", { name: "What you told WISP" })).toContainText("Movement within your usual");
+  await expect(page.getByRole("region", { name: "What WISP checked" })).toContainText("Movement within your usual");
   await expect(page.getByRole("region", { name: "Follow-ups" })).toContainText("Emergency help");
   await expect(page.getByText(/fixed safety rules, not by the AI/)).toBeVisible(); // How WISP decided
   await page.getByRole("link", { name: "Visit summary" }).click();
@@ -61,12 +61,15 @@ test("healthy-day check journey: not today, a stopped check is discarded, a full
 
   // Not feeling like yourself → do it another day.
   await page.getByRole("link", { name: "Record my first healthy-day check" }).click();
-  await button(page, "Not really").click();
+  await expect(heading(page)).toHaveText("Build your usual");
+  await button(page, "Let's start").click();
+  await button(page, "Not today").click();
   await expect(heading(page)).toHaveText("Let's do this another day");
 
   // Stopped part-way → nothing saved.
   await request.post(`${API}/api/dev/sensor`, { data: { speed: 1 } });
   await page.goto("/you/baseline/enroll");
+  await button(page, "Let's start").click();
   await button(page, "Yes, I feel like myself").click();
   await expect(button(page, "Tick each item to continue")).toBeDisabled();
   await tickAll(page, 4);
@@ -81,11 +84,12 @@ test("healthy-day check journey: not today, a stopped check is discarded, a full
   // A full check is added.
   await request.post(`${API}/api/dev/sensor`, { data: { speed: 8 } });
   await page.goto("/you/baseline/enroll");
+  await button(page, "Let's start").click();
   await button(page, "Yes, I feel like myself").click();
   await tickAll(page, 4);
   await button(page, "I'm ready").click();
   await button(page, "No, I stand up without my arms").click();
-  await expect(heading(page)).toHaveText("Thank you. That check has been added.", { timeout: 30_000 });
+  await expect(heading(page)).toHaveText("Healthy-day check saved.", { timeout: 30_000 });
   await expect(page.getByText("1 of 3 healthy-day checks")).toBeVisible();
 
   // Inline delete.
@@ -145,7 +149,7 @@ test("privacy: deleting all data empties History and My usual", async ({ page, r
   await expect(page.getByText("Your WISP data on this device has been deleted.")).toBeVisible();
   await page.goto("/history");
   await page.getByRole("radio", { name: "Checks" }).click();
-  await expect(page.getByText("No checks yet.")).toBeVisible();
+  await expect(page.getByText("No check-ins yet")).toBeVisible();
   await page.goto("/you/baseline");
   await expect(page.getByText("0 of 3 done")).toBeVisible();
 });

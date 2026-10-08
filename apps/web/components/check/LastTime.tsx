@@ -9,7 +9,7 @@ export function LastTime({ prev }: { prev: Snapshot }) {
   const when = dayLabel(prev.case.created_at);
   return (
     <div className="rounded-(--radius-card) border border-line bg-card p-5">
-      <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Last time · {when}</p>
+      <p className="label text-ink-faint">Last time · {when}</p>
       {prev.case.complaint_text && <p className="mt-1 text-[1.05rem]">You said: “{prev.case.complaint_text}”</p>}
       {d && (
         <p className="mt-2 flex items-center gap-2 font-bold">

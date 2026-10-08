@@ -1,13 +1,14 @@
 import type { Metadata, Viewport } from "next";
-import { Atkinson_Hyperlegible } from "next/font/google";
+import { Inter, Lora } from "next/font/google";
 import { Shell } from "@/components/Shell";
 import "./globals.css";
 
-// Atkinson Hyperlegible was designed for low-vision readers.
-const atkinson = Atkinson_Hyperlegible({ variable: "--font-atkinson", subsets: ["latin"], weight: ["400", "700"] });
+// Lora: warm editorial serif for headings. Inter: clear, highly legible sans for everything else.
+const lora = Lora({ variable: "--font-lora", subsets: ["latin"], weight: ["500", "600", "700"], style: ["normal", "italic"] });
+const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "WISP — self-triage and care navigation",
+  title: "WISP — gentle guidance when something feels off",
   description: "Wireless Intelligent Sensing for Personalized Self-Triage",
 };
 
@@ -16,12 +17,12 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
-  themeColor: "#fbf8f1",
+  themeColor: "#faf7ee",
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en-SG" className={`${atkinson.variable} h-full antialiased`}>
+    <html lang="en-SG" className={`${lora.variable} ${inter.variable} h-full antialiased`}>
       <body className="min-h-full">
         <Shell>{children}</Shell>
       </body>

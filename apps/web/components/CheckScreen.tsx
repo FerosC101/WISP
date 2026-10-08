@@ -44,7 +44,7 @@ export function CheckScreen({ snapshot, progress }: { snapshot: Snapshot; progre
     <section aria-labelledby="check-title" className="mx-auto max-w-xl">
       <div className="rounded-[2rem] border border-line bg-card px-6 py-8 sm:px-10">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-teal">Step {step} of 2</p>
+          <p className="label text-teal">Step {step} of 2</p>
           <RecordedBadge mode={snapshot.sensor.mode === "live" ? "live" : "recorded"} />
         </div>
         <h1 id="check-title" className="mt-2 text-[2rem] font-bold leading-tight text-forest">
@@ -62,7 +62,7 @@ export function CheckScreen({ snapshot, progress }: { snapshot: Snapshot; progre
                 </li>
               ))}
             </ul>
-            <p className="mt-6 rounded-2xl bg-amber-bg px-5 py-4 text-[1.02rem]">
+            <p className="mt-6 rounded-w-md bg-amber-bg px-5 py-4 text-[1.02rem]">
               <strong className="text-amber">Stop</strong> if you feel dizzy, breathless, or in pain.
             </p>
             <div className="mt-8 flex flex-col gap-3">

@@ -3,17 +3,12 @@
 import { useEffect, useState } from "react";
 import { CheckFrame } from "@/components/check/CheckFrame";
 import { StickyActions } from "@/components/StickyActions";
-import { Button } from "@/components/ui";
+import { Icon } from "@/components/Icon";
+import { Illustration } from "@/components/Illustration";
+import { Button, Disclosure } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
 import type { Snapshot } from "@/lib/types";
-
-// The agent's options, in patient words (the trace uses the technical names).
-const OPTIONS: { action: string; label: string; detail: string }[] = [
-  { action: "Ask another question", label: "Ask you more questions", detail: "If something important is still unclear" },
-  { action: "Physical function check", label: "A short movement check", detail: "Compare how you move today with your usual" },
-  { action: "Recommend care now", label: "Suggest your next step now", detail: "If WISP already has what it needs" },
-];
 
 /**
  * Why no movement check, in plain words. Mirrors the order of the agent's own checks
@@ -54,7 +49,6 @@ export default function Decision() {
   const offer = s ? pendingQuestion(s) : null;
   const isOffer = offer?.data.question === "offer";
   const decided = !!s && (isOffer || !!s.disposition);
-  const selected = decided ? (isOffer ? "Physical function check" : "Recommend care now") : null;
   const reduced = usePrefersReducedMotion();
 
   // A short "checking" moment before revealing the choice: the agent's decision is the point of this screen.
@@ -73,47 +67,40 @@ export default function Decision() {
     return () => clearTimeout(id);
   }, [revealed, isOffer, s?.disposition, ack]);
 
+  const why =
+    offer?.data.why ??
+    "Right now your answers fall between monitoring at home and seeing a doctor. Comparing today’s movement with your usual pattern may help clarify the next step.";
+
   return (
     <CheckFrame stage="decision" loading={!f.ready || !s} error={f.error}>
       {s && (
         <section aria-labelledby="decision-title" aria-live="polite">
-          <WispLine variant={revealed ? "draw" : "flow"} className="mb-4 h-4 w-32 text-teal" />
-          <h1 id="decision-title" className="text-[1.8rem] font-bold leading-tight text-forest">
-            {revealed ? (isOffer ? "A short movement check could help" : "WISP can suggest your next step now") : "WISP is checking what would help next…"}
-          </h1>
-
-          <ul className="mt-5 space-y-2.5" aria-label="What WISP considered">
-            {OPTIONS.map((o) => {
-              const chosen = revealed && o.action === selected;
-              return (
-                <li
-                  key={o.action}
-                  className={`flex items-center gap-3 rounded-2xl border-2 px-4 transition-all duration-500 ${revealed && !chosen ? "py-2" : "py-3"} ${
-                    chosen ? "border-teal bg-teal-bg" : revealed ? "border-line bg-card opacity-50" : "border-line bg-card"
-                  }`}
-                >
-                  <span
-                    aria-hidden
-                    className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${chosen ? "bg-teal text-white" : "bg-sage text-transparent"}`}
-                  >
-                    <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M5 12.5l4.5 4.5L19 7.5" />
-                    </svg>
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block font-bold">{o.label}</span>
-                    {(!revealed || chosen) && <span className="block text-[0.92rem] text-ink-soft">{o.detail}</span>}
-                  </span>
-                  {chosen && <span className="sr-only">(WISP chose this)</span>}
-                </li>
-              );
-            })}
-          </ul>
-
-          {revealed && isOffer && offer && (
-            <div className="mt-6 wisp-fade-in">
-              <p className="text-[1.1rem]">{offer.data.why ?? offer.text.split("\n").slice(1).join(" ")}</p>
-              <p className="mt-2 text-ink-soft">It takes about 30 seconds: you sit and stand five times. It&apos;s your choice.</p>
+          {!revealed ? (
+            <div className="flex min-h-[46vh] flex-col items-center justify-center text-center">
+              <WispLine variant="flow" className="h-14 w-full max-w-xs text-sage-mid" strokeWidth={3} />
+              <h1 id="decision-title" className="mt-8 text-[1.75rem] text-forest">
+                Checking what would help next…
+              </h1>
+              <p className="mt-2 text-ink-soft">Looking at everything you&apos;ve told me.</p>
+            </div>
+          ) : isOffer && offer ? (
+            <div className="wisp-fade-in">
+              <Illustration scene="rise" decorative className="mb-6 max-w-[17rem] rounded-w-lg sm:max-w-none" />
+              <h1 id="decision-title" className="text-[2rem] leading-[1.15] text-forest sm:text-[2.3rem]">
+                A quick movement check could help.
+              </h1>
+              <WispLine variant="draw" className="mt-3 h-4 w-28 text-sage-mid" />
+              <p className="mt-4 text-[1.1rem]">
+                Your answers are not showing an emergency, but I&apos;m still not sure whether your movement has changed from your usual.
+              </p>
+              <p className="mt-2 text-[1.06rem] text-ink-soft">A short check can give us another piece of information.</p>
+              <p className="mt-4 inline-flex items-center gap-2 rounded-full bg-sage px-3.5 py-1.5 text-[0.98rem] font-medium text-forest">
+                <Icon name="clock" className="h-5 w-5" />
+                Takes about 30 seconds · you sit and stand five times
+              </p>
+              <Disclosure summary="Why this check?" className="mt-4">
+                <p className="rounded-w-md bg-card px-4 py-3 text-ink-soft">{why}</p>
+              </Disclosure>
               <StickyActions>
                 {(offer.data.quick_replies ?? []).map((r) => (
                   <Button
@@ -132,18 +119,20 @@ export default function Decision() {
                 ))}
               </StickyActions>
             </div>
-          )}
-
-          {revealed && !isOffer && s.disposition && (
-            <div className="mt-6 wisp-fade-in">
-              <p className="text-[1.1rem]">{noCheckReason(s)}</p>
+          ) : s.disposition ? (
+            <div className="wisp-fade-in">
+              <WispLine variant="draw" className="mb-4 h-4 w-28 text-sage-mid" />
+              <h1 id="decision-title" className="text-[2rem] leading-[1.15] text-forest">
+                I already have enough information to guide the next step.
+              </h1>
+              <p className="mt-4 text-[1.1rem]">{noCheckReason(s)}</p>
               <StickyActions>
                 <Button size="lg" className="w-full" onClick={() => f.ack("decision")}>
                   See my next step
                 </Button>
               </StickyActions>
             </div>
-          )}
+          ) : null}
         </section>
       )}
     </CheckFrame>

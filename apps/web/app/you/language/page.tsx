@@ -15,14 +15,14 @@ export default function Language() {
             role="radio"
             aria-checked={language === l}
             onClick={() => setLanguage(l)}
-            className={`flex min-h-16 w-full items-center justify-between rounded-2xl border-2 px-5 text-left text-[1.15rem] font-bold ${language === l ? "border-forest bg-sage" : "border-line bg-card"}`}
+            className={`flex min-h-16 w-full items-center justify-between rounded-w-md border-2 px-5 text-left text-[1.15rem] font-bold ${language === l ? "border-forest bg-sage" : "border-line bg-card"}`}
           >
             {LANGUAGE_NAMES[l]}
             {language === l && <span aria-hidden className="text-forest">✓</span>}
           </button>
         ))}
       </div>
-      <p className="mt-5 rounded-2xl bg-amber-bg px-4 py-3 text-[0.95rem]">
+      <p className="mt-5 rounded-w-md bg-amber-bg px-4 py-3 text-[0.95rem]">
         The Mandarin, Malay and Tamil wording is still being checked by native speakers. If anything is unclear, choose English or ask someone to help.
       </p>
       <p className="mt-3 text-[0.95rem] text-ink-soft">The rest of the app is in English for now. Your choice applies to new checks.</p>

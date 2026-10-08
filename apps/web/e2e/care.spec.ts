@@ -20,7 +20,8 @@ test("Care hub shows the latest recommendation and every section", async ({ page
   await asPersona(page, "mdm_tan");
   await page.goto("/care");
   await expect(page.getByText("Book your doctor in the next few days")).toBeVisible();
-  for (const name of ["Care plan", "Find care", "Visit summary", "Share with family"]) await expect(page.getByRole("link", { name: new RegExp(name) })).toBeVisible();
+  const sections = page.getByRole("navigation", { name: "Your care" });
+  for (const name of ["Care plan", "Find care", "Visit summary", "Share with family"]) await expect(sections.getByRole("link", { name: new RegExp(name) })).toBeVisible();
   await expect(page.getByText(/No check-in is scheduled/)).toBeVisible();
   await page.getByRole("link", { name: /Care plan/ }).click();
   await expect(page).toHaveURL(/\/care\/plan\?s=/);
@@ -89,7 +90,7 @@ test("visit summary: clinician details, synthetic-data notice, doctor view and c
   await expect(doc).toContainText(/Usual range .* from 3 healthy-day checks/);
   await expect(doc).toContainText("not a diagnosis");
 
-  await button(page, "Show to my doctor").click();
+  await button(page, "Show full screen").click();
   await expect(page.getByRole("dialog", { name: "Visit summary for your doctor" })).toBeVisible();
   await page.keyboard.press("Escape");
   await expect(page.getByRole("dialog")).toHaveCount(0);
