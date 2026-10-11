@@ -84,7 +84,7 @@ function TextAnswer({ text, setText, sending }: { text: string; setText: (v: str
         maxLength={1000}
         onChange={(e) => setText(e.target.value)}
         placeholder="Type your answer…"
-        className="min-h-14 min-w-0 flex-1 rounded-2xl border border-line bg-card px-4 text-[1.05rem] placeholder:text-ink-faint"
+        className="min-h-14 min-w-0 flex-1 rounded-w-md border border-line bg-card px-4 text-[1.05rem] placeholder:text-ink-faint"
       />
       <Button type="submit" size="lg" disabled={sending || !text.trim()}>
         Send

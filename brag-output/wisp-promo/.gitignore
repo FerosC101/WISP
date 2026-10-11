@@ -1,0 +1,4 @@
+# Intermediate renders and audio takes: regenerate with work/finalize.sh, keep out of git.
+work/audio/
+work/check/
+work/poster.png

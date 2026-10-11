@@ -27,7 +27,7 @@ export const button = (page: Page, name: string | RegExp) => page.getByRole("but
 export async function startCheck(page: Page, text: string) {
   await page.goto("/check/start");
   await page.getByLabel("Tell WISP how you feel").fill(text);
-  await button(page, "Continue").click();
+  await button(page, "Start check-in").click();
   // The flow lands on /check/concern first and redirects to the session's real stage.
   await expect(page).toHaveURL(/\/check\/(safety|complete|summary)/);
 }
@@ -68,16 +68,16 @@ export async function tickAll(page: Page, n: number) {
 /** Summary → decision → do the check → room ready → movement (replay) → result screen. */
 export async function doMovementCheck(page: Page) {
   await expect(page).toHaveURL(/\/check\/summary/);
-  await button(page, "That's right — continue").click();
+  await button(page, "Yes, continue").click();
   await expect(page).toHaveURL(/\/check\/decision/);
   await button(page, "Do the check").click();
   await expect(page).toHaveURL(/\/check\/room-ready/);
   await tickAll(page, 3);
   await button(page, "My space is ready").click();
-  await button(page, "Yes, I'm ready").click();
+  await button(page, "Yes, I feel steady").click();
   await button(page, "No, I'm alone").click();
   await expect(page).toHaveURL(/\/check\/movement/);
-  await button(page, "I'm seated — start").click();
+  await button(page, "I'm ready").click();
   await expect(page).toHaveURL(/\/check\/movement-result/, { timeout: 60_000 });
 }
 

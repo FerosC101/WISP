@@ -1,11 +1,15 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { CheckFrame } from "@/components/check/CheckFrame";
 import { StickyActions } from "@/components/StickyActions";
+import { Icon } from "@/components/Icon";
+import { PageIntro } from "@/components/kit";
 import { Button, Card } from "@/components/ui";
 import { SAFETY_ORDER, pendingQuestion, useCheckFlow } from "@/lib/checkFlow";
+import { usePrefs } from "@/lib/prefs";
+import { replyLabel } from "@/lib/replyLabels";
 import type { CaseState, ChatMessage, QuickReply, Snapshot } from "@/lib/types";
 
 const RED_FLAGS = SAFETY_ORDER.filter((k) => !["onset", "duration", "fall", "eating"].includes(k));
@@ -100,8 +104,8 @@ function EditableRow({ row, open, onToggle, onPick, busy }: { row: Row; open: bo
     <div className="py-3 first:pt-0 last:pb-0">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <dt className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">{row.label}</dt>
-          <dd className="mt-0.5 text-[1.1rem] font-bold">{row.value}</dd>
+          <dt className="label text-ink-faint">{row.label}</dt>
+          <dd className="mt-0.5 text-[1.1rem] font-semibold">{row.value}</dd>
         </div>
         {editable && (
           <button type="button" onClick={onToggle} aria-expanded={open} className="min-h-11 shrink-0 px-2 font-bold text-forest underline underline-offset-4">
@@ -118,7 +122,7 @@ function EditableRow({ row, open, onToggle, onPick, busy }: { row: Row; open: bo
               disabled={busy}
               onClick={() => onPick(o.value)}
               aria-pressed={o.value === row.current}
-              className={`min-h-14 rounded-2xl border-2 px-4 text-left text-[1.05rem] font-bold ${o.value === row.current ? "border-forest bg-sage" : "border-line bg-card hover:border-forest/50"}`}
+              className={`min-h-14 rounded-w-md border-[1.5px] px-4 text-left text-[1.05rem] font-semibold ${o.value === row.current ? "border-forest bg-sage" : "border-line bg-card hover:border-forest/50"}`}
             >
               {o.label}
             </button>
@@ -134,7 +138,11 @@ export default function Summary() {
   const s = f.snapshot;
   const [open, setOpen] = useState<string | null>(null);
   const confirm = s ? pendingQuestion(s) : null;
-  const confirmLabel = confirm?.data.quick_replies?.[0]?.label ?? "That's right";
+  const { language } = usePrefs();
+  const reply = confirm?.data.quick_replies?.[0];
+  const confirmLabel = reply ? replyLabel("confirm", reply, language) : "Yes, continue";
+  const [answersOpen, setAnswersOpen] = useState(false);
+  const editRef = useRef<HTMLDivElement>(null);
 
   async function pick(field: string, value: string) {
     setOpen(null);
@@ -160,16 +168,14 @@ export default function Summary() {
     <CheckFrame stage="summary" loading={!f.ready || !s} error={f.error}>
       {s && (
         <section aria-labelledby="summary-title">
-          <h1 id="summary-title" className="text-[1.8rem] font-bold leading-tight text-forest">
-            Here&apos;s what WISP understood
-          </h1>
-          <p className="mt-2 text-ink-soft">Check it&apos;s right. You can change any answer before WISP decides what to do next.</p>
+          <PageIntro id="summary-title" title="Here’s what I understand." lead="Check it’s right. You can change any answer before WISP decides what would help next." />
 
+          <div ref={editRef} className="scroll-mt-6" />
           <Card as="div" className="mt-5">
             <div className="flex items-start justify-between gap-3 pb-3">
               <div className="min-w-0">
-                <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Main concern</p>
-                <p className="mt-0.5 text-[1.1rem] font-bold">{capitalise(s.case.complaint_summary ?? s.case.complaint_text ?? "—")}</p>
+                <p className="label text-ink-faint">You&apos;re feeling</p>
+                <p className="mt-0.5 font-serif text-[1.35rem] font-semibold text-forest">{capitalise(s.case.complaint_summary ?? s.case.complaint_text ?? "—")}</p>
               </div>
               <Link href="/check/start" className="flex min-h-11 shrink-0 items-center px-2 font-bold text-forest underline underline-offset-4">
                 Start again
@@ -190,14 +196,15 @@ export default function Summary() {
           </Card>
 
           <Card as="div" className="mt-3">
-            <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Safety check</p>
-            <p className="mt-0.5 text-[1.1rem] font-bold">
+            <p className="label text-ink-faint">Safety check</p>
+            <p className="mt-0.5 flex items-center gap-2 text-[1.1rem] font-semibold">
+              <Icon name="shield" className="h-5 w-5 text-forest" />
               {unsureCount === 0 ? "No warning signs reported" : `No warning signs reported · ${unsureCount} “not sure”`}
             </p>
             {unsureCount > 0 && (
               <p className="mt-1 text-[0.95rem] text-ink-soft">If a warning sign can&apos;t be ruled out, WISP will suggest speaking to a professional.</p>
             )}
-            <details className="mt-2" open={unsureCount > 0}>
+            <details className="mt-2" open={answersOpen || unsureCount > 0} onToggle={(e) => setAnswersOpen(e.currentTarget.open)}>
               <summary className="min-h-11 cursor-pointer py-2 font-bold text-forest">See or change your answers</summary>
               <dl className="divide-y divide-line">
                 {flagRows.map((r) => (
@@ -214,9 +221,22 @@ export default function Summary() {
             </details>
           </Card>
 
+          <p className="mt-6 font-serif text-[1.25rem] font-semibold text-forest">Does this look right?</p>
+          <p className="text-[0.98rem] text-ink-soft">Use “Change” next to anything that isn&apos;t quite right.</p>
           <StickyActions>
             <Button size="lg" className="w-full" disabled={f.sending || !confirm} onClick={() => f.answer(confirmLabel, "confirm")}>
-              {confirmLabel} — continue
+              {language === "en" ? confirmLabel : `${confirmLabel} — continue`}
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              disabled={f.sending}
+              onClick={() => {
+                setAnswersOpen(true);
+                editRef.current?.scrollIntoView({ behavior: "smooth" });
+              }}
+            >
+              Change something
             </Button>
           </StickyActions>
         </section>

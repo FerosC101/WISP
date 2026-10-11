@@ -26,7 +26,7 @@ function SinceLastTime({ s }: { s: Snapshot }) {
   );
   return (
     <section aria-labelledby="since-title" className="mb-5 rounded-(--radius-card) border border-line bg-card p-5">
-      <h2 id="since-title" className="text-[0.78rem] font-bold uppercase tracking-[0.16em] text-ink-faint">
+      <h2 id="since-title" className="label text-ink-faint">
         Compared with your last check
       </h2>
       <div className="mt-2 space-y-1.5">
@@ -49,7 +49,7 @@ export default function Complete() {
   const alreadyDecided = !!s?.trace.events.some((e) => e.tool === "share_summary");
 
   return (
-    <CheckFrame stage="complete" loading={!f.ready || !s?.disposition} error={f.error}>
+    <CheckFrame stage="complete" loading={!f.ready || !s?.disposition} error={f.error} quiet={s?.disposition?.tier === "T1"}>
       {s && (
         <>
           <SinceLastTime s={s} />
@@ -71,7 +71,7 @@ export default function Complete() {
               <div className="mt-4 flex flex-col gap-3">
                 <Link
                   href={`/care/share?s=${s.session_id}`}
-                  className="flex min-h-14 items-center justify-center rounded-2xl bg-forest px-6 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
+                  className="flex min-h-14 items-center justify-center rounded-w-md bg-forest px-6 text-[1.08rem] font-bold text-white hover:bg-forest-deep"
                 >
                   Preview and share
                 </Link>

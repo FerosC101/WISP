@@ -2,13 +2,13 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Icon } from "@/components/Icon";
 import { Button } from "@/components/ui";
 import { post } from "@/lib/api";
 import { beginFlow, stagePath } from "@/lib/checkFlow";
 import { type Lang, usePrefs } from "@/lib/prefs";
 import type { Persona, Snapshot } from "@/lib/types";
 
-const PROMPTS = ["I feel weak", "I feel dizzy", "I'm unusually tired", "Something feels off"];
 const SPEECH_LANG: Record<Lang, string> = { en: "en-SG", zh: "zh-CN", ms: "ms-MY", ta: "ta-IN" };
 
 // Minimal typing for the browser speech API (not in the standard DOM lib).
@@ -78,8 +78,18 @@ export function useStartCheck(me: Persona | null) {
   return { start, startFollowUp, startFollowUpWith, busy, error, setError };
 }
 
-/** Free-text / voice entry with quick-start cards. */
-export function StartCheck({ me, check }: { me: Persona | null; check: ReturnType<typeof useStartCheck> }) {
+/** Speak or type how you feel. Voice input appears only where the browser supports it. */
+export function DescribeBox({
+  me,
+  check,
+  submitLabel = "Start check-in",
+  placeholder = "Describe how you feel…",
+}: {
+  me: Persona | null;
+  check: ReturnType<typeof useStartCheck>;
+  submitLabel?: string;
+  placeholder?: string;
+}) {
   const { language } = usePrefs();
   const { start, busy } = check;
   const [text, setText] = useState("");
@@ -112,14 +122,13 @@ export function StartCheck({ me, check }: { me: Persona | null; check: ReturnTyp
   }
 
   return (
-    <>
-      <form
-        className="mt-6 rounded-[1.75rem] border border-line bg-card p-3 shadow-[0_1px_0_rgba(27,37,64,0.04)]"
-        onSubmit={(e) => {
-          e.preventDefault();
-          start(text);
-        }}
-      >
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        start(text);
+      }}
+    >
+      <div className="flex items-start gap-2 rounded-w-md border-[1.5px] border-line bg-card p-2 focus-within:border-forest/60">
         <label htmlFor="feel" className="sr-only">
           Tell WISP how you feel
         </label>
@@ -135,44 +144,31 @@ export function StartCheck({ me, check }: { me: Persona | null; check: ReturnTyp
               start(text);
             }
           }}
-          placeholder="Tell WISP how you feel…"
-          className="w-full resize-none rounded-2xl bg-transparent px-3 py-2 text-[1.1rem] placeholder:text-ink-faint focus:outline-none"
+          placeholder={listening ? "Listening…" : placeholder}
+          className="min-h-[3.4rem] flex-1 resize-none bg-transparent px-2.5 py-2 text-[1.06rem] placeholder:text-ink-faint focus:outline-none"
         />
-        <div className="flex flex-col gap-2 sm:flex-row">
-          {speechOk && (
-            <Button type="button" variant={listening ? "danger" : "soft"} size="lg" onClick={speak} aria-pressed={listening} className="sm:flex-1">
-              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
-                <rect x="9" y="3" width="6" height="11" rx="3" />
-                <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
-              </svg>
-              {listening ? "Listening… tap to stop" : "Speak"}
-            </Button>
-          )}
-          <Button type="submit" size="lg" disabled={!me || busy || !text.trim()} className="sm:flex-1">
-            {busy ? "Starting…" : "Continue"}
-          </Button>
-        </div>
-      </form>
-
-      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label="Quick starts">
-        {PROMPTS.map((p) => (
+        {speechOk && (
           <button
-            key={p}
             type="button"
-            disabled={!me || busy}
-            onClick={() => start(p)}
-            className="min-h-11 rounded-full border border-line bg-card px-4 text-[0.98rem] text-ink hover:border-forest/50 hover:bg-sage/50"
+            onClick={speak}
+            aria-pressed={listening}
+            aria-label={listening ? "Stop listening" : "Speak instead of typing"}
+            className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full transition-colors ${listening ? "bg-red text-white" : "bg-sage text-forest hover:bg-sage-deep"}`}
           >
-            {p}
+            <Icon name="mic" className="h-6 w-6" />
           </button>
-        ))}
+        )}
       </div>
-
+      {text.trim() && (
+        <Button type="submit" size="lg" disabled={!me || busy} className="mt-3 w-full">
+          {busy ? "Starting…" : submitLabel}
+        </Button>
+      )}
       {check.error && (
-        <p role="alert" className="mt-4 rounded-xl bg-amber-bg px-4 py-3 text-amber">
+        <p role="alert" className="mt-3 rounded-w-sm bg-amber-bg px-4 py-3 text-amber">
           {check.error}
         </p>
       )}
-    </>
+    </form>
   );
 }

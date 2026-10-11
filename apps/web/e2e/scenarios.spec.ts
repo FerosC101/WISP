@@ -59,7 +59,7 @@ test("Scenario 3 — Mdm Siti: home monitoring, then a follow-up with a new red 
   // Next day: the scheduled check-in on Today.
   await page.goto("/today");
   await expect(page.getByText("Next check")).toBeVisible();
-  await button(page, "Start check-in").click();
+  await button(page, "Start early").click();
   await expect(page).toHaveURL(/\/follow-up\?prev=/);
   await expect(page.getByText("Home monitoring")).toBeVisible();
   await page.getByRole("button", { name: /Something new/ }).click();

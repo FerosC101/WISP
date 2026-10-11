@@ -1,31 +1,63 @@
 @import "tailwindcss";
 
-/* WISP identity: warm ivory, deep forest green, soft sage, navy text.
-   Amber = same-day caution. Warm red is reserved for emergencies. */
+/* ──────────────────────────────────────────────────────────────────────────
+   WISP design tokens — "Soft on the surface. Serious underneath."
+   Warm ivory and forest green, sage surfaces, amber for same-day care,
+   warm red only for emergencies. Text colours are checked for WCAG AA
+   (4.5:1) on ivory; lighter brand tints are used for fills and decoration only.
+   ────────────────────────────────────────────────────────────────────────── */
 @theme {
-  --color-ivory: #fbf8f1;
-  --color-card: #ffffff;
-  --color-sage: #e9efe7;
-  --color-sage-deep: #d3ded0;
-  --color-forest: #1f4d3a;
-  --color-forest-deep: #163a2c;
-  --color-ink: #1b2540;
-  --color-ink-soft: #4a5368;
-  --color-ink-faint: #767d8f;
-  --color-line: #e6e0d4;
-  --color-teal: #1f6f6a;
-  --color-teal-bg: #e1f0ee;
-  --color-amber: #9c5700;
-  --color-amber-bg: #fdf0d9;
-  --color-red: #b3372b;
-  --color-red-bg: #fbe8e4;
-  --color-slate: #4a5368;
-  --color-slate-bg: #eeece7;
+  /* Surfaces */
+  --color-ivory: #faf7ee;
+  --color-card: #fffdf8; /* warm near-white: pure white is used sparingly */
+  --color-sand: #efe4cf;
+  --color-sand-soft: #f5eddd;
+  --color-sage: #e4ebdd; /* soft sage surface */
+  --color-sage-deep: #cdd8c4;
+  --color-sage-mid: #a7b89f; /* brand sage — fills and illustration only */
 
-  --font-sans: var(--font-atkinson), ui-sans-serif, system-ui, sans-serif;
+  /* Brand */
+  --color-forest: #2f4f3e;
+  --color-forest-deep: #183c31;
+  --color-teal: #4e7070; /* muted teal, darkened for text contrast */
+  --color-teal-soft: #6e8f8f; /* brand muted teal — decoration */
+  --color-teal-bg: #e3ece9;
+  --color-dusty: #8ea9c7;
+  --color-dusty-bg: #e7eef5;
+
+  /* Text and lines */
+  --color-ink: #24352f;
+  --color-ink-soft: #5c6a64;
+  --color-ink-faint: #6b7771;
+  --color-line: #dedcd2;
+
+  /* Care levels */
+  --color-amber: #8a5a12; /* same-day text */
+  --color-amber-soft: #e3b567; /* brand amber — fills and the WISP dot */
+  --color-amber-bg: #fbf0d9;
+  --color-red: #b94335;
+  --color-red-deep: #8f2f24;
+  --color-red-bg: #f8e0db;
+  --color-slate: #55625c;
+  --color-slate-bg: #eeece4;
+
+  /* Type */
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-lora), ui-serif, Georgia, serif;
   --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
 
-  --radius-card: 1.5rem;
+  /* Shape: small 10 · medium 18 · large 28 (named w-* so Tailwind's own rounded-sm/md/lg stay unchanged) */
+  --radius-w-sm: 10px;
+  --radius-w-md: 18px;
+  --radius-w-lg: 28px;
+  --radius-card: 18px;
+
+  /* Elevation: very soft, for interactive surfaces only */
+  --shadow-soft: 0 1px 2px rgb(36 53 47 / 0.04), 0 10px 24px -14px rgb(36 53 47 / 0.18);
+  --shadow-lift: 0 2px 4px rgb(36 53 47 / 0.05), 0 18px 36px -18px rgb(36 53 47 / 0.25);
+
+  /* Motion */
+  --ease-soft: cubic-bezier(0.25, 0.8, 0.3, 1);
 }
 
 html {
@@ -38,10 +70,43 @@ html[data-large="true"] {
 }
 
 body {
-  background: var(--color-ivory);
+  background-color: var(--color-ivory);
+  /* A faint paper grain, like a printed health journal. */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.35 0 0 0 0 0.3 0 0 0 0 0.2 0 0 0 0.05 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   color: var(--color-ink);
   font-family: var(--font-sans);
-  line-height: 1.55;
+  line-height: 1.6;
+  font-feature-settings: "cv11", "ss01";
+}
+
+/* Editorial serif for page and section headings (base layer, so .label and utilities can override). */
+@layer base {
+  h1,
+  h2 {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.012em;
+    line-height: 1.18;
+  }
+}
+
+@layer components {
+  /* Section label: replaces tiny uppercase eyebrows. Sentence case, readable size. */
+  .label {
+    font-family: var(--font-sans);
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    line-height: 1.4;
+    text-transform: none;
+  }
+  /* Serif display sizes */
+  .display {
+    font-family: var(--font-serif);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.08;
+  }
 }
 
 :focus-visible {
@@ -62,33 +127,48 @@ html[data-motion="reduce"] * {
   transition: none !important;
 }
 
-/* The WISP line: conversation → evidence → decision → care */
+/* ── The WISP line: understand → check → guide → care ───────────────────── */
 .wisp-line-flow {
-  stroke-dasharray: 8 10;
-  animation: wisp-flow 1.6s linear infinite;
+  stroke-dasharray: 10 12;
+  animation: wisp-flow 2.4s linear infinite;
 }
 @keyframes wisp-flow {
   to {
-    stroke-dashoffset: -36;
+    stroke-dashoffset: -44;
   }
 }
 .wisp-line-draw {
-  stroke-dasharray: 600;
-  stroke-dashoffset: 600;
-  animation: wisp-draw 1.4s ease-out forwards;
+  stroke-dasharray: 700;
+  stroke-dashoffset: 700;
+  animation: wisp-draw 1.6s var(--ease-soft) forwards;
 }
 @keyframes wisp-draw {
   to {
     stroke-dashoffset: 0;
   }
 }
+.wisp-line-breathe {
+  animation: wisp-breathe 3.2s ease-in-out infinite;
+  transform-origin: center;
+}
+@keyframes wisp-breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+    opacity: 0.9;
+  }
+  50% {
+    transform: scaleY(1.35);
+    opacity: 1;
+  }
+}
 .wisp-fade-in {
-  animation: wisp-fade 0.35s ease-out both;
+  animation: wisp-fade 0.36s var(--ease-soft) both;
 }
 @keyframes wisp-fade {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;

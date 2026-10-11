@@ -40,7 +40,7 @@ function Step({ n, title, children, tone = "" }: { n: number; title: string; chi
   return (
     <li className="relative pl-10">
       <span className="absolute left-0 top-0 flex h-7 w-7 items-center justify-center rounded-full bg-forest font-mono text-xs font-bold text-white">{n}</span>
-      <h3 className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">{title}</h3>
+      <h3 className="font-serif text-[1.15rem] font-semibold text-forest">{title}</h3>
       <div className={`mt-1 min-w-0 break-words text-[0.98rem] ${tone}`}>{children}</div>
     </li>
   );
@@ -150,8 +150,8 @@ function Record({ s }: { s: Snapshot }) {
           })}
         </ul>
         {s.case.sensing_locked && (
-          <div className="mt-3 rounded-xl border-2 border-red bg-red-bg px-4 py-3">
-            <div className="text-sm font-bold uppercase tracking-wider text-red">Sensing not requested</div>
+          <div className="mt-3 rounded-w-sm border-2 border-red bg-red-bg px-4 py-3">
+            <div className="font-semibold text-red">Sensing not requested</div>
             <div className="text-[0.92rem]">Emergency warning sign already determines the disposition. Sensing tools locked for this session.</div>
           </div>
         )}
@@ -308,10 +308,11 @@ export default function ExplainPage() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-teal">Technical view · structured decision record</p>
-          <h1 className="mt-1 text-[1.8rem] font-bold text-forest">
+          <p className="label text-teal">Technical view · structured decision record</p>
+          <h1 className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
             {s.profile?.display_name} · {s.case.previous_session_id ? "follow-up" : "check-in"}
           </h1>
+          <WispLine variant="draw" className="my-2 h-4 w-28 text-sage-mid" />
           <p className="text-sm text-ink-soft">
             Agent: {s.agent === "workbuddy" ? "Tencent WorkBuddy via MCP" : "built-in agent (offline stand-in)"} · session <code className="break-all">{s.session_id}</code> · not model
             chain-of-thought
@@ -328,7 +329,7 @@ export default function ExplainPage() {
       {progress && (
         <section className="mb-6 rounded-(--radius-card) border border-teal/40 bg-teal-bg p-5" aria-live="polite">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <h2 className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-teal">Sensing live · {s.sensor.mode === "live" ? "ESP32 CSI" : "recorded replay"}</h2>
+            <h2 className="font-serif text-[1.1rem] font-semibold text-teal">Sensing live · {s.sensor.mode === "live" ? "ESP32 CSI" : "recorded replay"}</h2>
             <span className="font-mono text-sm">
               {progress.elapsed.toFixed(1)} s · rises detected so far {Math.min(progress.rises_so_far, 5)}/5
             </span>
@@ -349,7 +350,7 @@ export default function ExplainPage() {
           <Record s={s} />
         </section>
         <aside className="rounded-(--radius-card) border border-line bg-card p-5 lg:sticky lg:top-4 lg:max-h-[calc(100vh-2rem)] lg:self-start lg:overflow-y-auto">
-          <h2 className="mb-3 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint">Tool calls &amp; decisions</h2>
+          <h2 className="mb-3 font-serif text-[1.2rem] font-semibold text-forest">Tool calls &amp; decisions</h2>
           <Timeline events={s.trace.events} />
         </aside>
       </div>

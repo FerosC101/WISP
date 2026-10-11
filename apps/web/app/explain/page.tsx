@@ -13,13 +13,13 @@ export default function ExplainIndex() {
   }, []);
   return (
     <div>
-      <p className="font-mono text-xs font-bold uppercase tracking-[0.18em] text-teal">Technical view</p>
-      <h1 className="mt-1 text-[1.8rem] font-bold text-forest">Choose a check to explain</h1>
+      <p className="label text-teal">Technical view</p>
+      <h1 className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">Choose a check to explain</h1>
       <ul className="mt-6 space-y-2">
         {items.length === 0 && <li className="text-ink-soft">No checks yet.</li>}
         {items.map((h) => (
           <li key={h.session_id}>
-            <Link href={`/explain/${h.session_id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-line bg-card px-5 py-3 hover:border-forest/40">
+            <Link href={`/explain/${h.session_id}`} className="flex flex-wrap items-center justify-between gap-2 rounded-w-md border border-line bg-card px-5 py-3 hover:border-forest/40">
               <span>
                 <span className="font-mono text-xs text-ink-faint">{h.user_id}</span> · {h.complaint ?? "—"}
               </span>

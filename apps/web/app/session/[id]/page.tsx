@@ -86,7 +86,7 @@ function FollowUpDemo({ sessionId }: { sessionId: string }) {
   const { agentMode, language } = usePrefs();
   const router = useRouter();
   return (
-    <div className="mt-8 rounded-2xl border-2 border-dashed border-ink-faint px-5 py-4">
+    <div className="mt-8 rounded-w-md border-2 border-dashed border-ink-faint px-5 py-4">
       <p className="font-mono text-xs uppercase tracking-wider text-ink-faint">Demo control</p>
       <p className="mt-1 text-ink-soft">Skip ahead to tomorrow&apos;s check-in.</p>
       <Button

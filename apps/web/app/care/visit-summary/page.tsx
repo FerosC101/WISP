@@ -14,11 +14,11 @@ function SummaryDoc({ v, large = false }: { v: VisitSummary; large?: boolean }) 
     <article aria-label="Visit summary" className={large ? "text-[1.25rem]" : ""}>
       <p className={`font-bold ${large ? "text-[1.6rem]" : "text-[1.2rem]"}`}>{v.name}</p>
       <p className="text-ink-soft">{v.when} · WISP self-triage check</p>
-      {v.dataNotice && <p className="mt-3 rounded-xl border-2 border-amber bg-amber-bg px-4 py-2.5 font-bold text-amber">{v.dataNotice}</p>}
+      {v.dataNotice && <p className="mt-3 rounded-w-sm border-2 border-amber bg-amber-bg px-4 py-2.5 font-bold text-amber">{v.dataNotice}</p>}
       <dl className="mt-3 divide-y divide-line">
         {v.sections.map((s) => (
           <div key={s.title} className="py-3">
-            <dt className="text-[0.75em] font-bold uppercase tracking-[0.14em] text-ink-faint">{s.title}</dt>
+            <dt className="text-[0.85em] font-semibold text-ink-soft">{s.title}</dt>
             {s.lines.map((l, i) => (
               <dd key={i} className={i === 0 ? "mt-0.5 font-bold" : "mt-0.5"}>
                 {l}
@@ -48,7 +48,7 @@ function DoctorView({ v, onClose }: { v: VisitSummary; onClose: () => void }) {
     <div role="dialog" aria-modal="true" aria-label="Visit summary for your doctor" className="fixed inset-0 z-50 overflow-y-auto bg-card">
       <div className="mx-auto max-w-2xl px-5 py-6">
         <div className="mb-4 flex items-center justify-between gap-3">
-          <p className="text-[0.75rem] font-bold uppercase tracking-[0.16em] text-teal">For your doctor or nurse</p>
+          <p className="label text-teal">For your doctor or nurse</p>
           <Button variant="secondary" onClick={onClose} autoFocus>
             Close
           </Button>
@@ -91,12 +91,12 @@ function Body({ s }: { s: Snapshot }) {
 
   return (
     <>
-      <h1 className="text-[1.9rem] font-bold leading-tight text-forest print:hidden">Visit summary</h1>
+      <h1 className="text-[1.9rem] leading-tight text-forest print:hidden sm:text-[2.2rem]">Visit summary</h1>
       <p className="mt-2 text-ink-soft print:hidden">Show this to your doctor or nurse. It only includes what you told WISP and what it measured.</p>
 
       <div className="mt-5 flex flex-col gap-2.5 print:hidden">
         <Button size="lg" onClick={() => setShowDoctor(true)} className="w-full">
-          Show to my doctor
+          Show full screen
         </Button>
         <div className="flex gap-2.5">
           <Button variant="secondary" className="flex-1" onClick={() => window.print()}>

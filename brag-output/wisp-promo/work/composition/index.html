@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>WISP — When Something Feels Different</title>
+<link rel="stylesheet" href="../fonts/fonts.css" />
+<style>
+  :root {
+    --ivory: #faf7ee; --card: #fffdf8; --sand: #efe4cf; --sand-soft: #f5eddd;
+    --sage: #e4ebdd; --sage-deep: #cdd8c4; --sage-mid: #a7b89f;
+    --forest: #2f4f3e; --forest-deep: #183c31; --teal: #4e7070; --teal-soft: #6e8f8f;
+    --ink: #24352f; --ink-soft: #5c6a64; --ink-faint: #6b7771; --line: #dedcd2;
+    --amber: #8a5a12; --amber-soft: #e3b567; --amber-bg: #fbf0d9;
+    --red: #b94335; --red-deep: #8f2f24; --red-bg: #f8e0db;
+    --serif: "Lora", Georgia, serif; --sans: "Inter", system-ui, sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1920px; background: var(--ivory); overflow: hidden; }
+  #stage { position: relative; width: 1080px; height: 1920px; overflow: hidden; background: var(--ivory); color: var(--ink); font-family: var(--sans); -webkit-font-smoothing: antialiased; font-feature-settings: "cv11", "ss01"; }
+  .abs { position: absolute; }
+  .scene { position: absolute; inset: 0; opacity: 0; }
+  .serif { font-family: var(--serif); font-weight: 600; letter-spacing: -0.02em; line-height: 1.08; }
+  .head { position: absolute; left: 90px; right: 90px; top: 290px; font-size: 96px; color: var(--forest); }
+  .mask { overflow: hidden; padding-bottom: 0.14em; margin-bottom: -0.14em; }
+  .mask > span { display: inline-block; will-change: transform; }
+  .eyebrow { font-family: var(--sans); font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; }
+  svg { overflow: visible; }
+
+  /* S2 safety card */
+  .card { position: absolute; left: 120px; width: 840px; top: 610px; background: var(--card); border-radius: 56px; padding: 56px 56px 60px;
+          box-shadow: 0 3px 6px rgb(36 53 47 / 0.05), 0 40px 80px -40px rgb(36 53 47 / 0.30); }
+  .ans { position: relative; display: flex; align-items: center; gap: 30px; height: 112px; border: 3.5px solid var(--line); border-radius: 34px; background: var(--card);
+         padding: 0 34px; font-weight: 600; font-size: 44px; color: var(--ink); margin-top: 22px; overflow: hidden;
+         box-shadow: 0 1px 2px rgb(36 53 47 / 0.04), 0 22px 44px -26px rgb(36 53 47 / 0.22); }
+  .ans .ic { width: 80px; height: 80px; border-radius: 50%; background: var(--sage); display: flex; align-items: center; justify-content: center; color: var(--forest); flex: none; }
+  .ripple { position: absolute; border-radius: 50%; background: var(--forest); pointer-events: none; }
+
+  /* S5 recommendation */
+  .rec { position: absolute; left: 90px; width: 900px; top: 330px; background: var(--amber-bg); border-radius: 64px; padding: 64px 68px 62px; }
+  .pill { display: inline-flex; align-items: center; gap: 14px; border-radius: 999px; }
+  .node { position: absolute; top: 0; transform: translate(-50%, -50%); background: var(--ivory); padding: 10px 14px; font: 600 34px/1 var(--sans); letter-spacing: 0.06em; color: var(--forest); white-space: nowrap; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <!-- warm window light -->
+  <div class="abs" style="inset:0;background:radial-gradient(1200px 900px at 12% 8%, rgba(227,181,103,0.10), transparent 60%), radial-gradient(900px 900px at 100% 100%, rgba(167,184,159,0.12), transparent 60%);"></div>
+
+  <!-- ───────── S1 · The problem ───────── -->
+  <div class="scene" id="s1">
+    <div class="abs" id="s1art" style="left:0;top:880px;width:1080px;height:780px;-webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 22%, #000 82%, transparent 100%);">
+      <svg viewBox="0 0 360 260" width="1080" height="780" id="room1"></svg>
+    </div>
+    <div class="head serif" style="top:330px;font-size:132px;">
+      <div class="mask"><span id="s1a">“I feel weak.”</span></div>
+    </div>
+    <div class="abs serif" style="left:90px;right:90px;top:520px;font-size:70px;font-weight:500;font-style:italic;color:var(--ink-soft);letter-spacing:-0.01em;">
+      <div class="mask"><span id="s1b">What should I do next?</span></div>
+    </div>
+  </div>
+
+  <!-- ───────── S2 · Safety first ───────── -->
+  <div class="scene" id="s2">
+    <div class="head serif">
+      <div class="mask"><span id="s2h1">First, check</span></div>
+      <div class="mask"><span id="s2h2">for <span style="color:var(--red)">danger.</span></span></div>
+    </div>
+    <div class="card" id="s2card">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;">
+        <span style="font:600 32px var(--sans);color:var(--forest);">Safety check</span>
+        <span style="font:500 30px var(--sans);color:var(--ink-faint);">Question 3 of 11</span>
+      </div>
+      <div id="s2bar" style="display:flex;gap:8px;margin-top:22px;"></div>
+      <div id="s2pill" class="pill" style="margin-top:34px;background:var(--red-bg);padding:12px 24px 12px 20px;font:600 30px var(--sans);color:var(--red-deep);">
+        <span style="width:16px;height:16px;border-radius:50%;background:var(--red);"></span>Checked before any sensing
+      </div>
+      <div class="serif" id="s2q" style="margin-top:30px;font-size:70px;color:var(--ink);letter-spacing:-0.015em;line-height:1.12;">Any chest pain or tightness?</div>
+      <div id="s2ans" style="margin-top:20px;"></div>
+    </div>
+  </div>
+
+  <!-- ───────── S3 · Evidence when it matters ───────── -->
+  <div class="scene" id="s3">
+    <div class="head serif" style="font-size:92px;">
+      <div class="mask"><span id="s3h1">Physical evidence,</span></div>
+      <div class="mask"><span id="s3h2">only when useful.</span></div>
+    </div>
+    <div class="abs eyebrow" id="s3tag" style="left:92px;top:518px;font-size:32px;color:var(--teal);">Wi-Fi CSI · 5× Sit-to-Stand</div>
+    <div class="abs" id="s3art" style="left:40px;top:620px;width:1000px;height:722px;border-radius:56px;overflow:hidden;">
+      <svg viewBox="0 0 360 260" width="1000" height="722" id="room3"></svg>
+    </div>
+    <div class="abs pill" id="s3pill" style="left:76px;top:648px;background:rgba(255,253,248,0.94);padding:12px 24px 12px 18px;font:600 30px var(--sans);color:var(--forest);box-shadow:0 10px 24px -14px rgb(36 53 47 / .3);">
+      <span id="s3dot" style="width:16px;height:16px;border-radius:50%;background:var(--teal-soft);"></span><span id="s3pilltxt">Starts only when you press start</span>
+    </div>
+    <div class="abs" id="s3lab1" style="left:70px;top:1262px;font:600 30px var(--sans);color:var(--ink-soft);">Home router</div>
+    <div class="abs" id="s3lab2" style="right:70px;top:1262px;font:600 30px var(--sans);color:var(--ink-soft);text-align:right;">ESP32-S3 sensor</div>
+    <svg class="abs" id="trace" width="1080" height="260" style="left:0;top:1360px;" viewBox="0 0 1080 260"></svg>
+  </div>
+
+  <!-- ───────── S4 · Personal baseline ───────── -->
+  <div class="scene" id="s4">
+    <div class="head serif">
+      <div class="mask"><span id="s4h1">Compared with</span></div>
+      <div class="mask"><span id="s4h2">your usual.</span></div>
+    </div>
+    <svg class="abs" id="base" width="1080" height="900" style="left:0;top:600px;" viewBox="0 600 1080 900"></svg>
+    <div class="abs" id="s4cap" style="left:90px;right:90px;top:1380px;font:500 36px/1.35 var(--sans);color:var(--ink-soft);">Your own pattern, from your earlier well days.</div>
+  </div>
+
+  <!-- ───────── S5 · The decision ───────── -->
+  <div class="scene" id="s5" style="z-index:3">
+    <div class="rec" id="rec">
+      <div id="r1" style="font:600 34px var(--sans);color:var(--ink-soft);">Your next step</div>
+      <div class="serif" id="r2" style="margin-top:14px;font-size:104px;color:var(--amber);">Please be seen today</div>
+      <svg id="r3" viewBox="0 0 400 44" style="display:block;margin-top:22px;width:250px;height:28px;" fill="none">
+        <path id="r3p" d="M4 30 C 56 30, 72 10, 126 12 S 204 40, 262 30 S 340 8, 392 15" stroke="#e3b567" stroke-width="7" stroke-linecap="round" pathLength="1" />
+        <circle id="r3c" cx="392" cy="15" r="11" fill="#e3b567" />
+      </svg>
+      <div id="r4" style="margin-top:26px;font:600 46px/1.3 var(--sans);color:var(--ink);">See your GP or a polyclinic today.</div>
+      <div id="r5" class="pill" style="margin-top:28px;background:rgba(255,253,248,0.85);padding:14px 30px 14px 22px;font:400 38px var(--sans);">
+        <svg width="42" height="42" viewBox="0 0 24 24" fill="none" stroke="#2f4f3e" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        <span style="color:var(--ink-soft)">When:</span><strong style="font-weight:600">Today</strong>
+      </div>
+      <div id="r6" style="margin-top:40px;padding-top:34px;border-top:2.5px solid rgba(138,90,18,0.18);">
+        <div class="serif" style="font-size:46px;color:var(--forest);letter-spacing:-0.01em;">Why this advice?</div>
+        <div style="display:flex;gap:22px;margin-top:16px;font:400 38px/1.35 var(--sans);color:var(--ink);">
+          <span style="flex:none;width:16px;height:16px;border-radius:50%;background:var(--sage-mid);margin-top:20px;"></span>
+          <span>Today’s movement check was slower than your usual pattern.</span>
+        </div>
+      </div>
+    </div>
+    <div class="abs" id="chips" style="left:0;right:0;top:1296px;display:flex;justify-content:center;gap:18px;font:600 34px var(--sans);color:var(--forest);"></div>
+    <div class="abs" id="pipe" style="left:0;top:1480px;width:1080px;height:120px;"></div>
+  </div>
+
+  <!-- ───────── S6 · Brand ───────── -->
+  <div class="scene" id="s6">
+    <div class="abs" style="left:0;right:0;top:752px;text-align:center;">
+      <div class="mask" style="display:inline-block;"><span id="wisp" class="serif" style="font-size:230px;letter-spacing:0.05em;line-height:1;color:var(--forest);padding-left:0.05em;">WISP</span></div>
+    </div>
+    <div class="abs serif" style="left:0;right:0;top:1052px;text-align:center;font-size:80px;font-weight:500;font-style:italic;color:var(--ink);letter-spacing:-0.01em;">
+      <div class="mask"><span id="tag">Know what to do next.</span></div>
+    </div>
+    <div class="abs" id="desc" style="left:0;right:0;top:1196px;text-align:center;font:500 36px/1.5 var(--sans);color:var(--teal);letter-spacing:0.01em;">
+      Agentic AI · Wi-Fi Sensing<br />Self-Triage &amp; Care Navigation
+    </div>
+    <div class="abs" id="disc" style="left:0;right:0;top:1468px;text-align:center;font:500 27px var(--sans);color:var(--ink-faint);letter-spacing:0.02em;">Healthcare prototype · Not a diagnosis</div>
+  </div>
+
+  <!-- ───────── The WISP Line (persistent) ───────── -->
+  <svg class="abs" id="wl" width="1080" height="1920" viewBox="0 0 1080 1920" style="left:0;top:0;pointer-events:none;z-index:2;">
+    <path id="wle1" fill="none" stroke="#6e8f8f" stroke-width="2.4" stroke-linecap="round" />
+    <path id="wle2" fill="none" stroke="#a7b89f" stroke-width="2" stroke-linecap="round" />
+    <path id="wlp" fill="none" stroke-linecap="round" stroke-linejoin="round" pathLength="1" />
+    <circle id="wld" r="16" fill="#e3b567" />
+  </svg>
+
+  <!-- paper grain -->
+  <svg class="abs" width="1080" height="1920" style="left:0;top:0;pointer-events:none;mix-blend-mode:multiply;opacity:0.55;z-index:4">
+    <filter id="paper"><feTurbulence type="fractalNoise" baseFrequency="0.85" numOctaves="2" stitchTiles="stitch" seed="3"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.10 0"/></filter>
+    <rect width="1080" height="1920" filter="url(#paper)" />
+  </svg>
+</div>
+
+<script>
+/* ════════════════ helpers ════════════════ */
+const $ = (id) => document.getElementById(id);
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, p) => a + (b - a) * p;
+function bez(x1, y1, x2, y2) { // CSS cubic-bezier easing
+  return (x) => {
+    if (x <= 0) return 0; if (x >= 1) return 1;
+    let t = x;
+    for (let i = 0; i < 8; i++) {
+      const cx = 3 * x1 * t * (1 - t) ** 2 + 3 * x2 * t * t * (1 - t) + t ** 3 - x;
+      const dx = 3 * x1 * (1 - t) ** 2 + 6 * (x2 - x1) * t * (1 - t) + 3 * (1 - x2) * t * t;
+      if (Math.abs(cx) < 1e-5) break; t -= cx / (dx || 1e-6); t = clamp(t);
+    }
+    return 3 * y1 * t * (1 - t) ** 2 + 3 * y2 * t * t * (1 - t) + t ** 3;
+  };
+}
+const soft = bez(0.25, 0.8, 0.3, 1);      // WISP --ease-soft
+const inOut = bez(0.65, 0, 0.35, 1);
+const outQ = bez(0.33, 1, 0.68, 1);
+const prog = (t, a, d) => clamp((t - a) / d);
+const hexToRgb = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
+const mixHex = (a, b, p) => { const A = hexToRgb(a), B = hexToRgb(b); return `rgb(${A.map((v, i) => Math.round(lerp(v, B[i], p))).join(",")})`; };
+
+/* reveal: masked rise-in, settles and holds */
+function rise(el, t, t0, dur = 0.75, dy = 1.0) {
+  const p = soft(prog(t, t0, dur));
+  el.style.transform = `translateY(${(1 - p) * 100 * dy}%)`;
+  el.style.opacity = clamp(p * 1.6);
+}
+function fadeUp(el, t, t0, dur = 0.6, px = 26) {
+  const p = soft(prog(t, t0, dur));
+  el.style.opacity = p; el.style.transform = `translateY(${(1 - p) * px}px)`;
+}
+/* scene envelope: in-fade at a, out-fade ending at b */
+function scene(el, t, a, b, fin = 0.35, fout = 0.3, drift = -24) {
+  const pin = soft(prog(t, a, fin)), pout = inOut(prog(t, b - fout, fout));
+  el.style.opacity = pin * (1 - pout);
+  el.style.transform = `translateY(${pout * drift}px)`;
+  el.style.visibility = pin * (1 - pout) <= 0.001 ? "hidden" : "visible";
+  return pin * (1 - pout);
+}
+
+/* ════════════════ WISP illustration kit (ported from components/Illustration.tsx) ════════════════ */
+const C = { ivory: "#faf7ee", sand: "#efe4cf", sandDeep: "#e2cfac", sandSoft: "#f5eddd", sage: "#a7b89f", sageSoft: "#d7e1cf", forest: "#2f4f3e", teal: "#6e8f8f", dusty: "#8ea9c7", dustySoft: "#cfdbe8", amber: "#e3b567", wood: "#b88a62", woodDark: "#8e6648", hairGrey: "#cfcac2", trouser: "#8d8a7c", trouserDark: "#5f6670" };
+const SKIN = { light: "#ecc9ad", deep: "#9a6a4f" };
+const defs = (id) => `<defs>
+  <filter id="wc-${id}" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="3" seed="4" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="5" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="0.5"/></filter>
+  <filter id="wash-${id}" x="-20%" y="-20%" width="140%" height="140%"><feTurbulence type="fractalNoise" baseFrequency="0.018" numOctaves="2" seed="9" result="t"/><feDisplacementMap in="SourceGraphic" in2="t" scale="22" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="3"/></filter>
+  <filter id="grain-${id}"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="2"/><feColorMatrix values="0 0 0 0 0.35  0 0 0 0 0.28  0 0 0 0 0.2  0 0 0 0.09 0"/><feComposite in2="SourceGraphic" operator="in"/></filter>
+</defs>`;
+const room = (id, win = true) => `<g>
+  <rect width="360" height="260" fill="${C.sandSoft}"/>
+  <g filter="url(#wash-${id})" opacity="0.75"><ellipse cx="250" cy="70" rx="120" ry="70" fill="${C.sageSoft}"/><ellipse cx="80" cy="150" rx="110" ry="80" fill="${C.ivory}"/></g>
+  ${win ? `<g filter="url(#wc-${id})"><rect x="34" y="34" width="86" height="104" rx="8" fill="${C.dustySoft}"/><path d="M34 112c18-14 34-16 52-8s24 6 34-2v32H34z" fill="${C.sageSoft}"/><circle cx="98" cy="62" r="10" fill="${C.amber}" opacity="0.75"/><path d="M77 34v104M34 86h86" stroke="${C.ivory}" stroke-width="5"/><rect x="34" y="34" width="86" height="104" rx="8" fill="none" stroke="${C.ivory}" stroke-width="6"/></g>` : ""}
+  <path d="M0 214h360v46H0z" fill="${C.sand}"/>
+  <ellipse cx="190" cy="226" rx="132" ry="15" fill="${C.sandDeep}" opacity="0.55" filter="url(#wc-${id})"/>
+</g>`;
+const plant = (x, y, s, id) => `<g transform="translate(${x} ${y}) scale(${s})" filter="url(#wc-${id})"><path d="M0-4c-6-26-22-38-36-44 4 18 14 34 36 44z" fill="${C.sage}"/><path d="M2-6c4-30 18-46 34-52-2 22-14 40-34 52z" fill="#8fa587"/><path d="M0-6c-2-24 4-46 10-60 6 22 2 42-10 60z" fill="${C.sage}"/><path d="M-14-2h30l-4 28h-22z" fill="${C.amber}" opacity="0.85"/></g>`;
+const chair = (x, y, id) => `<g transform="translate(${x} ${y})" filter="url(#wc-${id})"><path d="M2-104c-3 30-4 62-4 104" stroke="${C.woodDark}" stroke-width="7" stroke-linecap="round" fill="none"/><path d="M-2-104c10-4 16-2 16 6v44" stroke="${C.wood}" stroke-width="6" stroke-linecap="round" fill="none"/><rect x="-4" y="-56" width="74" height="11" rx="5" fill="${C.wood}"/><rect x="-2" y="-62" width="70" height="9" rx="4.5" fill="${C.sage}"/><path d="M64-46v46M6-46v46" stroke="${C.woodDark}" stroke-width="6" stroke-linecap="round"/></g>`;
+const calm = (id) => `<g filter="url(#wc-${id})">
+  <path d="M150 160 L196 162 L194 210" stroke="${C.trouserDark}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <path d="M152 156 L204 158 L206 210" stroke="${C.trouser}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <ellipse cx="212" cy="213" rx="13" ry="5" fill="${C.forest}"/>
+  <path d="M132 160c-6-26 0-58 18-68 12-6 26-4 32 6 8 14 6 42-2 62-14 8-34 8-48 0z" fill="${C.dusty}"/>
+  <path d="M150 104c6 10 10 24 8 40" stroke="${C.dustySoft}" stroke-width="5" fill="none" opacity="0.8"/>
+  <path d="M176 104c6 8 6 18 0 26-4 4-10 6-16 4" stroke="#7e98b6" stroke-width="12" stroke-linecap="round" fill="none"/>
+  <ellipse cx="158" cy="128" rx="7" ry="5.5" fill="${SKIN.light}"/>
+  <circle cx="164" cy="78" r="15" fill="${SKIN.light}"/>
+  <path d="M149 80c-4-16 6-28 20-26 10 2 16 10 14 20-4-8-14-10-22-6-6 2-10 8-12 12z" fill="${C.hairGrey}"/>
+  <path d="M150 82c-4 6-4 14 0 18" stroke="${C.hairGrey}" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <path d="M170 74c2-1 4-1 5 0M170 86c2 1 4 1 6 0" stroke="${SKIN.deep}" stroke-width="1.4" stroke-linecap="round" fill="none" opacity="0.6"/>
+</g>`;
+const grain = (id) => `<rect width="360" height="260" fill="#fff" filter="url(#grain-${id})" opacity="0.9"/>`;
+
+/* S1 room: the app's "calm" scene */
+$("room1").innerHTML = defs("a") + room("a") + chair(124, 214, "a") + calm("a") + plant(300, 214, 0.9, "a") + grain("a");
+
+/* S3 room: same person, now doing the sit-to-stand between a router and the sensor */
+const router = `<g filter="url(#wc-b)">
+  <rect x="14" y="176" width="64" height="8" rx="3" fill="${C.wood}"/><path d="M22 184v30M70 184v30" stroke="${C.woodDark}" stroke-width="4" stroke-linecap="round"/>
+  <rect x="24" y="160" width="44" height="16" rx="5" fill="#55625c"/>
+  <path d="M30 160l-4-22M62 160l4-22" stroke="#55625c" stroke-width="3.2" stroke-linecap="round"/>
+  <circle cx="34" cy="168" r="1.8" fill="${C.amber}"/><circle cx="40" cy="168" r="1.8" fill="${C.sage}"/>
+</g>`;
+const sensor = `<g filter="url(#wc-b)">
+  <rect x="300" y="152" width="46" height="6" rx="2.5" fill="${C.wood}"/>
+  <rect x="306" y="134" width="30" height="18" rx="3" fill="${C.forest}"/>
+  <rect x="314" y="138" width="11" height="9" rx="1.5" fill="${C.hairGrey}"/>
+  <rect x="302" y="140" width="5" height="6" rx="1" fill="#8d8a7c"/>
+  <circle cx="331" cy="140" r="1.6" fill="${C.amber}"/>
+</g>`;
+$("room3").innerHTML = defs("b") + room("b") +
+  `<g id="sig"></g>` + router + sensor + chair(140, 214, "b") +
+  `<g id="fig" filter="url(#wc-b)">
+     <path id="fLegB" stroke="${C.trouserDark}" stroke-width="17" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+     <path id="fLegF" stroke="${C.trouser}" stroke-width="18" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+     <ellipse id="fFoot" rx="13" ry="5" fill="${C.forest}"/>
+     <path id="fTorso" stroke="${C.dusty}" stroke-width="34" stroke-linecap="round" fill="none"/>
+     <path id="fArm" stroke="#7e98b6" stroke-width="12" stroke-linecap="round" fill="none"/>
+     <circle id="fHand" r="5.5" fill="${SKIN.light}"/>
+     <circle id="fHair" r="15" fill="${C.hairGrey}"/>
+     <circle id="fHead" r="13.5" fill="${SKIN.light}"/>
+     <circle id="fBun" r="6.5" fill="${C.hairGrey}"/>
+   </g>` + grain("b");
+
+/* ════════════════ timeline (narration take 1 at +0.10 s) ════════════════ */
+const S = { s1: [0, 5.25], s2: [5.25, 7.85], s3: [7.85, 11.0], s4: [11.0, 13.5], s5: [13.5, 16.88], s6: [16.8, 20.0] };
+const REP0 = 8.35, REPD = 0.5, NREP = 5;
+
+/* sit-to-stand pose: 0 seated · 1 standing (time-lapse) */
+function poseAt(t) {
+  if (t < REP0 || t > REP0 + NREP * REPD) return 0;
+  return 0.5 - 0.5 * Math.cos((2 * Math.PI * (t - REP0)) / REPD);
+}
+const P0 = { hip: [170, 154], knee: [220, 158], ank: [224, 210], sh: [178, 102], head: [182, 79] };
+const PM = { hip: [190, 148], knee: [228, 164], ank: [224, 210], sh: [222, 106], head: [234, 90] };
+const P1 = { hip: [218, 138], knee: [226, 175], ank: [224, 210], sh: [217, 88], head: [219, 64] };
+function joints(p) {
+  const out = {};
+  for (const k in P0) {
+    const [a, b, q] = p < 0.45 ? [P0[k], PM[k], p / 0.45] : [PM[k], P1[k], (p - 0.45) / 0.55];
+    out[k] = [lerp(a[0], b[0], q), lerp(a[1], b[1], q)];
+  }
+  return out;
+}
+function drawFigure(p) {
+  const j = joints(p);
+  const pt = (v) => `${v[0].toFixed(2)} ${v[1].toFixed(2)}`;
+  const off = (v, dx, dy) => [v[0] + dx, v[1] + dy];
+  $("fLegB").setAttribute("d", `M${pt(off(j.hip, -4, 2))} L${pt(off(j.knee, -10, 2))} L${pt(off(j.ank, -13, 0))}`);
+  $("fLegF").setAttribute("d", `M${pt(j.hip)} L${pt(j.knee)} L${pt(j.ank)}`);
+  $("fFoot").setAttribute("cx", j.ank[0] + 6); $("fFoot").setAttribute("cy", j.ank[1] + 4);
+  const tor0 = off(j.hip, -2, -4), tor1 = j.sh;
+  $("fTorso").setAttribute("d", `M${pt(tor0)} L${pt(tor1)}`);
+  // crossed arms over the chest (as the 5xSTS protocol asks)
+  const c0 = [lerp(tor0[0], tor1[0], 0.55), lerp(tor0[1], tor1[1], 0.55)];
+  const c1 = [lerp(tor0[0], tor1[0], 0.85), lerp(tor0[1], tor1[1], 0.85)];
+  const dir = [tor1[0] - tor0[0], tor1[1] - tor0[1]], L = Math.hypot(...dir), nrm = [-dir[1] / L, dir[0] / L];
+  const fwd = nrm[0] < 0 ? [-nrm[0], -nrm[1]] : nrm; // perpendicular pointing to the front (+x)
+  const a0 = [c0[0] + fwd[0] * 12, c0[1] + fwd[1] * 12], a1 = [c1[0] + fwd[0] * 14, c1[1] + fwd[1] * 14];
+  $("fArm").setAttribute("d", `M${pt(a0)} L${pt(a1)}`);
+  $("fHand").setAttribute("cx", a1[0] + 2); $("fHand").setAttribute("cy", a1[1] + 1);
+  $("fHair").setAttribute("cx", j.head[0] - 3); $("fHair").setAttribute("cy", j.head[1] - 2);
+  $("fHead").setAttribute("cx", j.head[0] + 2); $("fHead").setAttribute("cy", j.head[1] + 2);
+  $("fBun").setAttribute("cx", j.head[0] - 12); $("fBun").setAttribute("cy", j.head[1] - 10);
+  return j;
+}
+
+/* S3 → screen mapping */
+const R3 = { x: 40, y: 620, s: 1000 / 360 };
+const toScr = (v) => [R3.x + v[0] * R3.s, R3.y + v[1] * R3.s];
+const ROUTER = [44, 140], SENSOR = [321, 136];
+
+/* multipath signal lines (router → sensor), bending around the moving body */
+function drawSignal(t, j, vis) {
+  const mid = [lerp(j.hip[0], j.sh[0], 0.6), lerp(j.hip[1], j.sh[1], 0.6)];
+  const paths = [
+    [[ROUTER[0], ROUTER[1] - 4], [110, 40], [250, 30], [SENSOR[0], SENSOR[1] - 4]],   // ceiling bounce
+    [[ROUTER[0], ROUTER[1] + 6], [120, 210 + (mid[1] - 140) * 0.3], [260, 214], [SENSOR[0], SENSOR[1] + 8]], // floor
+    [[ROUTER[0] + 4, ROUTER[1] + 2], [mid[0] - 70, mid[1] - 10], [mid[0] + 50, mid[1] - 26], [SENSOR[0], SENSOR[1] + 2]], // through the body
+  ];
+  const off = -(t * 70);
+  $("sig").innerHTML = paths.map((p, i) => {
+    const d = `M${p[0]} C${p[1]} ${p[2]} ${p[3]}`;
+    return `<path d="${d}" stroke="#6e8f8f" stroke-width="1.2" fill="none" opacity="${0.35 * vis}"/>` +
+      `<path d="${d}" stroke="#4e7070" stroke-width="2.6" stroke-linecap="round" fill="none" stroke-dasharray="0.1 13" stroke-dashoffset="${off + i * 4}" opacity="${0.85 * vis}"/>`;
+  }).join("");
+  return mid;
+}
+
+/* illustrative posture trace with one peak per stand */
+function noise(x) { return Math.sin(x * 37.1) * 0.5 + Math.sin(x * 91.7 + 1.3) * 0.3 + Math.sin(x * 211.3 + 2.1) * 0.2; }
+const TR = { t0: 8.2, t1: 10.95, x0: 96, x1: 984, base: 168, amp: 112 };
+function traceY(tt) { return TR.base - TR.amp * poseAt(tt) - 7 * noise(tt) * (0.4 + 0.6 * Math.min(1, poseAt(tt) * 3 + 0.3)); }
+function drawTrace(t, vis) {
+  const svg = $("trace"); const tEnd = clamp(t, TR.t0, TR.t1);
+  let d = ""; const N = 260;
+  for (let i = 0; i <= N; i++) {
+    const tt = TR.t0 + ((TR.t1 - TR.t0) * i) / N; if (tt > tEnd) break;
+    const x = lerp(TR.x0, TR.x1, (tt - TR.t0) / (TR.t1 - TR.t0));
+    d += (i ? "L" : "M") + x.toFixed(1) + " " + traceY(tt).toFixed(1);
+  }
+  let marks = "";
+  for (let k = 0; k < NREP; k++) {
+    const tp = REP0 + (k + 0.5) * REPD; const ap = soft(prog(t, tp, 0.3));
+    if (ap <= 0) continue;
+    const x = lerp(TR.x0, TR.x1, (tp - TR.t0) / (TR.t1 - TR.t0)), y = TR.base - TR.amp;
+    marks += `<circle cx="${x}" cy="${y - 2}" r="${13 * ap}" fill="#e3b567"/>` +
+      `<text x="${x}" y="${y - 30 - 10 * (1 - ap)}" text-anchor="middle" font-family="Inter" font-weight="600" font-size="28" fill="#2f4f3e" opacity="${ap}">${k + 1}</text>`;
+  }
+  const capO = soft(prog(t, 8.6, 0.5));
+  svg.innerHTML = `<line x1="${TR.x0}" x2="${TR.x1}" y1="${TR.base + 12}" y2="${TR.base + 12}" stroke="#dedcd2" stroke-width="2"/>` +
+    `<path d="${d}" stroke="#4e7070" stroke-width="4" fill="none" stroke-linejoin="round" stroke-linecap="round"/>` + marks +
+    `<text x="${TR.x1}" y="${TR.base + 56}" text-anchor="end" font-family="Inter" font-weight="500" font-size="27" fill="#6b7771" opacity="${capO}">Illustrative signal · time-lapse</text>`;
+  svg.style.opacity = vis;
+}
+
+/* S4 baseline rows */
+const B = { x0: 130, usual: 150, today: 172, yU: 900, yT: 1180 };
+function drawBaseline(t) {
+  const svg = $("base");
+  const row = (y, label, gap, t0, col, mcol) => {
+    const lp = soft(prog(t, t0, 0.6));
+    const end = B.x0 + 40 + gap * 4 + 50;
+    let s = `<text x="${B.x0}" y="${y - 150}" font-family="Inter" font-weight="600" font-size="36" letter-spacing="5" fill="${col}" opacity="${lp}">${label}</text>`;
+    s += `<line x1="${B.x0}" x2="${lerp(B.x0, end, lp)}" y1="${y}" y2="${y}" stroke="${mcol}" stroke-width="4" stroke-linecap="round" opacity="0.6"/>`;
+    s += `<line x1="${B.x0}" x2="${B.x0}" y1="${y - 26}" y2="${y + 26}" stroke="${col}" stroke-width="3" opacity="${lp}"/>`;
+    for (let k = 0; k < 5; k++) {
+      const x = B.x0 + 40 + gap * k; const mp = outQ(prog(t, t0 + 0.18 + k * 0.09, 0.4));
+      s += `<path d="M${x - 34} ${y} Q ${x} ${y - 120 * mp} ${x + 34} ${y}" stroke="${mcol}" stroke-width="6" fill="none" stroke-linecap="round" opacity="${mp}"/>`;
+      s += `<circle cx="${x}" cy="${y - 60 * mp}" r="${15 * mp}" fill="${mcol}"/>`;
+    }
+    const ep = soft(prog(t, t0 + 0.7, 0.4));
+    s += `<line x1="${end}" x2="${end}" y1="${y - 26}" y2="${y + 26}" stroke="${col}" stroke-width="3" opacity="${ep}"/>`;
+    return [s, end];
+  };
+  const [u, eU] = row(B.yU, "YOUR USUAL", B.usual, 11.12, "#5c6a64", "#a7b89f");
+  const [d, eT] = row(B.yT, "TODAY", B.today, 11.36, "#2f4f3e", "#2f4f3e");
+  // the difference, without numbers
+  const bp = soft(prog(t, 12.05, 0.55));
+  const gx0 = eU, gx1 = lerp(eU, eT, bp);
+  let g = `<line x1="${eU}" x2="${eU}" y1="${B.yU + 30}" y2="${B.yT + 40}" stroke="#a7b89f" stroke-width="2.5" stroke-dasharray="6 9" opacity="${soft(prog(t, 11.9, 0.4))}"/>`;
+  g += `<rect x="${gx0}" y="${B.yT + 44}" width="${Math.max(0, gx1 - gx0)}" height="10" rx="5" fill="#e3b567" opacity="${bp}"/>`;
+  g += `<text x="${eT}" y="${B.yT + 110}" text-anchor="end" font-family="Inter" font-weight="600" font-size="34" fill="#8a5a12" opacity="${bp}">slower than usual</text>`;
+  svg.innerHTML = u + d + g;
+}
+
+/* S5 pipeline on the WISP Line rail */
+const NODES = [["WORKBUDDY", 160], ["MCP", 362], ["CSI", 500], ["BASELINE", 676], ["CARE TIER", 900]];
+$("pipe").innerHTML = NODES.map((n, i) => `<div class="node" id="n${i}" style="left:${n[1]}px;top:0">${n[0]}</div>`).join("") +
+  `<div class="abs" id="brA" style="left:50px;width:500px;top:44px;"><div style="height:16px;border:2.5px solid #a7b89f;border-top:none;border-radius:0 0 14px 14px;"></div><div style="text-align:center;margin-top:12px;font:600 29px var(--sans);letter-spacing:0.1em;color:var(--teal);">AGENT REQUESTS</div></div>` +
+  `<div class="abs" id="brB" style="left:572px;width:460px;top:44px;"><div style="height:16px;border:2.5px solid #2f4f3e;border-top:none;border-radius:0 0 14px 14px;"></div><div style="text-align:center;margin-top:12px;font:600 29px var(--sans);letter-spacing:0.1em;color:var(--forest);">RULES DECIDE</div></div>`;
+$("chips").innerHTML = ["Clear next step", "Time frame", "Reasons"].map((c, i) => `<span id="c${i}" style="display:inline-flex;align-items:center;gap:12px;">${i ? '<span style="color:#a7b89f">·</span>' : ""}${c}</span>`).join("");
+
+/* S2 progress bar + answers (as in app/check/safety) */
+$("s2bar").innerHTML = Array.from({ length: 11 }, (_, i) => `<span style="flex:1;height:10px;border-radius:6px;background:${i < 2 ? "#2f4f3e" : i === 2 ? "#e3b567" : "#cdd8c4"}"></span>`).join("");
+const ICON = { yes: "M5 12.5l4.5 4.5L19 7.5", no: "M6 6l12 12M18 6L6 18", unsure: "M9.1 9a3 3 0 1 1 4.2 2.7c-.8.4-1.3 1.1-1.3 2v.3M12 17.5v.5" };
+$("s2ans").innerHTML = [["yes", "Yes"], ["no", "No"], ["unsure", "Not sure"]].map(([k, l], i) =>
+  `<div class="ans" id="a${i}"><span class="ic"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="${ICON[k]}"/></svg></span>${l}${i === 1 ? '<span class="ripple" id="rip"></span>' : ""}</div>`).join("");
+
+/* ════════════════ the WISP Line ════════════════ */
+// 5 anchors → 4 smooth cubic segments (Catmull-Rom), as 13 control points
+function cr(A) {
+  const P = [A[0]];
+  for (let i = 0; i < A.length - 1; i++) {
+    const p0 = A[Math.max(0, i - 1)], p1 = A[i], p2 = A[i + 1], p3 = A[Math.min(A.length - 1, i + 2)];
+    P.push([p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6], [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6], p2);
+  }
+  return P;
+}
+// one cubic split into 4 equal-t pieces (de Casteljau) → 13 control points
+function split4(c) {
+  const out = [c[0]]; let cur = c;
+  const splitAt = (q, u) => {
+    const L = (a, b) => [lerp(a[0], b[0], u), lerp(a[1], b[1], u)];
+    const a = L(q[0], q[1]), b = L(q[1], q[2]), d = L(q[2], q[3]), e = L(a, b), f = L(b, d), g = L(e, f);
+    return [[q[0], a, e, g], [g, f, d, q[3]]];
+  };
+  for (const u of [1 / 4, 1 / 3, 1 / 2]) { const [l, r] = splitAt(cur, u); out.push(l[1], l[2], l[3]); cur = r; }
+  out.push(cur[1], cur[2], cur[3]);
+  return out;
+}
+// logo geometry (WispLogo: arc M2 19 C 28 6, 64 1, 104 7 · dot (110,8) r4.6 in a 2.7em-wide 120×22 box)
+const LOGO = { font: 230, x: 540 - (2.7 * 230) / 2, y: 0 };
+LOGO.s = (2.7 * 230) / 120; LOGO.y = 752 + 0.0 - (22 * LOGO.s) + 0.12 * 230 + 18;
+const lg = (x, y) => [LOGO.x + x * LOGO.s, LOGO.y + y * LOGO.s];
+const K = {
+  k0: { P: cr([[-30, 900], [250, 842], [540, 902], [800, 836], [1004, 868]]), w: 6, col: "#2f4f3e" },
+  k1: { P: cr([[-30, 566], [250, 548], [520, 572], [770, 546], [962, 560]]), w: 5, col: "#2f4f3e" },
+  k3: { P: cr([[130, B.yT], [330, B.yT - 4], [520, B.yT + 4], [710, B.yT - 3], [B.x0 + 40 + B.today * 4 + 50, B.yT]]), w: 5, col: "#2f4f3e" },
+  k4: { P: cr([[40, 1482], [290, 1474], [540, 1486], [790, 1474], [1048, 1480]]), w: 4, col: "#183c31" },
+  k5: { P: split4([lg(2, 19), lg(28, 6), lg(64, 1), lg(104, 7)]), w: 2.6 * LOGO.s, col: "#a7b89f" },
+};
+function k2(t) { // signal path through the moving body
+  const j = joints(poseAt(t)); const mid = [lerp(j.hip[0], j.sh[0], 0.6), lerp(j.hip[1], j.sh[1], 0.6)];
+  return { P: cr([toScr([ROUTER[0] + 4, ROUTER[1] + 2]), toScr([mid[0] - 60, mid[1] - 2]), toScr([mid[0] + 6, mid[1] - 14]), toScr([mid[0] + 70, mid[1] - 20]), toScr([SENSOR[0], SENSOR[1] + 2])]), w: 5, col: "#4e7070" };
+}
+const mixK = (a, b, p) => ({ P: a.P.map((v, i) => [lerp(v[0], b.P[i][0], p), lerp(v[1], b.P[i][1], p)]), w: lerp(a.w, b.w, p), col: mixHex(a.col.startsWith("#") ? a.col : "#2f4f3e", b.col, p) });
+function lineAt(t) {
+  const M = (a, b, t0, d) => mixK(a, b, inOut(prog(t, t0, d)));
+  if (t < 5.0) return K.k0;
+  if (t < 7.55) return M(K.k0, K.k1, 5.0, 0.6);
+  if (t < 10.8) return M(K.k1, k2(t), 7.55, 0.65);
+  if (t < 13.25) return M(k2(t), K.k3, 10.8, 0.6);
+  if (t < 16.72) return M(K.k3, K.k4, 13.25, 0.65);
+  return M(K.k4, K.k5, 16.72, 0.68);
+}
+function drawLine(t) {
+  const L = lineAt(t), P = L.P;
+  let d = `M${P[0][0].toFixed(1)} ${P[0][1].toFixed(1)}`;
+  for (let i = 1; i < P.length; i += 3) d += ` C${P[i].map((v) => v.toFixed(1))} ${P[i + 1].map((v) => v.toFixed(1))} ${P[i + 2].map((v) => v.toFixed(1))}`;
+  const p = $("wlp");
+  p.setAttribute("d", d); p.setAttribute("stroke", L.col); p.setAttribute("stroke-width", L.w.toFixed(2));
+  const draw = inOut(prog(t, -0.1, 1.55));
+  p.setAttribute("stroke-dasharray", `${draw} 1`);
+  // amber point at the end of the line (in the logo it sits just past the arc)
+  const end = P[P.length - 1], lp = inOut(prog(t, 16.72, 0.68));
+  const dot = $("wld");
+  dot.setAttribute("cx", end[0] + lp * 6 * LOGO.s); dot.setAttribute("cy", end[1] + lp * 1 * LOGO.s);
+  dot.setAttribute("r", lerp(15, 4.6 * LOGO.s, lp) * soft(prog(t, 1.3, 0.45)));
+  // S1: faint echoes travel with the line, a hint of wireless propagation through the room
+  const eo = soft(prog(t, 0.9, 0.9)) * (1 - inOut(prog(t, 4.75, 0.45)));
+  [["wle1", -34, 0.0, 0.32], ["wle2", 30, 1.7, 0.42]].forEach(([id, dy, ph, op]) => {
+    const e = $(id); if (eo <= 0) { e.setAttribute("opacity", 0); return; }
+    const A = [[-30, 900], [250, 842], [540, 902], [800, 836], [1004, 868]].map(([x, y], i) => [x, y + dy + 12 * Math.sin(t * 1.6 + i * 1.3 + ph)]);
+    const Q = cr(A); let dd = `M${Q[0]}`; for (let i = 1; i < Q.length; i += 3) dd += ` C${Q[i]} ${Q[i + 1]} ${Q[i + 2]}`;
+    e.setAttribute("d", dd); e.setAttribute("opacity", eo * op);
+  });
+}
+
+/* ════════════════ render(t) ════════════════ */
+function render(t) {
+  /* S1 */
+  if (scene($("s1"), t, S.s1[0], S.s1[1], 0.01, 0.4, -30) > 0) {
+    const ap = soft(prog(t, -0.45, 1.6));
+    const art = $("s1art"); art.style.opacity = ap; art.style.transform = `translateY(${(1 - ap) * 40}px) scale(${lerp(1.05, 1, ap)})`;
+    rise($("s1a"), t, 1.3, 0.8); rise($("s1b"), t, 3.05, 0.8);
+  }
+  /* S2 */
+  if (scene($("s2"), t, S.s2[0], S.s2[1], 0.3, 0.32) > 0) {
+    rise($("s2h1"), t, 5.33, 0.7); rise($("s2h2"), t, 5.43, 0.7);
+    const cp = soft(prog(t, 5.3, 0.7)); const card = $("s2card");
+    card.style.opacity = cp; card.style.transform = `translateY(${(1 - cp) * 80}px)`;
+    fadeUp($("s2pill"), t, 5.75, 0.5, 14); fadeUp($("s2q"), t, 5.55, 0.6, 20);
+    for (let i = 0; i < 3; i++) fadeUp($("a" + i), t, 5.8 + i * 0.09, 0.5, 18);
+    // patient taps "No"
+    const tp = prog(t, 6.95, 0.55), sel = soft(prog(t, 6.95, 0.25)), a1 = $("a1");
+    a1.style.background = mixHex("#fffdf8", "#eef2e9", sel); a1.style.borderColor = mixHex("#dedcd2", "#7f9586", sel);
+    const rip = $("rip"); const R = 40 + 900 * outQ(tp);
+    rip.style.width = rip.style.height = `${R}px`; rip.style.left = `${150 - R / 2}px`; rip.style.top = `${56 - R / 2}px`;
+    rip.style.opacity = t < 6.95 ? 0 : 0.14 * (1 - tp);
+  }
+  /* S3 */
+  const v3 = scene($("s3"), t, S.s3[0], S.s3[1], 0.4, 0.3, -20);
+  if (v3 > 0) {
+    rise($("s3h1"), t, 7.95, 0.75); rise($("s3h2"), t, 8.07, 0.75);
+    fadeUp($("s3tag"), t, 8.3, 0.55, 14);
+    const ap = soft(prog(t, 7.85, 0.6)), art = $("s3art");
+    art.style.opacity = ap; art.style.transform = `scale(${lerp(0.96, 1, ap)})`;
+    fadeUp($("s3pill"), t, 8.35, 0.5, 12);
+    const on = soft(prog(t, REP0 - 0.1, 0.25)), off = soft(prog(t, REP0 + NREP * REPD + 0.05, 0.25));
+    $("s3dot").style.background = mixHex("#cdd8c4", "#4e7070", on * (1 - off));
+    fadeUp($("s3lab1"), t, 8.45, 0.5, 10); fadeUp($("s3lab2"), t, 8.5, 0.5, 10);
+    const j = drawFigure(poseAt(t));
+    drawSignal(t, j, soft(prog(t, 8.1, 0.5)));
+    drawTrace(t, 1);
+  }
+  /* S4 */
+  if (scene($("s4"), t, S.s4[0], S.s4[1], 0.25, 0.28) > 0) {
+    rise($("s4h1"), t, 11.05, 0.7); rise($("s4h2"), t, 11.15, 0.7);
+    drawBaseline(t); fadeUp($("s4cap"), t, 11.75, 0.55, 14);
+  }
+  /* S5 */
+  if (scene($("s5"), t, S.s5[0], S.s5[1], 0.25, 0.28, -30) > 0) {
+    const rp = soft(prog(t, 13.5, 0.6)), rec = $("rec");
+    rec.style.opacity = rp; rec.style.transform = `translateY(${(1 - rp) * 90}px)`;
+    fadeUp($("r1"), t, 13.6, 0.5, 12); fadeUp($("r2"), t, 13.68, 0.6, 22);
+    $("r3p").setAttribute("stroke-dasharray", `${inOut(prog(t, 13.95, 0.6))} 1`); $("r3c").setAttribute("opacity", soft(prog(t, 14.4, 0.3)));
+    fadeUp($("r4"), t, 14.0, 0.5, 14); fadeUp($("r5"), t, 14.25, 0.5, 14); fadeUp($("r6"), t, 14.5, 0.55, 14);
+    [14.05, 14.3, 14.55].forEach((s, i) => fadeUp($("c" + i), t, s, 0.45, 10));
+    NODES.forEach((_, i) => { const e = $("n" + i), p = soft(prog(t, 15.0 + i * 0.13, 0.45)); e.style.opacity = p; e.style.transform = `translate(-50%, ${-50 + (1 - p) * 40}%)`; });
+    fadeUp($("brA"), t, 15.75, 0.45, 10); fadeUp($("brB"), t, 15.95, 0.45, 10);
+  }
+  /* S6 */
+  if (scene($("s6"), t, 16.8, 99, 0.2, 0.01) > 0) {
+    rise($("wisp"), t, 16.86, 0.85); rise($("tag"), t, 17.65, 0.8);
+    fadeUp($("desc"), t, 18.0, 0.6, 14); fadeUp($("disc"), t, 18.3, 0.6, 10);
+  }
+  drawLine(t);
+}
+window.render = render;
+window.ready = Promise.all(['400','500','600','700'].map((w)=>document.fonts.load(`${w} 40px Inter`)).concat(['500','600','700'].map((w)=>document.fonts.load(`${w} 40px Lora`)), [document.fonts.load('italic 500 40px Lora')])).then(() => document.fonts.ready).then(() => new Promise((r) => requestAnimationFrame(() => r(true))));
+const q = new URLSearchParams(location.search).get("t");
+render(q ? parseFloat(q) : 0);
+</script>
+</body>
+</html>

@@ -6,12 +6,18 @@ import type { SensingState } from "@/lib/types";
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "soft";
 
 const VARIANT: Record<Variant, string> = {
-  primary: "bg-forest text-white hover:bg-forest-deep disabled:bg-ink-faint",
-  secondary: "bg-card text-ink border-2 border-line hover:border-forest/50",
+  primary: "bg-forest text-white shadow-(--shadow-soft) hover:bg-forest-deep disabled:bg-ink-faint disabled:shadow-none",
+  secondary: "bg-card text-ink border-[1.5px] border-line hover:border-forest/50 hover:bg-sage/40",
   soft: "bg-sage text-forest hover:bg-sage-deep",
-  ghost: "!px-3 text-forest underline underline-offset-4",
-  danger: "bg-red text-white hover:brightness-95",
+  ghost: "!px-3 text-forest underline underline-offset-4 decoration-forest/40 hover:decoration-forest",
+  danger: "bg-red text-white shadow-(--shadow-soft) hover:bg-red-deep",
 };
+const SIZE = { md: "min-h-12 px-5 text-[1rem]", lg: "min-h-14 px-7 text-[1.06rem]" } as const;
+
+/** Classes for anything that should look like a button (also used on <Link>). */
+export function buttonClass(variant: Variant = "primary", size: "md" | "lg" = "lg", className = "") {
+  return `inline-flex items-center justify-center gap-2 rounded-w-md text-center font-semibold transition-colors duration-200 disabled:cursor-not-allowed ${SIZE[size]} ${VARIANT[variant]} ${className}`;
+}
 
 export function Button({
   variant = "primary",
@@ -19,14 +25,7 @@ export function Button({
   className = "",
   ...rest
 }: ButtonHTMLAttributes<HTMLButtonElement> & { variant?: Variant; size?: "md" | "lg" }) {
-  const sz = size === "lg" ? "min-h-14 px-7 text-[1.08rem]" : "min-h-12 px-5 text-base";
-  return (
-    <button
-      type="button"
-      {...rest}
-      className={`inline-flex items-center justify-center gap-2 rounded-2xl font-bold transition-colors disabled:cursor-not-allowed ${sz} ${VARIANT[variant]} ${className}`}
-    />
-  );
+  return <button type="button" {...rest} className={buttonClass(variant, size, className)} />;
 }
 
 export function Card({
@@ -49,7 +48,7 @@ export function Card({
 }
 
 export function Eyebrow({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return <div className={`text-[0.72rem] font-bold uppercase tracking-[0.16em] text-ink-faint ${className}`}>{children}</div>;
+  return <div className={`label text-ink-faint ${className}`}>{children}</div>;
 }
 
 const SENSING: Record<SensingState, { label: string; dot: string; text: string }> = {
@@ -73,7 +72,7 @@ export function SensingIndicator({ state }: { state: SensingState }) {
 export function RecordedBadge({ mode }: { mode: string | undefined }) {
   if (!mode || mode === "live") return null;
   return (
-    <div className="inline-flex items-center gap-2 rounded-md border border-dashed border-ink-faint bg-slate-bg px-2.5 py-1 font-mono text-[0.68rem] font-bold uppercase tracking-wider text-ink-soft">
+    <div className="inline-flex items-center gap-2 rounded-w-sm border border-dashed border-ink-faint/70 bg-slate-bg px-2.5 py-1 text-[0.8rem] font-medium text-ink-soft">
       {mode === "synthetic_recorded" ? "Recorded sensor session · synthetic" : "Recorded sensor session"}
     </div>
   );

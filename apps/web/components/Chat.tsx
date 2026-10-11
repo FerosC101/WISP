@@ -22,7 +22,7 @@ function AgentMessage({ m }: { m: ChatMessage }) {
         ))}
         {m.data.why && (
           <Disclosure summary="Why this check?" className="mt-3">
-            <p className="rounded-xl bg-card px-4 py-3 text-ink-soft">{m.data.why}</p>
+            <p className="rounded-w-sm bg-card px-4 py-3 text-ink-soft">{m.data.why}</p>
           </Disclosure>
         )}
       </div>
@@ -31,14 +31,14 @@ function AgentMessage({ m }: { m: ChatMessage }) {
   if (kind === "instructions") {
     return (
       <div className="wisp-fade-in rounded-(--radius-card) border border-line bg-card px-5 py-4">
-        <p className="mb-1 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-teal">Before you start</p>
+        <p className="mb-1 label text-teal">Before you start</p>
         <p>{m.text}</p>
       </div>
     );
   }
   if (kind === "result" && m.data.tier) {
     const s = TIER_STYLE[m.data.tier];
-    return <p className={`wisp-fade-in rounded-2xl border-2 ${s.border} ${s.bg} px-5 py-4 text-[1.05rem] font-bold`}>{m.text}</p>;
+    return <p className={`wisp-fade-in rounded-w-md border-2 ${s.border} ${s.bg} px-5 py-4 text-[1.05rem] font-bold`}>{m.text}</p>;
   }
   return <p className={`wisp-fade-in max-w-[92%] text-[1.08rem] leading-relaxed ${kind === "question" ? "font-bold text-ink" : "text-ink"}`}>{m.text}</p>;
 }
@@ -92,7 +92,7 @@ export function Chat({ snapshot, onSnapshot }: { snapshot: Snapshot; onSnapshot:
           if (m.role === "patient") {
             return (
               <div key={m.id} className="flex justify-end">
-                <p className="max-w-[85%] rounded-3xl rounded-br-lg bg-forest px-5 py-3 text-[1.02rem] text-white">{m.text}</p>
+                <p className="max-w-[85%] rounded-w-lg rounded-br-lg bg-forest px-5 py-3 text-[1.02rem] text-white">{m.text}</p>
               </div>
             );
           }
@@ -106,7 +106,7 @@ export function Chat({ snapshot, onSnapshot }: { snapshot: Snapshot; onSnapshot:
       </div>
 
       {isWorkBuddy ? (
-        <div className="rounded-2xl border border-dashed border-ink-faint bg-slate-bg px-5 py-4 text-ink-soft">
+        <div className="rounded-w-md border border-dashed border-ink-faint bg-slate-bg px-5 py-4 text-ink-soft">
           You&apos;re talking with WISP through <strong className="text-ink">WorkBuddy</strong>. This screen shows the movement check and your recommendation.
         </div>
       ) : (
@@ -150,7 +150,7 @@ export function Chat({ snapshot, onSnapshot }: { snapshot: Snapshot; onSnapshot:
                 }
               }}
               placeholder={replies.length ? "Or type your answer…" : "Type here…"}
-              className="min-h-12 flex-1 resize-none rounded-2xl border border-line bg-card px-4 py-3 text-[1.02rem] placeholder:text-ink-faint focus:border-forest disabled:bg-slate-bg"
+              className="min-h-12 flex-1 resize-none rounded-w-md border border-line bg-card px-4 py-3 text-[1.02rem] placeholder:text-ink-faint focus:border-forest disabled:bg-slate-bg"
             />
             <Button type="submit" disabled={!canAnswer || !text.trim()} className="min-h-12" aria-label="Send">
               Send

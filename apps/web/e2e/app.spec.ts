@@ -71,7 +71,7 @@ test("Larger text: the summary's main button is still on screen", async ({ page 
   await startCheck(page, "I feel weak");
   await answerSafety(page, (q) => (/eating and drinking/i.test(q) ? "No" : SAFE(q)));
   await expect(page.locator("html")).toHaveAttribute("data-large", "true");
-  await expect(button(page, "That's right — continue")).toBeInViewport();
+  await expect(button(page, "Yes, continue")).toBeInViewport();
   await page.goto("/today");
   await expect(page.getByRole("link", { name: "Start a new check-in" })).toBeInViewport();
 });
@@ -120,7 +120,7 @@ test("WorkBuddy mode: a new check opens the conversation view and waits for Work
   await asPersona(page, "mdm_tan", { agentMode: "workbuddy" });
   await page.goto("/check/start");
   await page.getByLabel("Tell WISP how you feel").fill("I feel weak");
-  await button(page, "Continue").click();
+  await button(page, "Start check-in").click();
   await expect(page).toHaveURL(/\/session\/s_/);
   await expect(page.getByText("Waiting for WorkBuddy to join this assessment…")).toBeVisible();
 });

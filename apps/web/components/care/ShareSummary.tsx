@@ -70,12 +70,12 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
       <h1 className="text-[1.9rem] font-bold leading-tight text-forest">Share with {name}?</h1>
       <p className="mt-2 text-ink-soft">Nothing is sent unless you agree below.</p>
 
-      <div className="mt-5 flex items-center gap-3 rounded-2xl border border-line bg-card px-4 py-3">
+      <div className="mt-5 flex items-center gap-3 rounded-w-md border border-line bg-card px-4 py-3">
         <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sage text-[1.1rem] font-bold text-forest">
           {name.charAt(0)}
         </span>
         <div>
-          <p className="text-[0.85rem] text-ink-soft">To</p>
+          <p className="text-[0.92rem] text-ink-soft">To</p>
           <p className="font-bold">
             {name} <span className="font-normal text-ink-soft">({relationship})</span>
           </p>
@@ -83,7 +83,7 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
       </div>
 
       {status !== "shared" && (
-        <label className="mt-3 flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-2xl border border-line bg-card px-4 py-3">
+        <label className="mt-3 flex min-h-14 cursor-pointer items-center justify-between gap-3 rounded-w-md border border-line bg-card px-4 py-3">
           <span>
             <span className="block font-bold">Include the reasons</span>
             <span className="block text-[0.92rem] text-ink-soft">These mention how you&apos;ve been feeling.</span>
@@ -102,13 +102,13 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
       )}
 
       <section aria-labelledby="preview-title" className="mt-4 rounded-(--radius-card) border-2 border-forest/30 bg-card p-5">
-        <h2 id="preview-title" className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-forest">
+        <h2 id="preview-title" className="label text-forest">
           Exactly what {name} will receive
         </h2>
         <pre className="mt-3 whitespace-pre-wrap font-sans text-[1.05rem] leading-relaxed">{s.summary}</pre>
       </section>
 
-      <section aria-label="Never shared" className="mt-3 rounded-2xl bg-sage px-4 py-3">
+      <section aria-label="Never shared" className="mt-3 rounded-w-md bg-sage px-4 py-3">
         <p className="font-bold">Never shared</p>
         <ul className="mt-1 space-y-1 text-[0.95rem]">
           {NEVER.map((x) => (
@@ -121,16 +121,16 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
       </section>
 
       {status === "shared" ? (
-        <p role="status" className="mt-5 rounded-2xl bg-sage px-5 py-4 font-bold text-forest">
+        <p role="status" className="mt-5 rounded-w-md bg-sage px-5 py-4 font-bold text-forest">
           Sent to {name}. (Prototype: delivery is simulated.)
         </p>
       ) : status === "declined" ? (
-        <p role="status" className="mt-5 rounded-2xl bg-slate-bg px-5 py-4">
+        <p role="status" className="mt-5 rounded-w-md bg-slate-bg px-5 py-4">
           Nothing was shared.
         </p>
       ) : (
         <StickyActions>
-          <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-2xl border-2 border-line bg-card px-4 py-2">
+          <label className="flex min-h-12 cursor-pointer items-center gap-3 rounded-w-md border-2 border-line bg-card px-4 py-2">
             <input type="checkbox" checked={agreed} onChange={(e) => setAgreed(e.target.checked)} className="h-6 w-6 shrink-0 accent-forest" />
             <span className="text-[1.02rem] font-bold">I agree to send this message to {name}</span>
           </label>

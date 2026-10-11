@@ -189,7 +189,7 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
           <p className="text-sm text-ink-soft">Reads the radio only while connected here. Data stays on this machine.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <select value={port} onChange={(e) => setPort(e.target.value)} disabled={connected} className="min-h-11 rounded-xl border border-line bg-card px-3 text-sm" aria-label="Serial port">
+          <select value={port} onChange={(e) => setPort(e.target.value)} disabled={connected} className="min-h-11 rounded-w-sm border border-line bg-card px-3 text-sm" aria-label="Serial port">
             {ports.length === 0 && <option value="">No serial ports found</option>}
             {ports.map((p) => (
               <option key={p.port} value={p.port}>
@@ -227,7 +227,7 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
             </p>
           )}
           {st.device?.firmware === "wisp" && (
-            <details className="mt-3 rounded-xl border border-line px-4 py-3" open={st.state === "needs_wifi"}>
+            <details className="mt-3 rounded-w-sm border border-line px-4 py-3" open={st.state === "needs_wifi"}>
               <summary className="cursor-pointer font-bold">Sensor Wi-Fi</summary>
               <p className="mt-2 text-sm text-ink-soft">
                 The sensor joins your router and measures its replies. Details go from this page to the board over USB and are stored only on the board.
@@ -239,8 +239,8 @@ export function LiveSensor({ provider, onProviderChange }: { provider: { name: s
                   sendWifi();
                 }}
               >
-                <input value={ssid} onChange={(e) => setSsid(e.target.value)} placeholder="Network name (2.4 GHz)" autoComplete="off" className="min-h-11 flex-1 rounded-xl border border-line px-3" aria-label="Wi-Fi network name" />
-                <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="Password" autoComplete="off" className="min-h-11 flex-1 rounded-xl border border-line px-3" aria-label="Wi-Fi password" />
+                <input value={ssid} onChange={(e) => setSsid(e.target.value)} placeholder="Network name (2.4 GHz)" autoComplete="off" className="min-h-11 flex-1 rounded-w-sm border border-line px-3" aria-label="Wi-Fi network name" />
+                <input value={pass} onChange={(e) => setPass(e.target.value)} type="password" placeholder="Password" autoComplete="off" className="min-h-11 flex-1 rounded-w-sm border border-line px-3" aria-label="Wi-Fi password" />
                 <Button type="submit" disabled={!ssid}>
                   Send to sensor
                 </Button>

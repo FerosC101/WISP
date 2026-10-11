@@ -34,7 +34,7 @@ test("“not sure” about a warning sign → can't judge safely, and it can be 
 test("“not sure” left unresolved → can't safely judge (never self-care)", async ({ page }) => {
   await startCheck(page, "I feel weak");
   await answerSafety(page, (q) => (/fainted/i.test(q) ? "Not sure" : SAFE(q)));
-  await button(page, "That's right — continue").click();
+  await button(page, "Yes, continue").click();
   await expect(page).toHaveURL(/\/check\/decision/);
   await expect(page.getByText(/couldn.t be ruled out/)).toBeVisible();
   await button(page, "See my next step").click();
@@ -70,8 +70,8 @@ test("eating less, changed on the summary, asks the fluids question and comes ba
 test("declining the movement check → book your doctor (no self-care without a measurement)", async ({ page }) => {
   await startCheck(page, "I feel weak");
   await answerSafety(page);
-  await button(page, "That's right — continue").click();
-  await expect(page.getByRole("heading", { name: "A short movement check could help" })).toBeVisible();
+  await button(page, "Yes, continue").click();
+  await expect(page.getByRole("heading", { name: "A quick movement check could help." })).toBeVisible();
   await expect(button(page, "Do the check")).toBeInViewport();
   await button(page, "Continue without it").click();
   await expect(page.getByRole("heading", { name: "Book your doctor in the next few days" })).toBeVisible();
@@ -80,31 +80,31 @@ test("declining the movement check → book your doctor (no self-care without a 
 test("not feeling steady at Room Ready → be seen today", async ({ page }) => {
   await startCheck(page, "I feel weak");
   await answerSafety(page);
-  await button(page, "That's right — continue").click();
+  await button(page, "Yes, continue").click();
   await button(page, "Do the check").click();
   await expect(page).toHaveURL(/\/check\/room-ready/);
   await expect(page.getByText(/Sensing is off/)).toBeVisible();
   await expect(button(page, "Tick each item to continue")).toBeDisabled();
   await tickAll(page, 3);
   await button(page, "My space is ready").click();
-  await button(page, "No").click();
+  await button(page, "Not right now").click();
   await expect(page.getByRole("heading", { name: "Please be seen today" })).toBeVisible();
 });
 
 test("someone else in the room: wait until it's clear, then the check starts", async ({ page }) => {
   await startCheck(page, "I feel weak");
   await answerSafety(page);
-  await button(page, "That's right — continue").click();
+  await button(page, "Yes, continue").click();
   await button(page, "Do the check").click();
   await tickAll(page, 3);
   await button(page, "My space is ready").click();
-  await button(page, "Yes, I'm ready").click();
+  await button(page, "Yes, I feel steady").click();
   await button(page, "Yes, someone is here").click();
   await expect(heading(page)).toHaveText("Please wait until the area around your chair is clear.");
   await button(page, "It's clear now").click();
   await expect(page).toHaveURL(/\/check\/movement/);
   await expect(page.getByRole("dialog")).toBeVisible(); // full-screen movement check
-  await expect(button(page, "I'm seated — start")).toBeInViewport();
+  await expect(button(page, "I'm ready")).toBeInViewport();
   await expect(button(page, "Skip the check")).toBeInViewport();
 });
 
@@ -112,16 +112,16 @@ async function stopPartWay(page: import("@playwright/test").Page, request: impor
   await request.post("http://127.0.0.1:8788/api/dev/sensor", { data: { speed: 1 } }); // slow enough to stop
   await startCheck(page, "I feel weak");
   await answerSafety(page);
-  await button(page, "That's right — continue").click();
+  await button(page, "Yes, continue").click();
   await button(page, "Do the check").click();
   await tickAll(page, 3);
   await button(page, "My space is ready").click();
-  await button(page, "Yes, I'm ready").click();
+  await button(page, "Yes, I feel steady").click();
   await button(page, "No, I'm alone").click();
-  await button(page, "I'm seated — start").click();
+  await button(page, "I'm ready").click();
   await expect(page.getByRole("dialog").getByText("Stand up and sit down five times")).toBeVisible();
-  await expect(button(page, "Stop")).toBeInViewport();
-  await button(page, "Stop").click();
+  await expect(button(page, "Stop the check")).toBeInViewport();
+  await button(page, "Stop the check").click();
   await expect(page).toHaveURL(/\/check\/movement-result/);
   await expect(heading(page)).toContainText("Did you stop because you felt unwell?");
 }
@@ -159,7 +159,7 @@ test("no baseline (Mr Lim) → WISP explains why there's no movement check and m
   await asPersona(page, "mr_lim");
   await startCheck(page, "I feel weak");
   await answerSafety(page);
-  await button(page, "That's right — continue").click();
+  await button(page, "Yes, continue").click();
   await expect(page.getByText(/doesn.t have your usual movement on record/)).toBeVisible();
   // Auto-continues to the recommendation.
   await expect(page.getByRole("heading", { name: "Book your doctor in the next few days" })).toBeVisible({ timeout: 15_000 });

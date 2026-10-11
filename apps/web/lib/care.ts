@@ -27,7 +27,7 @@ export function providers(profile: PublicProfile | null): Provider[] {
     out.push({
       id: "usual-gp",
       name: profile.usual_gp,
-      kind: "Your usual clinic",
+      kind: "Your usual doctor",
       about: "Your own doctor knows your history.",
       mapQuery: profile.usual_gp,
       address: d?.address ?? undefined,
@@ -37,8 +37,8 @@ export function providers(profile: PublicProfile | null): Provider[] {
   }
   out.push(
     { id: "polyclinic", name: "Polyclinic", kind: "Polyclinic", about: "Government clinics for GP care, with lower fees.", mapQuery: "polyclinic near me" },
-    { id: "gp", name: "GP clinic near you", kind: "GP clinic", about: "Private family clinics, often open in the evening.", mapQuery: "GP clinic near me" },
-    { id: "ae", name: "Emergency department (A&E)", kind: "Hospital A&E", about: "For emergencies, or if you can't be seen today.", mapQuery: "hospital emergency department near me" },
+    { id: "gp", name: "GP clinic near you", kind: "Family doctor / GP", about: "Private family clinics, often open in the evening.", mapQuery: "GP clinic near me" },
+    { id: "ae", name: "Emergency department (A&E)", kind: "Emergency department", about: "For emergencies, or if you can't be seen today.", mapQuery: "hospital emergency department near me" },
   );
   return out;
 }

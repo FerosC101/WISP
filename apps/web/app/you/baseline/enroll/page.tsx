@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { Icon } from "@/components/Icon";
+import { Illustration } from "@/components/Illustration";
 import { StickyActions } from "@/components/StickyActions";
-import { Button } from "@/components/ui";
+import { Button, buttonClass } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
 import { post } from "@/lib/api";
-import { type Baseline, STATUS_WORDS, baselineStatus } from "@/lib/baseline";
+import { type Baseline, STATUS_WORDS, baselineStatus, useBaseline } from "@/lib/baseline";
 import { unreliableWhy } from "@/lib/movementWords";
 import { useUserId } from "@/lib/prefs";
 
-type Step = "feeling" | "not-today" | "setup" | "arms" | "measuring" | "result";
+type Step = "intro" | "feeling" | "not-today" | "setup" | "arms" | "measuring" | "result";
 
 const SAME = [
   { id: "chair", label: "The same sturdy chair, against the same wall" },
@@ -43,7 +45,7 @@ function Measuring({ onStop, stopping }: { onStop: () => void; stopping: boolean
   return createPortal(
     <div role="dialog" aria-modal="true" aria-labelledby="enrol-move" className="fixed inset-0 z-50 flex flex-col bg-forest-deep text-white">
       <div className="mx-auto flex w-full max-w-md flex-1 flex-col px-6 pb-6 pt-8">
-        <p className="text-[0.72rem] font-bold uppercase tracking-[0.16em] text-white/70">Healthy-day check</p>
+        <p className="label text-white/70">Healthy-day check</p>
         <div className="flex flex-1 flex-col items-center justify-center text-center" aria-live="assertive">
           {countdown > 0 ? (
             <>
@@ -66,7 +68,7 @@ function Measuring({ onStop, stopping }: { onStop: () => void; stopping: boolean
           type="button"
           disabled={stopping}
           onClick={onStop}
-          className="min-h-14 rounded-2xl border-2 border-white/60 text-[1.1rem] font-bold text-white hover:bg-white/10 disabled:opacity-60"
+          className="min-h-14 rounded-w-md border-2 border-white/60 text-[1.1rem] font-bold text-white hover:bg-white/10 disabled:opacity-60"
         >
           {stopping ? "Stopping…" : "Stop"}
         </button>
@@ -79,7 +81,12 @@ function Measuring({ onStop, stopping }: { onStop: () => void; stopping: boolean
 
 export default function Enroll() {
   const userId = useUserId();
-  const [step, setStep] = useState<Step>("feeling");
+  const { data: existing, error: baselineError } = useBaseline(userId);
+  const loaded = !!existing || !!baselineError;
+  const [chosen, setStep] = useState<Step | null>(null);
+  // The first time, explain what a healthy-day check is for; after that, go straight to the check.
+  const firstTime = !!existing && (existing.baseline?.sessions.length ?? 0) === 0;
+  const step: Step = chosen ?? (firstTime ? "intro" : "feeling");
   const [ticked, setTicked] = useState<Record<string, boolean>>({});
   const [armsUsed, setArmsUsed] = useState(false);
   const [result, setResult] = useState<EnrolResult | null>(null);
@@ -116,23 +123,47 @@ export default function Enroll() {
 
   return (
     <div className="mx-auto max-w-xl pt-2 sm:pt-8">
-      <Link href="/you/baseline" className="inline-flex min-h-11 items-center font-bold text-forest">
-        ‹ My usual
+      <Link href="/you/baseline" className="-ml-1 inline-flex min-h-11 items-center gap-1 font-semibold text-forest">
+        <Icon name="chevron-left" className="h-5 w-5" />
+        My usual
       </Link>
-      <p className="mt-1 text-[0.72rem] font-bold uppercase tracking-[0.16em] text-teal">Healthy-day check</p>
+      <p className="mt-1 label text-teal">Healthy-day check</p>
 
-      {step === "feeling" && (
+      {!chosen && !loaded && (
+        <div className="py-16" aria-busy>
+          <WispLine variant="flow" className="mx-auto h-8 w-48 text-sage-mid" />
+        </div>
+      )}
+
+      {step === "intro" && (
         <section aria-labelledby="t">
-          <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+          <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
+            Build your usual
+          </h1>
+          <WispLine variant="draw" className="mt-3 h-4 w-28 text-sage-mid" />
+          <p className="mt-3 text-[1.06rem] text-ink-soft">
+            We&apos;ll use a few healthy-day movement checks to understand your normal. It takes about a minute each time, on three different days.
+          </p>
+          <Illustration scene="healthy" decorative className="mt-6 max-w-[18rem] rounded-w-lg" />
+          <Button size="lg" className="mt-6 w-full" onClick={() => setStep("feeling")}>
+            Let&apos;s start
+          </Button>
+        </section>
+      )}
+
+      {step === "feeling" && (chosen || loaded) && (
+        <section aria-labelledby="t">
+          <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
             Are you feeling like your usual self today?
           </h1>
           <p className="mt-2 text-ink-soft">WISP learns your usual from days when you feel well.</p>
+          {!firstTime && <Illustration scene="healthy" decorative className="mt-6 max-w-[18rem] rounded-w-lg" />}
           <div className="mt-6 flex flex-col gap-3">
             <Button size="lg" onClick={() => setStep("setup")}>
               Yes, I feel like myself
             </Button>
             <Button size="lg" variant="secondary" onClick={() => setStep("not-today")}>
-              Not really
+              Not today
             </Button>
           </div>
         </section>
@@ -140,14 +171,14 @@ export default function Enroll() {
 
       {step === "not-today" && (
         <section aria-labelledby="t">
-          <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+          <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
             Let&apos;s do this another day
           </h1>
           <p className="mt-2">A healthy-day check only works on a day you feel well. If something feels different today, a check can help you decide what to do.</p>
-          <Link href="/check/start" className="mt-6 flex min-h-14 items-center justify-center rounded-2xl bg-forest px-6 text-[1.08rem] font-bold text-white">
+          <Link href="/check/start" className={buttonClass("primary", "lg", "mt-6 w-full")}>
             Start a check
           </Link>
-          <Link href="/you/baseline" className="mt-3 flex min-h-14 items-center justify-center rounded-2xl border-2 border-line bg-card px-6 font-bold">
+          <Link href="/you/baseline" className={buttonClass("secondary", "lg", "mt-3 w-full")}>
             Back to My usual
           </Link>
         </section>
@@ -155,14 +186,14 @@ export default function Enroll() {
 
       {step === "setup" && (
         <section aria-labelledby="t">
-          <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+          <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
             Keep it the same each time
           </h1>
           <p className="mt-2 text-ink-soft">That way WISP compares like with like.</p>
           <ul className="mt-4 space-y-2.5">
             {SAME.map((x) => (
               <li key={x.id}>
-                <label className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-2xl border-2 px-4 py-3 ${ticked[x.id] ? "border-forest bg-sage" : "border-line bg-card"}`}>
+                <label className={`flex min-h-14 cursor-pointer items-center gap-3 rounded-w-md border-2 px-4 py-3 ${ticked[x.id] ? "border-forest bg-sage" : "border-line bg-card"}`}>
                   <input
                     type="checkbox"
                     checked={!!ticked[x.id]}
@@ -184,7 +215,7 @@ export default function Enroll() {
 
       {step === "arms" && (
         <section aria-labelledby="t">
-          <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+          <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
             Do you usually push up with your arms to stand?
           </h1>
           <p className="mt-2 text-ink-soft">Answer for a normal day. When you press an answer, the check starts: sit still for 3 seconds first.</p>
@@ -206,38 +237,45 @@ export default function Enroll() {
         <section aria-labelledby="t" aria-live="polite">
           {error ? (
             <>
-              <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+              <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
                 That didn&apos;t work
               </h1>
               <p className="mt-2">{error}</p>
             </>
           ) : result?.accepted ? (
             <>
-              <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
-                Thank you. That check has been added.
+              <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
+                Healthy-day check saved.
               </h1>
-              <p className="mt-2 text-[1.1rem] font-bold">
+              <ol className="mt-4 flex items-center gap-2" aria-hidden>
+                {[0, 1, 2].map((i) => (
+                  <li key={i} className={`h-3.5 w-3.5 rounded-full ${i < n ? "bg-forest" : "border-2 border-forest/30 bg-card"}`} />
+                ))}
+              </ol>
+              <p className="mt-2 text-[1.1rem] font-semibold">
                 {Math.min(n, 3)} of 3 healthy-day checks{n > 3 ? ` · ${n} in total` : ""}
               </p>
-              <p className="mt-1 text-ink-soft">{n >= 3 ? `WISP now knows your usual. Status: ${STATUS_WORDS[status].title.toLowerCase()}.` : "Try to do the next one on another good day."}</p>
+              <p className="mt-1 text-ink-soft">
+                {n >= 3 ? `WISP now knows your usual. Status: ${STATUS_WORDS[status].title.toLowerCase()}.` : "Do the next one on another day when you feel well."}
+              </p>
               {armsUsed && <p className="mt-2 text-ink-soft">WISP noted that you usually use your arms.</p>}
             </>
           ) : result?.reason === "stopped" ? (
             <>
-              <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+              <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
                 You stopped the check
               </h1>
               <p className="mt-2">Nothing was saved. Please rest. You can try again on another good day.</p>
             </>
           ) : (
             <>
-              <h1 id="t" className="mt-1 text-[1.9rem] font-bold leading-tight text-forest">
+              <h1 id="t" className="mt-1 text-[1.9rem] leading-tight text-forest sm:text-[2.2rem]">
                 That reading wasn&apos;t clear enough
               </h1>
               <p className="mt-2">{unreliableWhy(result?.reason)} It wasn&apos;t added. You can try again.</p>
             </>
           )}
-          <Link href="/you/baseline" className="mt-6 flex min-h-14 items-center justify-center rounded-2xl bg-forest px-6 text-[1.08rem] font-bold text-white">
+          <Link href="/you/baseline" className={buttonClass("primary", "lg", "mt-6 w-full")}>
             Back to My usual
           </Link>
         </section>

@@ -105,3 +105,12 @@ export function buildPlan(s: Snapshot): CarePlan {
       return plan;
   }
 }
+
+/** Steps the person has ticked on the care plan (stored on this device only). */
+export function loadPlanDone(sid: string): Record<string, boolean> {
+  try {
+    return JSON.parse(localStorage.getItem(`wisp-plan-${sid}`) ?? "{}");
+  } catch {
+    return {};
+  }
+}

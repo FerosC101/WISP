@@ -37,7 +37,7 @@ export default function TrustedPeople() {
     <YouPage title="Trusted people" intro="Someone WISP can send a short summary to, only when you say yes.">
       {error && <p className="text-ink-soft">WISP can&apos;t reach its local service right now.</p>}
       {removed && (
-        <p role="status" className="mb-3 rounded-2xl bg-sage px-4 py-3 font-bold text-forest">
+        <p role="status" className="mb-3 rounded-w-md bg-sage px-4 py-3 font-bold text-forest">
           {removed} has been removed. WISP won&apos;t offer to share with them.
         </p>
       )}
@@ -51,7 +51,7 @@ export default function TrustedPeople() {
                 Remove {c.name}
               </button>
             ) : (
-              <div role="alertdialog" aria-labelledby="rm-title" className="mt-3 rounded-2xl border-2 border-red/40 bg-red-bg p-4">
+              <div role="alertdialog" aria-labelledby="rm-title" className="mt-3 rounded-w-md border-2 border-red/40 bg-red-bg p-4">
                 <p id="rm-title" className="font-bold text-red">
                   Remove {c.name}?
                 </p>
