@@ -49,7 +49,15 @@ Safety-relevant backend additions, all opt-in or additive and documented in `doc
 - Clinic location and medicines are kept off the agent's view.
 - The global audit list returns the latest events.
 
-Still open (out of scope here): the hardware/WorkBuddy P0 items (first real 5xSTS, real sensor data, live WorkBuddy) and the P2 items (native-speaker and clinical review, interference handling, persisting live ESP32 mode, merging into `main`).
+Still open (out of scope here): the hardware P0 items (first real 5xSTS, real sensor data) and the P2 items (native-speaker and clinical review, interference handling, persisting live ESP32 mode, merging into `main`).
+
+## Live WorkBuddy (P0 "Connect real Tencent WorkBuddy"), 10 Oct 2026 ✅
+
+Ran the 8-point checklist in `docs/workbuddy/README.md` with real WorkBuddy AI 5.7.6 (macOS) over HTTP MCP. Results are recorded there.
+- Setup: WorkBuddy reads `~/.workbuddy-ai/mcp.json` (not `~/.workbuddy/mcp.json`) and user skills from `~/.workbuddy-ai/skills/`. It needs a full quit and reopen to load a new MCP server. It listed all 13 `wisp` tools.
+- Scenario 1 (Mdm Tan): T2 "Please be seen today" via the movement check (recorded synthetic replay), slower than usual. All 8 items pass.
+- Scenario 2 (Mr Lim): T1, sensing locked, no `run_functional_assessment`.
+- Findings: WorkBuddy relies on the automatic red-flag screen in `record_case_facts` and never calls `screen_red_flags` itself (checklist item 3 reworded). It asked a duplicate fluids question. In Scenario 2, its `log_decision` reason said "Possible stroke or TIA", so `SKILL.md` now forbids naming conditions, including in the Decision Trace. That rule hasn't been re-run live yet.
 
 ## End-to-end testing (after task 21)
 

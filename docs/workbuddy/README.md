@@ -49,9 +49,24 @@ Use whichever transport your WorkBuddy build supports. Both are equivalent.
 
 `mcp-config.example.json` contains both. If you change `WISP_MCP_TOKEN`, set the same value for the API and the MCP server.
 
+**WorkBuddy AI desktop (macOS, 5.7.x)** reads user MCP servers from `~/.workbuddy-ai/mcp.json` (its `WORKBUDDY_CONFIG_DIR`; the bundled agent text mentions `~/.workbuddy/mcp.json`, which the desktop app does not read). Use `"type": "http"`;
+`"alwaysLoad": true` lists the 13 tools directly instead of hiding them behind WorkBuddy's tool search:
+
+```json
+{
+  "mcpServers": {
+    "wisp": { "type": "http", "url": "http://127.0.0.1:8765/mcp", "alwaysLoad": true }
+  }
+}
+```
+
+Quit and reopen WorkBuddy after editing the file.
+
 ## 3. Load the skill
 
 Paste [`SKILL.md`](SKILL.md) into WorkBuddy as the agent's instructions (or install it as a skill).
+On WorkBuddy AI desktop, user skills live in `~/.workbuddy-ai/skills/<name>/SKILL.md` and need YAML front matter
+(`name`, `description`). The text below the `---` line in `SKILL.md` is the body.
 
 ## 4. Run a check
 
@@ -64,8 +79,8 @@ Paste [`SKILL.md`](SKILL.md) into WorkBuddy as the agent's instructions (or inst
 
 ## Verifying the live WorkBuddy connection
 
-Status: **not yet run against real WorkBuddy** (no WorkBuddy install was available while building). Use this
-checklist on a machine with WorkBuddy and record the result here.
+Status: **passed against real WorkBuddy** on 10 Oct 2026 (WorkBuddy AI 5.7.6, macOS, HTTP transport); see the
+results table below. Re-run this checklist after changing the tools or `SKILL.md`, and add a row.
 
 1. `./scripts/demo.sh --mcp`; in the Engineering view (`/dev`) select **Agent → Tencent WorkBuddy via MCP**.
 2. Add the MCP server to WorkBuddy (above) and paste `SKILL.md` as its instructions. Confirm WorkBuddy lists 13 `wisp` tools.
@@ -74,21 +89,21 @@ checklist on a machine with WorkBuddy and record the result here.
 
 | # | WorkBuddy must… | Evidence (Engineering view → Audit log → "WorkBuddy tool calls", or Technical view) | ✓ |
 |---|---|---|---|
-| 1 | understand vague text | `record_case_facts` with `complaint_category=functional`, duration 2 | |
-| 2 | populate structured case state | red flags recorded one by one as the patient answers | |
-| 3 | call `screen_red_flags` | `screen_red_flags → passed` by actor WorkBuddy | |
-| 4 | decide whether sensing is useful | `log_decision → Physical function check` with a reason | |
-| 5 | call the physical assessment | `check_assessment_eligibility → allowed`, then `run_functional_assessment` | |
-| 6 | receive the structured result | `measurement_complete` + `compare_to_baseline → slower_than_usual` | |
-| 7 | call the care-tier engine | `decide_care_tier → T2` | |
-| 8 | communicate the output | WorkBuddy explains "Please be seen today" + reasons + warning signs; `say_to_patient` mirrors it | |
+| 1 | understand vague text | `record_case_facts` with `complaint_category=functional`, duration 2 | ✓ |
+| 2 | populate structured case state | red flags recorded one by one as the patient answers | ✓ |
+| 3 | trigger the red-flag screen | `screen_red_flags → passed` (actor `rule_engine`: WISP re-runs the screen on every `record_case_facts`; WorkBuddy may also call the tool itself) | ✓ |
+| 4 | decide whether sensing is useful | `log_decision → Physical function check` with a reason | ✓ |
+| 5 | call the physical assessment | `check_assessment_eligibility → allowed`, then `run_functional_assessment` | ✓ |
+| 6 | receive the structured result | `measurement_complete` + `compare_to_baseline → slower_than_usual` | ✓ |
+| 7 | call the care-tier engine | `decide_care_tier → T2` | ✓ |
+| 8 | communicate the output | WorkBuddy explains "Please be seen today" + reasons + warning signs; `say_to_patient` mirrors it | ✓ |
 
 Then repeat with Mr Lim: *"This morning I suddenly felt dizzy and my left hand feels clumsy."* Expected: T1, no
 `run_functional_assessment` call, Technical view shows **SENSING NOT REQUESTED**.
 
 | Date | WorkBuddy version | Transport (HTTP/stdio) | Scenario 1 | Scenario 2 | Notes |
 |---|---|---|---|---|---|
-| | | | | | |
+| 2026-10-10 | WorkBuddy AI 5.7.6 (macOS) | HTTP | ✓ T2 "Please be seen today"; 13 tools listed; recorded (synthetic) sensor replay | ✓ T1, sensing locked, no `run_functional_assessment` | WorkBuddy never called `screen_red_flags` itself (the screen still ran on every `record_case_facts`). It asked about fluids twice in a row. Its Scenario 2 `log_decision` reason said "Possible stroke or TIA", which is diagnostic wording in the Decision Trace; `SKILL.md` now forbids naming conditions there. Sessions `s_ca1570a60ca4`, `s_6a0ceff8e42e`. |
 
 ## Rehearsing without WorkBuddy
 
