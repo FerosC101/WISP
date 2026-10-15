@@ -48,6 +48,7 @@ export default function History() {
   const check = useStartCheck(me);
   const [entries, setEntries] = useState<Entry[] | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (!userId) return;
@@ -79,7 +80,11 @@ export default function History() {
         out.sort((a, b) => b.at.localeCompare(a.at));
         if (current) setEntries(out);
       })
-      .catch(() => current && setEntries([]));
+      .catch(() => {
+        if (!current) return;
+        setLoadError(true);
+        setEntries(null);
+      });
     return () => {
       current = false;
     };
@@ -113,7 +118,13 @@ export default function History() {
         ))}
       </div>
 
-      {entries === null && (
+      {loadError && (
+        <p role="alert" className="mt-6 rounded-w-sm bg-amber-bg px-4 py-3 text-amber">
+          WISP can&apos;t reach its local service right now, so your check-ins can&apos;t be shown. They&apos;re still saved; please try again in a moment.
+        </p>
+      )}
+
+      {entries === null && !loadError && (
         <div className="py-14" aria-busy>
           <WispLine variant="flow" className="mx-auto h-8 w-48 text-sage-mid" />
         </div>
@@ -204,8 +215,11 @@ function EntryCard({ e, onCheckIn, busy }: { e: Entry; onCheckIn: (sid: string) 
         {e.parent ? `Follow-up of ${dayLabel(e.parent.created_at).toLowerCase()}` : "Check"} · {timeLabel(h.created_at)}
       </p>
       <p className="mt-0.5 text-[1.05rem] font-semibold">{h.complaint ? `“${h.complaint}”` : "Check-in"}</p>
-      <p className={`mt-0.5 font-semibold ${h.tier ? TIER_STYLE[h.tier].fg : "text-ink-faint"}`}>→ {h.tier ? PATIENT_OUTCOME[h.tier] : "Not finished"}</p>
+      <p className={`mt-0.5 font-semibold ${h.tier ? TIER_STYLE[h.tier].fg : "text-ink-faint"}`}>→ {h.tier ? PATIENT_OUTCOME[h.tier] : "No recommendation yet"}</p>
       <div className="mt-2 flex flex-wrap gap-2 text-[0.9rem]">
+        <span className={`rounded-full px-2.5 py-0.5 ${!finished ? "bg-amber-bg text-amber" : h.tier === "ABSTAIN" ? "bg-slate-bg text-ink" : "bg-sage text-forest"}`}>
+          {!finished ? "Not finished" : h.tier === "ABSTAIN" ? "WISP couldn't judge safely" : "Completed"}
+        </span>
         {finished && <span className={`rounded-full px-2.5 py-0.5 ${move.used ? "bg-teal-bg text-teal" : "bg-slate-bg text-ink-soft"}`}>{move.text}</span>}
         {e.recheck?.status === "scheduled" && <span className="rounded-full bg-sage px-2.5 py-0.5 text-forest">Check-in planned</span>}
         {followUp?.tier && <span className="rounded-full bg-sage px-2.5 py-0.5 text-forest">Followed up: {PATIENT_OUTCOME[followUp.tier].toLowerCase()}</span>}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { DescribeBox, useStartCheck } from "@/components/StartCheck";
 import { Icon, type IconName } from "@/components/Icon";
 import { LargeChoice, PageIntro } from "@/components/kit";
@@ -53,6 +53,32 @@ function sentence(ids: string[], since: string, extra: string[] = []): string {
   return [first, ...more].join(" ");
 }
 
+// Answers survive leaving this screen by accident (this tab only), and are cleared once the check starts.
+const DRAFT_KEY = "wisp-check-start";
+interface Draft {
+  step: 1 | 2 | 3;
+  picked: string[];
+  since: string | null;
+  extra: string[];
+  nothingElse: boolean;
+}
+function loadDraft(): Draft | null {
+  try {
+    const raw = sessionStorage.getItem(DRAFT_KEY);
+    return raw ? (JSON.parse(raw) as Draft) : null;
+  } catch {
+    return null;
+  }
+}
+function saveDraft(d: Draft | null) {
+  try {
+    if (d) sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    else sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* storage unavailable: answers last for this visit only */
+  }
+}
+
 export default function CheckStart() {
   const { me, error } = useMe();
   const check = useStartCheck(me);
@@ -62,6 +88,30 @@ export default function CheckStart() {
   const [nothingElse, setNothingElse] = useState(false);
   const [picked, setPicked] = useState<string[]>([]);
   const [since, setSince] = useState<string | null>(null);
+
+  // Restore after mount (sessionStorage isn't available during server render), then keep it in sync.
+  const [restored, setRestored] = useState(false);
+  useEffect(() => {
+    const id = setTimeout(() => {
+      const d = loadDraft();
+      if (d) {
+        setStep(d.step);
+        setPicked(d.picked);
+        setSince(d.since);
+        setExtra(d.extra);
+        setNothingElse(d.nothingElse);
+      }
+      setRestored(true);
+    }, 0);
+    return () => clearTimeout(id);
+  }, []);
+  useEffect(() => {
+    if (restored) saveDraft(picked.length || since ? { step, picked, since, extra, nothingElse } : null);
+  }, [restored, step, picked, since, extra, nothingElse]);
+  const begin = (text: string) => {
+    saveDraft(null);
+    check.start(text);
+  };
 
   const toggle = (id: string) => setPicked((p) => (p.includes(id) ? p.filter((x) => x !== id) : [...p, id]));
 
@@ -165,7 +215,7 @@ export default function CheckStart() {
               size="lg"
               className="w-full"
               disabled={(!nothingElse && extra.length === 0) || !since || !me || check.busy}
-              onClick={() => since && check.start(sentence(picked, since, extra))}
+              onClick={() => since && begin(sentence(picked, since, extra))}
             >
               {check.busy ? "Starting…" : "Start the safety check"}
             </Button>

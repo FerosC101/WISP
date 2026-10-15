@@ -19,12 +19,12 @@
 ## Demo 1 — the agent uses sensing (Mdm Tan, 78)
 
 1. DEMO bar → profile **Mdm Tan**. Home: *"Good morning, Mdm Tan. How are you feeling today?"*
-2. Type **"I've felt weak for two days."** → Continue.
+2. Type **"I've felt weak for two days."** → **Start check-in**.
 3. WISP: *"You said you've been feeling weaker than usual for 2 days. I need to check for a few warning signs first."*
-   Answer: Gradually → No to each warning sign → No fall → **No** (not eating as usual) → Yes (keeps fluids down).
+   Answer: Gradually → No to each warning sign → No fall → **No** (not eating as usual) → Yes (keeps fluids down) → summary: **Yes, continue**.
 4. WISP: *"I've checked for the emergency warning signs… A short movement check could help."* Tap **Why this check?**
    → *"Your answers currently fall between seeing your doctor in the next few days and being seen today…"*
-5. **Do the check** → **Yes, I'm ready** → **No, I'm alone** → **I'm seated — start** → five chair rises.
+5. **Do the check** → tick the room checklist → **My space is ready** → **Yes, I feel steady** → **No, I'm alone** → **I'm ready** → five chair rises.
 6. *"Check complete."* → arms? **Yes**.
 7. **PLEASE BE SEEN TODAY** — reasons, warning signs. Tap **How WISP decided**.
 8. DEMO bar → **Technical view (this check)**: safety screen passed · range Primary care soon ↔ Same-day care ·
@@ -45,9 +45,9 @@
 ## Demo 3 — dynamic reassessment (Mdm Siti, 80)
 
 1. Profile **Mdm Siti**. Type **"I'm tired and don't feel like myself."** → Gradually → Since yesterday → No… → Yes (eating as usual)
-   → Do the check → ready → alone → start → arms **No**.
+   → **Yes, continue** → Do the check → room checklist → steady → alone → **I'm ready** → arms **No**.
 2. **YOU CAN CONTINUE MONITORING AT HOME FOR NOW** · next check tomorrow 10 AM.
-3. **Simulate next day** (demo control under the result) — or Home → *Next check* → **Start check-in**.
+3. **Simulate next day** (demo control under the result) — or Today → *Next check-in* → **Start early** → **Something new happened**.
 4. Type **"My daughter said I seemed confused last night."** → **THIS NEEDS HELP NOW**.
 5. How WISP decided: *"Your earlier check is only background. It can never make today's advice less urgent."*
    Technical view shows yesterday's *within your usual range* result as context only.

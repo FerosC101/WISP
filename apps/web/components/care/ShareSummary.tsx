@@ -26,6 +26,13 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
   const [s, setS] = useState<Summary | null>(null);
   const [agreed, setAgreed] = useState(false);
   const [status, setStatus] = useState<"idle" | "sending" | "shared" | "declined">("idle");
+  const [sendNote, setSendNote] = useState<string | null>(null);
+  const [canShare, setCanShare] = useState(false);
+  useEffect(() => {
+    // The share sheet only exists on some browsers (most phones); check after mount.
+    const id = setTimeout(() => setCanShare(typeof navigator !== "undefined" && typeof navigator.share === "function"), 0);
+    return () => clearTimeout(id);
+  }, []);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -39,7 +46,7 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
   if (!s.caregiver) {
     return (
       <div>
-        <h1 className="text-[1.9rem] font-bold leading-tight text-forest">Share with family</h1>
+        <h1 className="text-[1.9rem] leading-tight text-forest">Share with family</h1>
         <p className="mt-3">You haven&apos;t added a trusted person, so there&apos;s no one to share with.</p>
         <Link href="/you/caregivers" className="mt-4 inline-flex min-h-11 items-center font-bold text-forest underline underline-offset-4">
           Trusted people
@@ -60,6 +67,26 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
     }
   }
 
+  // WISP never sends messages itself: the person sends the agreed text from their own phone.
+  async function openShareSheet() {
+    if (!s) return;
+    try {
+      await navigator.share({ title: `WISP check-in for ${s.caregiver?.name ?? ""}`, text: s.summary });
+      setSendNote(null);
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") setSendNote("Couldn't open your share options. Try copying the message instead.");
+    }
+  }
+  async function copyMessage() {
+    if (!s) return;
+    try {
+      await navigator.clipboard.writeText(s.summary);
+      setSendNote(`Copied. Paste it into a message to ${s.caregiver?.name ?? "them"}.`);
+    } catch {
+      setSendNote("Couldn't copy from this browser. You can select the message above and copy it.");
+    }
+  }
+
   async function decline() {
     await post(`/api/sessions/${sessionId}/share`, { consent: false });
     setStatus("declined");
@@ -67,8 +94,8 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
 
   return (
     <div>
-      <h1 className="text-[1.9rem] font-bold leading-tight text-forest">Share with {name}?</h1>
-      <p className="mt-2 text-ink-soft">Nothing is sent unless you agree below.</p>
+      <h1 className="text-[1.9rem] leading-tight text-forest">Share with {name}?</h1>
+      <p className="mt-2 text-ink-soft">Nothing is shared unless you agree below. WISP doesn&apos;t send messages itself; you send it from your phone.</p>
 
       <div className="mt-5 flex items-center gap-3 rounded-w-md border border-line bg-card px-4 py-3">
         <span aria-hidden className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-sage text-[1.1rem] font-bold text-forest">
@@ -101,7 +128,7 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
         </label>
       )}
 
-      <section aria-labelledby="preview-title" className="mt-4 rounded-(--radius-card) border-2 border-forest/30 bg-card p-5">
+      <section aria-labelledby="preview-title" className="mt-4 rounded-w-lg border-2 border-forest/30 bg-card p-5">
         <h2 id="preview-title" className="label text-forest">
           Exactly what {name} will receive
         </h2>
@@ -121,9 +148,27 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
       </section>
 
       {status === "shared" ? (
-        <p role="status" className="mt-5 rounded-w-md bg-sage px-5 py-4 font-bold text-forest">
-          Sent to {name}. (Prototype: delivery is simulated.)
-        </p>
+        <section aria-label={`Send to ${name}`} className="mt-5 rounded-w-md bg-sage px-5 py-4">
+          <p role="status" className="font-semibold text-forest">
+            You agreed to share this with {name}. Now send it from your phone.
+          </p>
+          <p className="mt-1 text-[0.95rem] text-ink-soft">WISP has not sent anything. Use your usual messaging app.</p>
+          <div className="mt-3 flex flex-col gap-2.5 sm:flex-row">
+            {canShare && (
+              <Button onClick={openShareSheet} className="flex-1">
+                Open share options
+              </Button>
+            )}
+            <Button variant="secondary" onClick={copyMessage} className="flex-1">
+              Copy message
+            </Button>
+          </div>
+          {sendNote && (
+            <p role="status" className="mt-2 text-[0.95rem] text-ink-soft">
+              {sendNote}
+            </p>
+          )}
+        </section>
       ) : status === "declined" ? (
         <p role="status" className="mt-5 rounded-w-md bg-slate-bg px-5 py-4">
           Nothing was shared.
@@ -139,15 +184,15 @@ export function ShareSummary({ sessionId }: { sessionId: string }) {
               Don&apos;t share
             </Button>
             <Button disabled={!agreed || status === "sending"} onClick={send} className="flex-[2]">
-              {status === "sending" ? "Sending…" : `Send to ${name}`}
+              {status === "sending" ? "Saving…" : `Share with ${name}`}
             </Button>
           </div>
         </StickyActions>
       )}
 
       {s.shared.length > 0 && (
-        <section aria-label="Already shared" className="mt-5 text-[0.95rem] text-ink-soft">
-          <p className="font-bold text-ink">Already shared</p>
+        <section aria-label="You agreed to share" className="mt-5 text-[0.95rem] text-ink-soft">
+          <p className="font-bold text-ink">You agreed to share</p>
           <ul className="mt-1 space-y-0.5">
             {s.shared.map((x, i) => (
               <li key={i}>

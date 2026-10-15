@@ -105,8 +105,36 @@ function MyUsual({ userId }: { userId: string }) {
   );
 }
 
+/** First visit: how a check-in works, in four honest steps. */
+function FirstTime() {
+  const steps = [
+    "Tell WISP how you feel, in your own words or by tapping what's different.",
+    "WISP checks for emergency warning signs first.",
+    "If it would help, it asks for a 30-second movement check with a chair. Only then does sensing turn on.",
+    "You get a clear next step: what to do, where to go, by when, and why.",
+  ];
+  return (
+    <section aria-labelledby="first-title" className="rounded-w-lg bg-sage px-5 py-5">
+      <h2 id="first-title" className="text-[1.25rem] text-forest">
+        How a check-in works
+      </h2>
+      <ol className="mt-3 space-y-2.5">
+        {steps.map((t, i) => (
+          <li key={i} className="flex gap-3">
+            <span aria-hidden className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-card font-semibold text-forest">
+              {i + 1}
+            </span>
+            <span className="pt-0.5">{t}</span>
+          </li>
+        ))}
+      </ol>
+      <p className="mt-3 text-[0.95rem] text-ink-soft">WISP gives care guidance, not a diagnosis. In an emergency, call 995.</p>
+    </section>
+  );
+}
+
 export default function Today() {
-  const { me, recent, error } = useMe();
+  const { me, recent, error, loaded } = useMe();
   const check = useStartCheck(me);
   const recheck = me?.rechecks[0];
 
@@ -153,6 +181,7 @@ export default function Today() {
         <Illustration scene="healthy" decorative className="hidden rounded-w-lg md:block" />
         {recheck && <NextCheckIn recheck={recheck} busy={check.busy} onStart={() => check.startFollowUp(recheck.session_id)} />}
         {recent && <MostRecent item={recent} />}
+        {loaded && !error && !recent && !recheck && <FirstTime />}
         {me && <MyUsual userId={me.user_id} />}
         <p className="flex items-start gap-2.5 px-1 text-[0.95rem] text-ink-soft">
           <Icon name="lock" className="mt-0.5 h-5 w-5 text-teal" />

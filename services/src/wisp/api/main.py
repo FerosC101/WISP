@@ -11,6 +11,7 @@ import hmac
 import statistics
 import uuid
 from contextlib import asynccontextmanager
+from dataclasses import asdict
 from typing import Any, Literal
 
 from fastapi import Body, FastAPI, Header, HTTPException, WebSocket, WebSocketDisconnect
@@ -22,6 +23,7 @@ from .. import config
 from ..baseline.compare import summarise_baseline
 from ..demo import seed as demo_seed
 from ..schemas import FunctionalAssessment, utcnow
+from ..sensing.assessments import ASSESSMENTS
 from ..sensing.hub import HUB, list_ports
 from ..sensing.providers import ESP32CSIProvider, ReplayCSIProvider, build_provider
 from ..service import CaseFacts, EventBus, ToolError, WispService
@@ -360,6 +362,12 @@ def wipe(user_id: str) -> dict:
 
 
 # --------------------------------------------------------------------------- developer / demo
+@app.get("/api/dev/assessments")
+def dev_assessments() -> list[dict]:
+    """Implemented assessment modules and their limits (Engineering view)."""
+    return [asdict(m) for m in ASSESSMENTS.values()]
+
+
 @app.get("/api/dev/sensor")
 def dev_sensor() -> dict:
     s = svc()

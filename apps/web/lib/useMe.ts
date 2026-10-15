@@ -21,7 +21,12 @@ export function useMe() {
       .catch(() => current && setError("WISP can't reach its local service right now."));
     api<HistoryItem[]>(`/api/history?user_id=${userId}`)
       .then((h) => current && setRecent(h.find((x) => x.tier) ?? null))
-      .catch(() => current && setRecent(null))
+      .catch(() => {
+        // Unknown is not the same as "no checks": report it so screens don't show an empty state.
+        if (!current) return;
+        setRecent(null);
+        setError("WISP can't reach its local service right now.");
+      })
       .finally(() => current && setLoaded(true));
     return () => {
       current = false;

@@ -100,7 +100,8 @@ test("visit summary: clinician details, synthetic-data notice, doctor view and c
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("NOTE: Movement data is from a recorded SYNTHETIC sensor session");
 });
 
-test("sharing: minimal preview by default, explicit agreement, exact text recorded", async ({ page, request }) => {
+test("sharing: minimal preview by default, explicit agreement, exact text recorded", async ({ page, request, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
   const sid = await apiCheck(request, "mdm_tan", DECLINED);
   await asPersona(page, "mdm_tan");
   await page.goto(`/care/share?s=${sid}`);
@@ -108,15 +109,20 @@ test("sharing: minimal preview by default, explicit agreement, exact text record
   await expect(preview).toContainText("WISP's advice");
   await expect(preview).not.toContainText("weaker");
 
-  const send = button(page, "Send to Daniel");
+  const send = button(page, "Share with Daniel");
   await expect(send).toBeInViewport();
   await expect(send).toBeDisabled();
   await page.getByRole("switch", { name: /Include the reasons/ }).check();
   await expect(preview).toContainText("What WISP told Mdm Tan");
   await page.getByRole("checkbox", { name: /I agree to send this message to Daniel/ }).check();
   await send.click();
-  await expect(page.getByText("Sent to Daniel. (Prototype: delivery is simulated.)")).toBeVisible();
-  await expect(page.getByRole("region", { name: "Already shared" })).toContainText("With Daniel");
+  // WISP records the consent but never claims to have delivered anything: the person sends it themselves.
+  await expect(page.getByText("You agreed to share this with Daniel. Now send it from your phone.")).toBeVisible();
+  await expect(page.getByText(/Sent to Daniel/)).toHaveCount(0);
+  await button(page, "Copy message").click();
+  await expect(page.getByText("Copied. Paste it into a message to Daniel.")).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("What WISP told Mdm Tan");
+  await expect(page.getByRole("region", { name: "You agreed to share" })).toContainText("With Daniel");
 
   const shared = (await (await request.get(`${API}/api/sessions/${sid}/caregiver-summary?include_reasons=true`)).json()).shared;
   expect(shared).toHaveLength(1);

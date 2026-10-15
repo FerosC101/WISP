@@ -80,6 +80,9 @@ export default function RoomReady() {
                 </li>
               ))}
             </ul>
+            <p className="mt-4 text-[0.98rem] text-ink-soft">
+              WISP can&apos;t see your room or check it for hazards, so please look around yourself before you start. If anything feels unsafe, skip the check.
+            </p>
             <StickyActions>
               <Button size="lg" className="w-full" disabled={!allTicked} onClick={() => setSetupDone(true)}>
                 {allTicked ? "My space is ready" : "Tick each item to continue"}

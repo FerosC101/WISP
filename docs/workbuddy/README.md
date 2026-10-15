@@ -74,7 +74,7 @@ On WorkBuddy AI desktop, user skills live in `~/.workbuddy-ai/skills/<name>/SKIL
    a quick prompt (with WorkBuddy selected the session opens empty and waits for WorkBuddy).
 2. In WorkBuddy say e.g. *"I've felt weak for two days."*
 3. WorkBuddy calls `get_active_session` → asks questions → … → `run_functional_assessment`.
-   The patient screen switches to the **Quick movement check**; the patient presses **I'm seated — start**.
+   The patient screen switches to the **Quick movement check**; the patient presses **I'm ready**.
 4. The recommendation appears on the patient screen; the structured record is at `/explain/<session>`.
 
 ## Verifying the live WorkBuddy connection
@@ -112,7 +112,7 @@ Then repeat with Mr Lim: *"This morning I suddenly felt dizzy and my left hand f
 
 ```bash
 cd services
-uv run python ../scripts/workbuddy_simulator.py --scenario 1   # press "I'm seated — start" on screen
+uv run python ../scripts/workbuddy_simulator.py --scenario 1   # press "I'm ready" on screen
 uv run python ../scripts/workbuddy_simulator.py --scenario 2   # emergency: no sensing
 ```
 

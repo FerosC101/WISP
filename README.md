@@ -143,7 +143,7 @@ Script: [docs/demo.md](docs/demo.md). All four run end-to-end in `services/tests
 
 1. `./scripts/demo.sh`, then open http://localhost:3000/dev and tick **Demo mode**.
 2. Under **Agent**, keep the built-in agent selected.
-3. Press **Start as …** on Demo 1 or Demo 2. The patient app opens the Check flow; answer on screen. When the movement check appears, press **I'm seated — start**.
+3. Press **Start as …** on Demo 1 or Demo 2. The patient app opens the Check flow; answer on screen. When the movement check appears, press **I'm ready**.
 4. For Scenario 3 day 2 and Scenario 4, follow [docs/demo.md](docs/demo.md).
 
 ### Running the demo with WorkBuddy
@@ -164,7 +164,7 @@ Each demo:
 3. Press **Start as Mdm Tan** (Demo 1). The patient screen opens an empty session that says "Waiting for WorkBuddy to join this assessment…". Put this screen next to the chair.
 4. In WorkBuddy, start a **new chat** and type as the patient: *"I've felt weak for two days. I've been eating less."* If WorkBuddy doesn't pick up the skill, say "Use the wisp-triage skill" first.
 5. Answer WorkBuddy one question at a time: no to every warning sign, it came on gradually, steady enough to stand, nobody else in the room. Allow the `wisp` tools if WorkBuddy asks. Each WorkBuddy message also appears on the WISP screen.
-6. When the WISP screen shows the movement check, press **I'm seated — start**. When WorkBuddy asks whether you pushed up with your arms, answer yes.
+6. When the WISP screen shows the movement check, press **I'm ready**. When WorkBuddy asks whether you pushed up with your arms, answer yes.
 7. Expected: **T2 "Please be seen today"**, explained in WorkBuddy and shown on the WISP screen. The Technical view and the Engineering view's audit log (filter "WorkBuddy tool calls") show every tool call.
 8. Scenario 2: press **Start as Mr Lim** (Demo 2), start a **new chat** in WorkBuddy and type *"This morning I suddenly felt dizzy and my left hand feels clumsy."* Expected: **T1, call 995**, sensing locked, and no movement check offered.
 
@@ -218,7 +218,7 @@ No population-level fairness or real-world sensing accuracy is claimed.
 - Arm use is self-reported.
 - English-centric rule extraction; non-English input recovers through follow-up questions, or through LLM extraction if configured.
 - Clinic availability is not live; care links open map searches and the profile's usual GP.
-- Caregiver delivery is simulated. 995 is never dialled automatically.
+- WISP never sends caregiver messages itself: after consent, the person sends the exact text from their own phone. 995 is never dialled automatically.
 
 ## 16. Future work
 

@@ -17,7 +17,7 @@ interface Recognition {
   interimResults: boolean;
   onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null;
   onend: (() => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((e: { error?: string }) => void) | null;
   start: () => void;
   stop: () => void;
 }
@@ -95,6 +95,7 @@ export function DescribeBox({
   const [text, setText] = useState("");
   const [listening, setListening] = useState(false);
   const [speechOk, setSpeechOk] = useState(false);
+  const [speechNote, setSpeechNote] = useState<string | null>(null);
   const recRef = useRef<Recognition | null>(null);
 
   useEffect(() => {
@@ -115,7 +116,17 @@ export function DescribeBox({
     rec.interimResults = true;
     rec.onresult = (e) => setText(Array.from(e.results, (r) => r[0].transcript).join(" "));
     rec.onend = () => setListening(false);
-    rec.onerror = () => setListening(false);
+    rec.onerror = (e) => {
+      setListening(false);
+      setSpeechNote(
+        e.error === "not-allowed" || e.error === "service-not-allowed"
+          ? "Microphone access is turned off for WISP. You can type instead, or allow the microphone in your browser settings."
+          : e.error === "no-speech"
+            ? "WISP didn't hear anything. Tap the microphone and try again, or type instead."
+            : "Voice input isn't working right now. You can type instead.",
+      );
+    };
+    setSpeechNote(null);
     recRef.current = rec;
     setListening(true);
     rec.start();
@@ -159,6 +170,11 @@ export function DescribeBox({
           </button>
         )}
       </div>
+      {speechNote && (
+        <p role="status" className="mt-2 text-[0.95rem] text-ink-soft">
+          {speechNote}
+        </p>
+      )}
       {text.trim() && (
         <Button type="submit" size="lg" disabled={!me || busy} className="mt-3 w-full">
           {busy ? "Starting…" : submitLabel}

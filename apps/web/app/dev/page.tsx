@@ -98,6 +98,21 @@ function SignalChart({ title, data, dataKey, detail }: { title: string; data: Re
 
 const gtValid = (v: string) => v.trim() !== "" && Number.isFinite(Number(v)) && Number(v) >= 2 && Number(v) <= 120;
 
+interface AssessmentModule {
+  id: string;
+  name: string;
+  patient_name: string;
+  duration_seconds: number;
+  hardware: string[];
+  eligibility: string[];
+  quality_checks: string[];
+  baseline: string;
+  output: string[];
+  limitations: string[];
+  validation_status: string;
+  patient_available: boolean;
+}
+
 export default function DevPage() {
   const { devMode, setDevMode, agentMode, setAgentMode, userId, setUserId, language } = usePrefs();
   const router = useRouter();
@@ -114,6 +129,13 @@ export default function DevPage() {
   const [evaluation, setEvaluation] = useState<Evaluation | null>(null);
   const [gt, setGt] = useState("");
   const [msg, setMsg] = useState<string | null>(null);
+
+  const [modules, setModules] = useState<AssessmentModule[] | null>(null);
+  useEffect(() => {
+    api<AssessmentModule[]>("/api/dev/assessments")
+      .then(setModules)
+      .catch(() => setModules([]));
+  }, []);
 
   const [reloadKey, setReloadKey] = useState(0);
   const load = () => setReloadKey((k) => k + 1);
@@ -436,6 +458,48 @@ export default function DevPage() {
           </div>
         )}
       </Card>
+
+      {modules && modules.length > 0 && (
+        <Card>
+          <h2 className="font-serif text-[1.15rem] font-semibold text-forest">Assessment modules</h2>
+          <p className="mt-1 text-xs text-ink-faint">
+            Implemented and tested modules only (services/src/wisp/sensing/assessments.py). run_functional_assessment refuses anything not listed. Eligibility and care
+            rules stay in rules/.
+          </p>
+          {modules.map((m) => (
+            <div key={m.id} className="mt-3 rounded-lg border border-line p-3 text-sm">
+              <p className="font-semibold">
+                <span className="font-mono">{m.id}</span> · {m.name} <span className="font-normal text-ink-faint">· patient sees “{m.patient_name}”</span>
+              </p>
+              <p className="mt-1 text-xs font-bold text-amber">{m.validation_status}</p>
+              <div className="mt-2 grid gap-3 md:grid-cols-2">
+                {(
+                  [
+                    ["Hardware", m.hardware],
+                    ["Eligibility (rules/eligibility.py)", m.eligibility],
+                    ["Quality checks", m.quality_checks],
+                    ["Output", m.output],
+                    ["Limitations", m.limitations],
+                  ] as const
+                ).map(([title, items]) => (
+                  <div key={title}>
+                    <p className="text-xs font-semibold text-ink-soft">{title}</p>
+                    <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs">
+                      {items.map((x) => (
+                        <li key={x}>{x}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <div>
+                  <p className="text-xs font-semibold text-ink-soft">Baseline</p>
+                  <p className="mt-1 text-xs">{m.baseline}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </Card>
+      )}
 
       {evaluation && (
         <Card>

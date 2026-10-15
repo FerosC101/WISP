@@ -23,6 +23,7 @@ export default function MyUsual() {
   const { data, error, reload } = useBaseline(userId);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   if (error && !data) return <EmptyState scene="rest" title="WISP can't reach its local service right now" body="Your usual pattern is safe. Please try again in a moment." />;
   if (!data) {
@@ -43,10 +44,14 @@ export default function MyUsual() {
   async function remove() {
     if (!userId) return;
     setDeleting(true);
+    setDeleteError(null);
     try {
-      await fetch(`${API_URL}/api/baselines/${userId}`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/baselines/${userId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(String(res.status));
       setConfirmDelete(false);
       reload();
+    } catch {
+      setDeleteError("It couldn't be deleted because WISP can't reach its local service. Nothing was removed. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -148,6 +153,11 @@ export default function MyUsual() {
                 Delete your usual pattern?
               </p>
               <p className="mt-1 text-[0.95rem]">WISP will need {need} new healthy-day checks before it can compare again.</p>
+              {deleteError && (
+                <p role="alert" className="mt-2 text-[0.95rem] font-semibold text-red-deep">
+                  {deleteError}
+                </p>
+              )}
               <div className="mt-3 flex gap-2">
                 <Button variant="danger" disabled={deleting} onClick={remove} className="flex-1">
                   Delete

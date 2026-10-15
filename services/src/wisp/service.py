@@ -41,6 +41,7 @@ from .schemas import (
     Strict,
     utcnow,
 )
+from .sensing.assessments import ASSESSMENTS
 from .sensing.providers import AssessmentProvider
 from .store import Store
 
@@ -314,8 +315,8 @@ class WispService:
         return el
 
     async def run_functional_assessment(self, session_id: str, actor: Actor, *, assessment: str = "5xSTS", grant_id: str | None = None, wait: bool = True) -> dict:
-        if assessment != "5xSTS":
-            raise ToolError("Only '5xSTS' is supported", "invalid_input")
+        if assessment not in ASSESSMENTS:
+            raise ToolError(f"Unsupported assessment '{assessment}'. Supported: {', '.join(ASSESSMENTS)}", "invalid_input")
         case = self.case(session_id)
         if case.sensing_locked:
             self.audit(session_id, actor, "tool_call", "run_functional_assessment", "refused_locked")
@@ -546,9 +547,9 @@ class WispService:
         if consent is not True:
             self.audit(session_id, actor, "tool_call", "share_summary", "declined_by_patient")
             return {"shared": False}
-        record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "simulated", "include_reasons": include_reasons}
+        record = {"to": s["caregiver"]["name"], "summary": s["summary"], "consented_at": utcnow().isoformat(), "delivered": "not_sent_by_wisp", "include_reasons": include_reasons}
         self.store.add_share(session_id, record)
-        self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="simulated", include_reasons=include_reasons)
+        self.audit(session_id, actor, "tool_call", "share_summary", "shared_with_consent", to=s["caregiver"]["name"], delivery="not_sent_by_wisp", include_reasons=include_reasons)
         self.publish(session_id)
         return {"shared": True, **record}
 

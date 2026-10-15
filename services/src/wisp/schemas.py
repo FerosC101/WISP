@@ -360,7 +360,7 @@ class CaregiverShareConsent(Strict):
     consented: bool
     consented_at: datetime | None = None
     summary: str
-    delivered: Literal["simulated"] = "simulated"
+    delivered: Literal["not_sent_by_wisp"] = "not_sent_by_wisp"  # the patient sends it themselves
 
 
 CaseState.model_rebuild()

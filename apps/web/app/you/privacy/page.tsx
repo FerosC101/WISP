@@ -25,16 +25,23 @@ export default function PrivacyPage() {
   const userId = useUserId();
   const [p, setP] = useState<Privacy | null>(null);
   const [deleted, setDeleted] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
   async function deleteAll() {
     if (!userId) return;
     setDeleting(true);
+    setDeleteError(null);
     try {
-      await fetch(`${API_URL}/api/users/${userId}/data`, { method: "DELETE" });
+      const res = await fetch(`${API_URL}/api/users/${userId}/data`, { method: "DELETE" });
+      if (!res.ok) throw new Error(String(res.status));
       setDeleted(true);
       setConfirming(false);
+    } catch {
+      // Only say it's deleted when the server confirms it.
+      setDeleteError("Your data couldn't be deleted because WISP can't reach its local service. Nothing was removed. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -67,7 +74,12 @@ export default function PrivacyPage() {
 
   useEffect(() => {
     if (!userId) return;
-    api<Privacy>(`/api/privacy/${userId}`).then(setP);
+    api<Privacy>(`/api/privacy/${userId}`)
+      .then((x) => {
+        setP(x);
+        setLoadError(false);
+      })
+      .catch(() => setLoadError(true));
   }, [userId, deleted]);
 
   return (
@@ -81,6 +93,11 @@ export default function PrivacyPage() {
         WISP only switches on sensing during a movement check you start. It does not watch you the rest of the time.
       </p>
       <WispLine className="my-6 h-3 w-32 text-teal" />
+      {loadError && (
+        <p role="alert" className="mb-5 rounded-w-sm bg-amber-bg px-4 py-3 text-amber">
+          WISP can&apos;t reach its local service right now, so it can&apos;t show what is stored or delete it. Please try again in a moment.
+        </p>
+      )}
 
       <div className="grid gap-4 sm:grid-cols-2">
         <section className="rounded-w-lg bg-sage p-6">
@@ -124,6 +141,11 @@ export default function PrivacyPage() {
             <p className="mt-1 text-[0.95rem]">
               This removes your check-ins, your usual pattern and any saved sensor recordings from this device. It can&apos;t be undone.
             </p>
+            {deleteError && (
+              <p role="alert" className="mt-2 text-[0.95rem] font-semibold text-red-deep">
+                {deleteError}
+              </p>
+            )}
             <div className="mt-3 flex gap-2">
               <Button variant="danger" disabled={deleting} onClick={deleteAll} className="flex-1">
                 {deleting ? "Deleting…" : "Delete everything"}

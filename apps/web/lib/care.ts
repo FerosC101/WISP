@@ -105,10 +105,10 @@ export function whenToGo(d: CareDisposition, id: Provider["id"]): string {
  */
 export function useCareSession() {
   const param = useSearchParams().get("s");
-  const { me, recent, loaded } = useMe();
+  const { me, recent, loaded, error: meError } = useMe();
   const sid = param ?? recent?.session_id ?? undefined;
   const session = useSession(sid);
-  return { ...session, sid, me, none: !param && loaded && !recent };
+  return { ...session, error: session.error ?? (sid ? null : meError), sid, me, none: !param && loaded && !recent && !meError };
 }
 
 export const careHref = (path: string, sid: string | undefined) => (sid ? `${path}?s=${sid}` : path);
