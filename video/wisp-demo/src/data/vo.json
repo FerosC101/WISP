@@ -1,0 +1,369 @@
+{
+  "clips": [
+    {
+      "id": "vo01_s1",
+      "scene": 1,
+      "at": 2.6,
+      "dur": 14.32,
+      "available": true,
+      "lines": [
+        {
+          "text": "Sometimes, the hardest part of getting help is knowing where to start.",
+          "from": 2.6,
+          "to": 6.97
+        },
+        {
+          "text": "You feel weak.",
+          "from": 6.97,
+          "to": 8.44
+        },
+        {
+          "text": "Something feels different.",
+          "from": 8.44,
+          "to": 10.26
+        },
+        {
+          "text": "But you can't quite explain why.",
+          "from": 10.26,
+          "to": 12.53
+        },
+        {
+          "text": "Should you wait… see a doctor… or seek urgent help?",
+          "from": 12.53,
+          "to": 16.92
+        }
+      ]
+    },
+    {
+      "id": "vo02_s2",
+      "scene": 2,
+      "at": 21.4,
+      "dur": 20.4,
+      "available": true,
+      "lines": [
+        {
+          "text": "Nonspecific complaints are difficult to navigate.",
+          "from": 21.4,
+          "to": 24.72
+        },
+        {
+          "text": "A symptom may be mild, unfamiliar, or hard to describe.",
+          "from": 24.72,
+          "to": 29.43
+        },
+        {
+          "text": "Asking the right questions is essential.",
+          "from": 29.43,
+          "to": 31.6
+        },
+        {
+          "text": "But in some cases, symptoms alone leave important uncertainty.",
+          "from": 31.6,
+          "to": 35.77
+        },
+        {
+          "text": "The challenge is knowing when additional evidence could genuinely change the next step.",
+          "from": 35.77,
+          "to": 41.8
+        }
+      ]
+    },
+    {
+      "id": "vo03_s3",
+      "scene": 3,
+      "at": 51.2,
+      "dur": 19.76,
+      "available": true,
+      "lines": [
+        {
+          "text": "WISP is an AI-assisted self-triage and care-navigation prototype.",
+          "from": 51.2,
+          "to": 54.68
+        },
+        {
+          "text": "It begins with safety screening.",
+          "from": 54.68,
+          "to": 56.85
+        },
+        {
+          "text": "When appropriate, it can request an on-demand movement check, and compare the result with a person's usual baseline.",
+          "from": 56.85,
+          "to": 65.32
+        },
+        {
+          "text": "It then explains the next step… or abstains, when the evidence is not enough.",
+          "from": 65.32,
+          "to": 70.77
+        }
+      ]
+    },
+    {
+      "id": "vo04_s4a",
+      "scene": 4,
+      "at": 81.2,
+      "dur": 12,
+      "available": true,
+      "lines": [
+        {
+          "text": "Madam Tan is seventy-eight.",
+          "from": 81.2,
+          "to": 83.26
+        },
+        {
+          "text": "For two days, she has felt unusually weak, and she isn't sure why.",
+          "from": 83.26,
+          "to": 88.46
+        },
+        {
+          "text": "WISP starts with her own words, then asks focused questions.",
+          "from": 88.46,
+          "to": 93.2
+        }
+      ]
+    },
+    {
+      "id": "vo05_s4b",
+      "scene": 4,
+      "at": 96,
+      "dur": 13.28,
+      "available": true,
+      "lines": [
+        {
+          "text": "Before any movement check, WISP screens for warning signs, and decides whether this kind of check is appropriate.",
+          "from": 96,
+          "to": 103.52
+        },
+        {
+          "text": "If an emergency warning sign appears, urgent care comes first, and sensing is skipped.",
+          "from": 103.52,
+          "to": 109.28
+        }
+      ]
+    },
+    {
+      "id": "vo06_s4c",
+      "scene": 4,
+      "at": 116.4,
+      "dur": 11.44,
+      "available": true,
+      "lines": [
+        {
+          "text": "Here, a movement check could show whether Madam Tan's function has changed from usual.",
+          "from": 116.4,
+          "to": 121.58
+        },
+        {
+          "text": "WISP explains why it's asking, and offers the check only when the rules allow it.",
+          "from": 121.58,
+          "to": 127.84
+        }
+      ]
+    },
+    {
+      "id": "vo07_s4d",
+      "scene": 4,
+      "at": 131.4,
+      "dur": 16.16,
+      "available": true,
+      "lines": [
+        {
+          "text": "When she presses start, WISP uses Wi-Fi channel-state information to time five sit-to-stands.",
+          "from": 131.4,
+          "to": 137.01
+        },
+        {
+          "text": "The pipeline estimates each rise, so today can be compared with her healthy-day baseline.",
+          "from": 137.01,
+          "to": 143.64
+        },
+        {
+          "text": "In this demo, the signal is a recorded, synthetic session.",
+          "from": 143.64,
+          "to": 147.36
+        }
+      ]
+    },
+    {
+      "id": "vo08_s4e",
+      "scene": 4,
+      "at": 151,
+      "dur": 12.88,
+      "available": true,
+      "lines": [
+        {
+          "text": "Her movement is slower than usual.",
+          "from": 151,
+          "to": 153.48
+        },
+        {
+          "text": "Together with what she reported, the rules recommend same-day care.",
+          "from": 153.48,
+          "to": 158.65
+        },
+        {
+          "text": "And WISP explains why, and which warning signs need urgent help.",
+          "from": 158.65,
+          "to": 163.88
+        }
+      ]
+    },
+    {
+      "id": "vo09_s5a",
+      "scene": 5,
+      "at": 166,
+      "dur": 8.96,
+      "available": true,
+      "lines": [
+        {
+          "text": "When warning signs suggest an emergency, WISP does not ask for a movement test.",
+          "from": 166,
+          "to": 172.39
+        },
+        {
+          "text": "It directs the person to emergency help.",
+          "from": 172.39,
+          "to": 174.96
+        }
+      ]
+    },
+    {
+      "id": "vo10_s5b",
+      "scene": 5,
+      "at": 178.2,
+      "dur": 7.68,
+      "available": true,
+      "lines": [
+        {
+          "text": "And a normal result yesterday can't reassure us about new symptoms today.",
+          "from": 178.2,
+          "to": 182.92
+        },
+        {
+          "text": "New warning signs always take priority.",
+          "from": 182.92,
+          "to": 185.68
+        }
+      ]
+    },
+    {
+      "id": "vo11_s5c",
+      "scene": 5,
+      "at": 188.4,
+      "dur": 9.92,
+      "available": true,
+      "lines": [
+        {
+          "text": "If the reading is unreliable, or the evidence isn't enough, WISP doesn't invent certainty.",
+          "from": 188.4,
+          "to": 194.83
+        },
+        {
+          "text": "It abstains, and points the person to human support.",
+          "from": 194.83,
+          "to": 198.32
+        }
+      ]
+    },
+    {
+      "id": "vo12_s6",
+      "scene": 6,
+      "at": 202,
+      "dur": 25.68,
+      "available": true,
+      "lines": [
+        {
+          "text": "Under the interface, WorkBuddy interprets the conversation, spots missing information, and calls WISP's tools.",
+          "from": 202,
+          "to": 208.61
+        },
+        {
+          "text": "The sensing pipeline estimates movement, and checks whether the evidence is usable.",
+          "from": 208.61,
+          "to": 214.34
+        },
+        {
+          "text": "Deterministic safety rules decide the care level.",
+          "from": 214.34,
+          "to": 217.65
+        },
+        {
+          "text": "The key principle is asymmetric:",
+          "from": 217.65,
+          "to": 220.13
+        },
+        {
+          "text": "additional evidence may increase urgency… but it must never lower urgency below the symptom-based safety floor.",
+          "from": 220.13,
+          "to": 227.49
+        }
+      ]
+    },
+    {
+      "id": "vo13_s7",
+      "scene": 7,
+      "at": 241.2,
+      "dur": 14.24,
+      "available": true,
+      "lines": [
+        {
+          "text": "Privacy is part of the design.",
+          "from": 241.2,
+          "to": 243.54
+        },
+        {
+          "text": "Raw Wi-Fi sensing data stays on the local machine, while conversation text may go to a cloud language model.",
+          "from": 243.54,
+          "to": 250.82
+        },
+        {
+          "text": "Checks are user-started, and sharing with a caregiver needs consent.",
+          "from": 250.82,
+          "to": 255.44
+        }
+      ]
+    },
+    {
+      "id": "vo14_s8",
+      "scene": 8,
+      "at": 261.4,
+      "dur": 14.16,
+      "available": true,
+      "lines": [
+        {
+          "text": "WISP is a working prototype, not a clinically validated medical device.",
+          "from": 261.4,
+          "to": 266.19
+        },
+        {
+          "text": "Next comes real measurement validation, usability testing with older adults, and review with clinical advisors, before any real-world use.",
+          "from": 266.19,
+          "to": 275.56
+        }
+      ]
+    },
+    {
+      "id": "vo15_s9",
+      "scene": 9,
+      "at": 281,
+      "dur": 14.08,
+      "available": true,
+      "lines": [
+        {
+          "text": "WISP brings conversation, functional evidence, and safety-governed care navigation into one experience.",
+          "from": 281,
+          "to": 286.28
+        },
+        {
+          "text": "Because when someone says, \"I feel weak,\" the question isn't just what they feel.",
+          "from": 286.28,
+          "to": 293.11
+        },
+        {
+          "text": "It's knowing what to do next.",
+          "from": 293.11,
+          "to": 295.08
+        }
+      ]
+    }
+  ]
+}

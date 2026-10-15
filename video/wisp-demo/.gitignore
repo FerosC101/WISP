@@ -1,0 +1,10 @@
+node_modules/
+out/
+work/
+# regenerable: scripts/make_music.py, hyperframes/sync-and-render.sh
+public/audio/music.wav
+hyperframes/.hyperframes/
+hyperframes/*/.hyperframes/
+hyperframes/*/assets/
+hyperframes/*/brand.css
+hyperframes/*/renders/

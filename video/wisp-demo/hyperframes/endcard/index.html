@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>WISP end card</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="brand.css" />
+    <style>
+      /* the right half is left open: Remotion composites the WISP Sense hero there */
+      #spot { position: absolute; left: 1080px; top: 80px; width: 820px; height: 900px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(167, 184, 159, 0.3), rgba(24, 60, 49, 0)); }
+      #floorShadow { position: absolute; left: 1270px; top: 770px; width: 440px; height: 60px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(0, 0, 0, 0.38), rgba(0, 0, 0, 0)); }
+      #lines { position: absolute; inset: 0; }
+      #word { position: absolute; left: 170px; top: 300px; font-size: 230px; font-weight: 600; color: var(--ivory); line-height: 1; }
+      .letter { display: inline-block; }
+      #tag { position: absolute; left: 176px; top: 560px; font-size: 74px; font-style: italic; color: var(--ivory); }
+      #cta { position: absolute; left: 176px; top: 700px; padding: 18px 34px; border-radius: 999px; background: var(--amber); color: #2a1f0a;
+        font-size: 32px; font-weight: 700; }
+      #event { position: absolute; left: 176px; top: 820px; font-size: 26px; line-height: 1.5; color: #bfd0bc; }
+      #event b { font-weight: 650; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="endcard" data-start="0" data-duration="9" data-width="1920" data-height="1080">
+      <div id="spot" class="clip free" data-start="0" data-duration="9"></div>
+      <div id="floorShadow" class="clip free" data-start="0" data-duration="9"></div>
+      <svg id="lines" class="clip" data-start="0" data-duration="9" viewBox="0 0 1920 1080">
+        <path id="trail" data-layout-allow-overflow d="M -60 940 C 300 880, 700 1000, 1100 930 S 1700 860, 1990 920" fill="none" stroke="#a7b89f" stroke-opacity="0.45" stroke-width="4" stroke-linecap="round" />
+        <path id="arc" d="M 180 300 C 300 236, 470 214, 640 240" fill="none" stroke="#a7b89f" stroke-width="9" stroke-linecap="round" />
+        <g id="leaf" transform="translate(420 226) rotate(-24)"><path d="M0 0 C 8 -18, 28 -24, 40 -21 C 35 -8, 18 3, 0 0 Z" fill="#a7b89f" /></g>
+        <circle id="dot" cx="660" cy="242" r="14" fill="#e3b567" />
+      </svg>
+      <div id="word" class="clip serif free" data-start="0" data-duration="9">
+        <span class="letter">w</span><span class="letter">i</span><span class="letter">s</span><span class="letter">p</span>
+      </div>
+      <div id="tag" class="clip serif free" data-start="0" data-duration="9">Know what to do next.</div>
+      <div id="cta" class="clip sans free" data-start="0" data-duration="9">Seeking clinical advisors and pilot partners</div>
+      <div id="event" class="clip sans free" data-start="0" data-duration="9">
+        <div><b>Tencent Cloud AI CAN DO IT Hackathon Singapore 2026</b></div><div>Healthcare Case Study 1 · Intelligent Self-Triage and Care Navigation</div>
+      </div>
+    </div>
+    <script>
+      const dash = (id) => {
+        const p = document.getElementById(id);
+        const l = p.getTotalLength();
+        p.style.strokeDasharray = l;
+        p.style.strokeDashoffset = l;
+        return p;
+      };
+      const trail = dash("trail");
+      const arc = dash("arc");
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#spot", { opacity: 0, scale: 0.85 }, { opacity: 1, scale: 1, duration: 1.4, ease: "power2.out" }, 0.1);
+      tl.fromTo("#floorShadow", { opacity: 0 }, { opacity: 1, duration: 1 }, 0.5);
+      tl.to(trail, { strokeDashoffset: 0, duration: 2.6, ease: "power2.inOut" }, 0);
+      tl.to(arc, { strokeDashoffset: 0, duration: 0.8, ease: "power2.inOut" }, 0.2);
+      tl.fromTo(".letter", { y: 120, opacity: 0, rotation: 5 }, { y: 0, opacity: 1, rotation: 0, duration: 0.65, ease: "back.out(1.8)", stagger: 0.07 }, 0.45);
+      tl.fromTo("#leaf", { scale: 0, transformOrigin: "0px 0px" }, { scale: 1, duration: 0.45, ease: "back.out(2.4)" }, 0.85);
+      tl.fromTo("#dot", { scale: 0, svgOrigin: "660 242" }, { scale: 1, duration: 0.4, ease: "back.out(3)" }, 0.95);
+      tl.fromTo("#tag", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.7, ease: "power3.out" }, 2.05);
+      tl.fromTo("#cta", { y: 30, opacity: 0, scale: 0.92 }, { y: 0, opacity: 1, scale: 1, duration: 0.6, ease: "back.out(1.8)" }, 4.1);
+      tl.to("#cta", { scale: 1.04, duration: 0.5, ease: "sine.inOut", yoyo: true, repeat: 3 }, 5.0);
+      tl.fromTo("#event", { y: 20, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 5.1);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["endcard"] = tl;
+    </script>
+  </body>
+</html>

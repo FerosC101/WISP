@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>WISP brand ident</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="brand.css" />
+    <style>
+      #glow { position: absolute; left: 260px; top: -120px; width: 1400px; height: 1300px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(167, 184, 159, 0.28), rgba(24, 60, 49, 0)); }
+      #glow2 { position: absolute; left: 1100px; top: 520px; width: 900px; height: 700px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(227, 181, 103, 0.16), rgba(24, 60, 49, 0)); }
+      #lines { position: absolute; inset: 0; }
+      #mark { position: absolute; left: 0; right: 0; top: 300px; display: flex; justify-content: center; }
+      .letter { display: inline-block; font-size: 300px; font-weight: 600; color: var(--ivory); line-height: 1; letter-spacing: 0.01em; }
+      #tag { position: absolute; left: 0; right: 0; top: 700px; text-align: center; font-size: 76px; font-style: italic; color: var(--ivory); }
+      #desc { position: absolute; left: 0; right: 0; top: 830px; text-align: center; font-size: 30px; font-weight: 600; letter-spacing: 0.22em; text-transform: uppercase; color: var(--sage); }
+      #rule { position: absolute; left: 860px; top: 806px; width: 200px; height: 3px; background: var(--amber); border-radius: 2px; transform-origin: 50% 50%; }
+      .spark { position: absolute; width: 8px; height: 8px; border-radius: 50%; background: #fff6dd; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="ident" data-start="0" data-duration="5" data-width="1920" data-height="1080">
+      <div id="bg" class="clip" data-start="0" data-duration="5">
+        <div id="glow"></div>
+        <div id="glow2"></div>
+      </div>
+      <svg id="lines" class="clip" data-start="0" data-duration="5" viewBox="0 0 1920 1080">
+        <!-- the WISP Line enters, loops once and becomes the arc over the wordmark -->
+        <path id="sweep" data-layout-allow-overflow d="M -80 150 C 240 110, 420 290, 640 276 C 820 262, 1040 226, 1240 262"
+          fill="none" stroke="#a7b89f" stroke-width="8" stroke-linecap="round" />
+        <g id="leaf" transform="translate(1000 240) rotate(-24)">
+          <path d="M0 0 C 9 -22, 34 -28, 48 -25 C 42 -9, 22 4, 0 0 Z" fill="#a7b89f" />
+        </g>
+        <circle id="dot" cx="1262" cy="262" r="16" fill="#e3b567" />
+      </svg>
+      <div id="mark" class="clip serif" data-start="0" data-duration="5">
+        <span class="letter">w</span><span class="letter">i</span><span class="letter">s</span><span class="letter">p</span>
+      </div>
+      <div id="rule" class="clip free" data-start="0" data-duration="5"></div>
+      <div id="tag" class="clip serif free" data-start="0" data-duration="5">Know what to do next.</div>
+      <div id="desc" class="clip sans free" data-start="0" data-duration="5">AI-assisted self-triage &amp; care navigation · prototype</div>
+      <div id="sparks" class="clip" data-start="0" data-duration="5"></div>
+    </div>
+    <script>
+      // deterministic sparkles around the mark
+      const sparks = document.getElementById("sparks");
+      const pts = [[640, 300], [1320, 230], [1380, 520], [560, 560], [980, 180], [1500, 380], [420, 420], [1180, 620]];
+      pts.forEach(([x, y], i) => {
+        const s = document.createElement("div");
+        s.className = "spark";
+        s.style.left = x + "px";
+        s.style.top = y + "px";
+        s.id = "spark" + i;
+        sparks.appendChild(s);
+      });
+
+      const sweep = document.getElementById("sweep");
+      const len = sweep.getTotalLength();
+      sweep.style.strokeDasharray = len;
+      sweep.style.strokeDashoffset = len;
+
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#glow", { opacity: 0, scale: 0.8 }, { opacity: 1, scale: 1, duration: 1.6, ease: "power2.out" }, 0);
+      tl.fromTo("#glow2", { opacity: 0 }, { opacity: 1, duration: 1.6, ease: "power2.out" }, 0.4);
+      tl.to(sweep, { strokeDashoffset: 0, duration: 1.15, ease: "power2.inOut" }, 0.05);
+      tl.fromTo(".letter", { y: 140, opacity: 0, rotation: 6 }, { y: 0, opacity: 1, rotation: 0, duration: 0.7, ease: "back.out(1.8)", stagger: 0.08 }, 0.75);
+      tl.fromTo("#leaf", { scale: 0, opacity: 0, transformOrigin: "0px 0px" }, { scale: 1, opacity: 1, duration: 0.5, ease: "back.out(2.4)" }, 1.25);
+      tl.fromTo("#dot", { scale: 0, svgOrigin: "1262 262" }, { scale: 1, duration: 0.45, ease: "back.out(3)" }, 1.32);
+      tl.fromTo("#rule", { scaleX: 0 }, { scaleX: 1, duration: 0.5, ease: "power3.out" }, 1.75);
+      tl.fromTo("#tag", { y: 40, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 1.85);
+      tl.fromTo("#desc", { y: 24, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "power3.out" }, 2.35);
+      pts.forEach((_, i) => {
+        tl.fromTo("#spark" + i, { scale: 0, opacity: 0 }, { scale: 1.6, opacity: 1, duration: 0.35, ease: "power2.out" }, 1.0 + i * 0.12);
+        tl.to("#spark" + i, { scale: 0.2, opacity: 0, duration: 0.9, ease: "power2.in" }, 1.35 + i * 0.12);
+      });
+      tl.to("#mark", { scale: 1.03, duration: 2.6, ease: "none" }, 2.4);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["ident"] = tl;
+    </script>
+  </body>
+</html>
