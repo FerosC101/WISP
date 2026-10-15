@@ -1,0 +1,183 @@
+1
+00:00:02,600 --> 00:00:06,930
+Sometimes, the hardest part of getting help is knowing where to start.
+
+2
+00:00:06,970 --> 00:00:08,400
+You feel weak.
+
+3
+00:00:08,440 --> 00:00:10,220
+Something feels different.
+
+4
+00:00:10,260 --> 00:00:12,490
+But you can't quite explain why.
+
+5
+00:00:12,530 --> 00:00:17,170
+Should you wait… see a doctor… or seek urgent help?
+
+6
+00:00:21,400 --> 00:00:24,680
+Nonspecific complaints are difficult to navigate.
+
+7
+00:00:24,720 --> 00:00:29,390
+A symptom may be mild, unfamiliar, or hard to describe.
+
+8
+00:00:29,430 --> 00:00:31,560
+Asking the right questions is essential.
+
+9
+00:00:31,600 --> 00:00:35,730
+But in some cases, symptoms alone leave important uncertainty.
+
+10
+00:00:35,770 --> 00:00:42,050
+The challenge is knowing when additional evidence could genuinely change the next step.
+
+11
+00:00:51,200 --> 00:00:54,640
+WISP is an AI-assisted self-triage and care-navigation prototype.
+
+12
+00:00:54,680 --> 00:00:56,810
+It begins with safety screening.
+
+13
+00:00:56,850 --> 00:01:05,280
+When appropriate, it can request an on-demand movement check, and compare the result with a person's usual baseline.
+
+14
+00:01:05,320 --> 00:01:11,020
+It then explains the next step… or abstains, when the evidence is not enough.
+
+15
+00:01:21,200 --> 00:01:23,220
+Madam Tan is seventy-eight.
+
+16
+00:01:23,260 --> 00:01:28,420
+For two days, she has felt unusually weak, and she isn't sure why.
+
+17
+00:01:28,460 --> 00:01:33,450
+WISP starts with her own words, then asks focused questions.
+
+18
+00:01:36,000 --> 00:01:43,480
+Before any movement check, WISP screens for warning signs, and decides whether this kind of check is appropriate.
+
+19
+00:01:43,520 --> 00:01:49,530
+If an emergency warning sign appears, urgent care comes first, and sensing is skipped.
+
+20
+00:01:56,400 --> 00:02:01,540
+Here, a movement check could show whether Madam Tan's function has changed from usual.
+
+21
+00:02:01,580 --> 00:02:08,090
+WISP explains why it's asking, and offers the check only when the rules allow it.
+
+22
+00:02:11,400 --> 00:02:16,970
+When she presses start, WISP uses Wi-Fi channel-state information to time five sit-to-stands.
+
+23
+00:02:17,010 --> 00:02:23,600
+The pipeline estimates each rise, so today can be compared with her healthy-day baseline.
+
+24
+00:02:23,640 --> 00:02:27,610
+In this demo, the signal is a recorded, synthetic session.
+
+25
+00:02:31,000 --> 00:02:33,440
+Her movement is slower than usual.
+
+26
+00:02:33,480 --> 00:02:38,610
+Together with what she reported, the rules recommend same-day care.
+
+27
+00:02:38,650 --> 00:02:44,130
+And WISP explains why, and which warning signs need urgent help.
+
+28
+00:02:46,000 --> 00:02:52,350
+When warning signs suggest an emergency, WISP does not ask for a movement test.
+
+29
+00:02:52,390 --> 00:02:55,210
+It directs the person to emergency help.
+
+30
+00:02:58,200 --> 00:03:02,880
+And a normal result yesterday can't reassure us about new symptoms today.
+
+31
+00:03:02,920 --> 00:03:05,930
+New warning signs always take priority.
+
+32
+00:03:08,400 --> 00:03:14,790
+If the reading is unreliable, or the evidence isn't enough, WISP doesn't invent certainty.
+
+33
+00:03:14,830 --> 00:03:18,570
+It abstains, and points the person to human support.
+
+34
+00:03:22,000 --> 00:03:28,570
+Under the interface, WorkBuddy interprets the conversation, spots missing information, and calls WISP's tools.
+
+35
+00:03:28,610 --> 00:03:34,300
+The sensing pipeline estimates movement, and checks whether the evidence is usable.
+
+36
+00:03:34,340 --> 00:03:37,610
+Deterministic safety rules decide the care level.
+
+37
+00:03:37,650 --> 00:03:40,090
+The key principle is asymmetric:
+
+38
+00:03:40,130 --> 00:03:47,740
+additional evidence may increase urgency… but it must never lower urgency below the symptom-based safety floor.
+
+39
+00:04:01,200 --> 00:04:03,500
+Privacy is part of the design.
+
+40
+00:04:03,540 --> 00:04:10,780
+Raw Wi-Fi sensing data stays on the local machine, while conversation text may go to a cloud language model.
+
+41
+00:04:10,820 --> 00:04:15,690
+Checks are user-started, and sharing with a caregiver needs consent.
+
+42
+00:04:21,400 --> 00:04:26,150
+WISP is a working prototype, not a clinically validated medical device.
+
+43
+00:04:26,190 --> 00:04:35,810
+Next comes real measurement validation, usability testing with older adults, and review with clinical advisors, before any real-world use.
+
+44
+00:04:41,000 --> 00:04:46,240
+WISP brings conversation, functional evidence, and safety-governed care navigation into one experience.
+
+45
+00:04:46,280 --> 00:04:53,070
+Because when someone says, "I feel weak," the question isn't just what they feel.
+
+46
+00:04:53,110 --> 00:04:55,330
+It's knowing what to do next.

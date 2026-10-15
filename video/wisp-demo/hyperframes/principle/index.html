@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en" data-resolution="landscape">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=1920, height=1080" />
+    <title>WISP safety principle</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <link rel="stylesheet" href="brand.css" />
+    <style>
+      #glow { position: absolute; left: -200px; top: -200px; width: 1300px; height: 1300px; border-radius: 50%;
+        background: radial-gradient(closest-side, rgba(167, 184, 159, 0.2), rgba(24, 60, 49, 0)); }
+      #eyebrow { position: absolute; left: 140px; top: 150px; font-size: 28px; font-weight: 700; letter-spacing: 0.24em; color: var(--sage); }
+      .big { position: absolute; left: 140px; width: 980px; font-size: 104px; line-height: 1.06; color: var(--ivory); font-weight: 500; }
+      .big em { font-style: normal; color: var(--amber); }
+      .big .no { color: #f3a99c; }
+      .word { display: inline-block; }
+      #asym { left: 140px; top: 240px; }
+      #up { left: 140px; top: 420px; }
+      #down { left: 140px; top: 420px; font-size: 80px; width: 1000px; }
+      #code { position: absolute; left: 140px; top: 860px; padding: 18px 28px; border-radius: 16px; background: rgba(255, 255, 255, 0.07);
+        border: 1px solid rgba(255, 255, 255, 0.16); font-family: ui-monospace, Menlo, monospace; font-size: 30px; color: var(--amber); }
+      /* urgency meter */
+      #meter { position: absolute; left: 1260px; top: 150px; width: 520px; height: 780px; }
+      .rung { position: absolute; left: 0; width: 520px; height: 150px; border-radius: 26px; padding: 30px 34px;
+        font-family: "Inter", sans-serif; display: flex; flex-direction: column; justify-content: center; }
+      .rung b { font-size: 26px; letter-spacing: 0.12em; }
+      .rung span { font-family: "Lora", serif; font-size: 38px; margin-top: 4px; }
+      #r1 { top: 0; background: #f8e0db; color: #8f2f24; }
+      #r2 { top: 200px; background: #fbf0d9; color: #8a5a12; }
+      #r3 { top: 400px; background: #e4ebdd; color: #2f4f3e; }
+      #r4 { top: 600px; background: #e3ece9; color: #4e7070; }
+      #floor { position: absolute; left: 0; top: 570px; width: 600px; height: 8px; border-radius: 4px; background: var(--amber); }
+      #floorlabel { position: absolute; left: 150px; top: 556px; padding: 6px 18px; border-radius: 999px; background: var(--deep); font-family: "Inter", sans-serif;
+        font-size: 22px; font-weight: 700; letter-spacing: 0.14em; color: var(--amber); }
+      #marker { position: absolute; left: 400px; top: 445px; width: 60px; height: 60px; border-radius: 50%; background: var(--deep); border: 6px solid var(--amber); }
+      #ghost { position: absolute; left: 330px; top: 445px; width: 60px; height: 60px; border-radius: 50%; border: 5px dashed #f3a99c; }
+      #upArrow, #xMark { position: absolute; font-family: "Inter", sans-serif; font-weight: 800; }
+      #upArrow { left: 470px; top: 300px; font-size: 64px; color: #9fd39a; }
+      #xMark { left: 326px; top: 590px; width: 70px; height: 70px; border-radius: 50%; background: var(--red); color: #fff; font-size: 44px;
+        display: flex; align-items: center; justify-content: center; }
+      #blocked { position: absolute; left: 140px; top: 730px; font-family: "Inter", sans-serif; font-size: 30px; font-weight: 650; color: #f3a99c; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="principle" data-start="0" data-duration="10" data-width="1920" data-height="1080">
+      <div id="glow" class="clip free" data-start="0" data-duration="10"></div>
+      <div id="eyebrow" class="clip sans free" data-start="0" data-duration="10">THE KEY PRINCIPLE</div>
+      <div id="asym" class="big serif clip free" data-start="0" data-duration="10"><span class="word">It’s</span> <span class="word"><em>asymmetric.</em></span></div>
+      <div id="up" class="big serif clip free" data-start="0" data-duration="10">
+        <span class="word">Evidence</span> <span class="word">may</span> <span class="word"><em>increase</em></span> <span class="word">urgency.</span>
+      </div>
+      <div id="down" class="big serif clip free" data-start="0" data-duration="10">
+        <span class="word">It</span> <span class="word">must</span> <span class="word"><span class="no">never</span></span> <span class="word">lower</span> <span class="word">it</span>
+        <span class="word">below</span> <span class="word">the</span> <span class="word">symptom-based</span> <span class="word">safety</span> <span class="word">floor.</span>
+      </div>
+      <div id="blocked" class="clip free" data-start="0" data-duration="10">A normal measurement cannot pull the care level down.</div>
+      <div id="code" class="clip free" data-start="0" data-duration="10">final = more_urgent(symptom_floor, functional_tier)</div>
+      <div id="meter">
+        <div class="rung" id="r1"><b>T1</b><span>Emergency</span></div>
+        <div class="rung" id="r2"><b>T2</b><span>Same day</span></div>
+        <div class="rung" id="r3"><b>T3</b><span>Primary care soon</span></div>
+        <div class="rung" id="r4"><b>T4</b><span>Home care</span></div>
+        <div id="floor"></div>
+        <div id="floorlabel">SYMPTOM FLOOR</div>
+        <div id="ghost"></div>
+        <div id="xMark">✕</div>
+        <div id="marker"></div>
+        <div id="upArrow">↑</div>
+      </div>
+    </div>
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      tl.fromTo("#glow", { opacity: 0 }, { opacity: 1, duration: 1.2 }, 0);
+      tl.fromTo("#eyebrow", { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.5, ease: "power3.out" }, 0.1);
+      tl.fromTo("#asym .word", { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "back.out(1.7)", stagger: 0.12 }, 0.25);
+      tl.fromTo(".rung", { x: 160, opacity: 0 }, { x: 0, opacity: 1, duration: 0.4, ease: "power3.out", stagger: 0.04 }, 0.02);
+      tl.fromTo("#floor", { scaleX: 0, transformOrigin: "0% 50%" }, { scaleX: 1, duration: 0.6, ease: "power3.out" }, 1.2);
+      tl.fromTo("#floorlabel", { opacity: 0 }, { opacity: 1, duration: 0.4 }, 1.5);
+      tl.fromTo("#marker", { scale: 0 }, { scale: 1, duration: 0.45, ease: "back.out(3)" }, 1.6);
+      // beat 2: evidence may raise urgency (T3 → T2)
+      tl.to("#asym", { y: -40, opacity: 0, duration: 0.35, ease: "power2.in" }, 2.3);
+      tl.fromTo("#up .word", { y: 90, opacity: 0 }, { y: 0, opacity: 1, duration: 0.6, ease: "back.out(1.7)", stagger: 0.1 }, 2.45);
+      tl.fromTo("#upArrow", { y: 60, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "power3.out" }, 3.1);
+      tl.to("#marker", { y: -200, duration: 0.8, ease: "back.out(1.4)" }, 3.4);
+      tl.to("#upArrow", { opacity: 0, duration: 0.3 }, 4.6);
+      // beat 3: it can never lower it below the floor
+      tl.to("#up", { y: -40, opacity: 0, duration: 0.35, ease: "power2.in" }, 5.6);
+      tl.fromTo("#down .word", { y: 70, opacity: 0 }, { y: 0, opacity: 1, duration: 0.55, ease: "back.out(1.6)", stagger: 0.07 }, 5.75);
+      tl.to("#marker", { y: 0, duration: 0.6, ease: "power2.inOut" }, 6.0);
+      tl.fromTo("#ghost", { opacity: 0, y: 0 }, { opacity: 1, y: 110, duration: 0.5, ease: "power2.in" }, 6.7);
+      tl.to("#ghost", { y: 70, duration: 0.35, ease: "back.out(3)" }, 7.2);
+      tl.fromTo("#xMark", { scale: 0 }, { scale: 1, duration: 0.4, ease: "back.out(3)" }, 7.25);
+      tl.to("#ghost", { opacity: 0, duration: 0.4 }, 8.0);
+      tl.fromTo("#blocked", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 7.6);
+      tl.fromTo("#code", { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.5, ease: "power3.out" }, 8.3);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["principle"] = tl;
+    </script>
+  </body>
+</html>

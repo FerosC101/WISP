@@ -1,0 +1,217 @@
+{
+  "note": "Narration per clip. `at` = start time in the film (seconds). Files live in public/audio/vo/. Run `npm run prepare-audio` after adding or replacing a clip.",
+  "voice": "ElevenLabs · Jonathan – Warm Executive Narrator (eocOcfJL8piTXLNNpSCR) · eleven_v4",
+  "clips": [
+    {
+      "id": "vo01_s1",
+      "scene": 1,
+      "at": 2.6,
+      "slot": [
+        0,
+        20
+      ],
+      "text": [
+        "Sometimes, the hardest part of getting help is knowing where to start.",
+        "You feel weak.",
+        "Something feels different.",
+        "But you can't quite explain why.",
+        "Should you wait… see a doctor… or seek urgent help?"
+      ]
+    },
+    {
+      "id": "vo02_s2",
+      "scene": 2,
+      "at": 21.4,
+      "slot": [
+        20,
+        50
+      ],
+      "text": [
+        "Nonspecific complaints are difficult to navigate.",
+        "A symptom may be mild, unfamiliar, or hard to describe.",
+        "Asking the right questions is essential.",
+        "But in some cases, symptoms alone leave important uncertainty.",
+        "The challenge is knowing when additional evidence could genuinely change the next step."
+      ]
+    },
+    {
+      "id": "vo03_s3",
+      "scene": 3,
+      "at": 51.2,
+      "slot": [
+        50,
+        80
+      ],
+      "text": [
+        "WISP is an AI-assisted self-triage and care-navigation prototype.",
+        "It begins with safety screening.",
+        "When appropriate, it can request an on-demand movement check, and compare the result with a person's usual baseline.",
+        "It then explains the next step… or abstains, when the evidence is not enough."
+      ]
+    },
+    {
+      "id": "vo04_s4a",
+      "scene": 4,
+      "at": 81.2,
+      "slot": [
+        80,
+        95
+      ],
+      "text": [
+        "Madam Tan is seventy-eight.",
+        "For two days, she has felt unusually weak, and she isn't sure why.",
+        "WISP starts with her own words, then asks focused questions."
+      ]
+    },
+    {
+      "id": "vo05_s4b",
+      "scene": 4,
+      "at": 96.0,
+      "slot": [
+        95,
+        115
+      ],
+      "text": [
+        "Before any movement check, WISP screens for warning signs, and decides whether this kind of check is appropriate.",
+        "If an emergency warning sign appears, urgent care comes first, and sensing is skipped."
+      ]
+    },
+    {
+      "id": "vo06_s4c",
+      "scene": 4,
+      "at": 116.4,
+      "slot": [
+        115,
+        130
+      ],
+      "text": [
+        "Here, a movement check could show whether Madam Tan's function has changed from usual.",
+        "WISP explains why it's asking, and offers the check only when the rules allow it."
+      ]
+    },
+    {
+      "id": "vo07_s4d",
+      "scene": 4,
+      "at": 131.4,
+      "slot": [
+        130,
+        150
+      ],
+      "text": [
+        "When she presses start, WISP uses Wi-Fi channel-state information to time five sit-to-stands.",
+        "The pipeline estimates each rise, so today can be compared with her healthy-day baseline.",
+        "In this demo, the signal is a recorded, synthetic session."
+      ]
+    },
+    {
+      "id": "vo08_s4e",
+      "scene": 4,
+      "at": 151.0,
+      "slot": [
+        150,
+        165
+      ],
+      "text": [
+        "Her movement is slower than usual.",
+        "Together with what she reported, the rules recommend same-day care.",
+        "And WISP explains why, and which warning signs need urgent help."
+      ]
+    },
+    {
+      "id": "vo09_s5a",
+      "scene": 5,
+      "at": 166.0,
+      "slot": [
+        165,
+        177.5
+      ],
+      "text": [
+        "When warning signs suggest an emergency, WISP does not ask for a movement test.",
+        "It directs the person to emergency help."
+      ]
+    },
+    {
+      "id": "vo10_s5b",
+      "scene": 5,
+      "at": 178.2,
+      "slot": [
+        177.5,
+        187.5
+      ],
+      "text": [
+        "And a normal result yesterday can't reassure us about new symptoms today.",
+        "New warning signs always take priority."
+      ]
+    },
+    {
+      "id": "vo11_s5c",
+      "scene": 5,
+      "at": 188.4,
+      "slot": [
+        187.5,
+        200
+      ],
+      "text": [
+        "If the reading is unreliable, or the evidence isn't enough, WISP doesn't invent certainty.",
+        "It abstains, and points the person to human support."
+      ]
+    },
+    {
+      "id": "vo12_s6",
+      "scene": 6,
+      "at": 202.0,
+      "slot": [
+        200,
+        240
+      ],
+      "text": [
+        "Under the interface, WorkBuddy interprets the conversation, spots missing information, and calls WISP's tools.",
+        "The sensing pipeline estimates movement, and checks whether the evidence is usable.",
+        "Deterministic safety rules decide the care level.",
+        "The key principle is asymmetric:",
+        "additional evidence may increase urgency… but it must never lower urgency below the symptom-based safety floor."
+      ]
+    },
+    {
+      "id": "vo13_s7",
+      "scene": 7,
+      "at": 241.2,
+      "slot": [
+        240,
+        260
+      ],
+      "text": [
+        "Privacy is part of the design.",
+        "Raw Wi-Fi sensing data stays on the local machine, while conversation text may go to a cloud language model.",
+        "Checks are user-started, and sharing with a caregiver needs consent."
+      ]
+    },
+    {
+      "id": "vo14_s8",
+      "scene": 8,
+      "at": 261.4,
+      "slot": [
+        260,
+        280
+      ],
+      "text": [
+        "WISP is a working prototype, not a clinically validated medical device.",
+        "Next comes real measurement validation, usability testing with older adults, and review with clinical advisors, before any real-world use."
+      ]
+    },
+    {
+      "id": "vo15_s9",
+      "scene": 9,
+      "at": 281.0,
+      "slot": [
+        280,
+        300
+      ],
+      "text": [
+        "WISP brings conversation, functional evidence, and safety-governed care navigation into one experience.",
+        "Because when someone says, \"I feel weak,\" the question isn't just what they feel.",
+        "It's knowing what to do next."
+      ]
+    }
+  ]
+}
