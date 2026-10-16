@@ -8,6 +8,7 @@ import { Illustration } from "@/components/Illustration";
 import { LargeChoice, StatusLine } from "@/components/kit";
 import { Button, buttonClass } from "@/components/ui";
 import { WispLine } from "@/components/WispLine";
+import { PREVIEW } from "@/lib/api";
 import { STATUS_WORDS, baselineStatus, useBaseline } from "@/lib/baseline";
 import { PATIENT_OUTCOME, TIER_STYLE, dayLabel, greeting, timeLabel } from "@/lib/tiers";
 import type { HistoryItem, Persona } from "@/lib/types";
@@ -149,7 +150,7 @@ export default function Today() {
           <WispLine variant="draw" className="mt-3 h-5 w-36 text-sage-mid" />
         </section>
 
-        {error && (
+        {error && !PREVIEW && (
           <p role="alert" className="mt-4 rounded-w-sm bg-amber-bg px-4 py-3 text-amber">
             {error}
           </p>
@@ -181,7 +182,7 @@ export default function Today() {
         <Illustration scene="healthy" decorative className="hidden rounded-w-lg md:block" />
         {recheck && <NextCheckIn recheck={recheck} busy={check.busy} onStart={() => check.startFollowUp(recheck.session_id)} />}
         {recent && <MostRecent item={recent} />}
-        {loaded && !error && !recent && !recheck && <FirstTime />}
+        {loaded && (!error || PREVIEW) && !recent && !recheck && <FirstTime />}
         {me && <MyUsual userId={me.user_id} />}
         <p className="flex items-start gap-2.5 px-1 text-[0.95rem] text-ink-soft">
           <Icon name="lock" className="mt-0.5 h-5 w-5 text-teal" />

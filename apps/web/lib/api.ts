@@ -1,3 +1,7 @@
+/** Design preview: a deployment built without an API (see next.config.ts). The app then never calls a server. */
+export const PREVIEW = process.env.NEXT_PUBLIC_WISP_PREVIEW === "1";
+export const PREVIEW_MESSAGE = "This is a design preview. It isn't connected to WISP's engine, so check-ins and recommendations aren't available here.";
+
 export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:8787";
 export const WS_URL = API_URL.replace(/^http/, "ws");
 
@@ -11,6 +15,7 @@ export class ApiError extends Error {
 }
 
 export async function api<T>(path: string, init?: RequestInit & { json?: unknown }): Promise<T> {
+  if (PREVIEW) throw new ApiError(PREVIEW_MESSAGE, 503);
   const { json, ...rest } = init ?? {};
   const res = await fetch(`${API_URL}${path}`, {
     ...rest,

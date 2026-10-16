@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { api, WS_URL } from "./api";
+import { PREVIEW, api, WS_URL } from "./api";
 import type { SensingProgress, Snapshot } from "./types";
 
 /** Live session state: initial fetch + WebSocket snapshots, with polling fallback. */
@@ -29,6 +29,11 @@ export function useSession(sessionId: string | undefined) {
 
   useEffect(() => {
     if (!sessionId) return;
+    if (PREVIEW) {
+      // No engine to connect to: report it once instead of retrying.
+      const id = setTimeout(() => setError("This preview isn't connected to WISP's engine."), 0);
+      return () => clearTimeout(id);
+    }
     let closed = false;
     let retry: ReturnType<typeof setTimeout> | undefined;
 

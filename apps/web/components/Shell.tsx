@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { api } from "@/lib/api";
+import { PREVIEW, api } from "@/lib/api";
 import { usePrefs, usePrefsHydrated } from "@/lib/prefs";
 import type { Persona } from "@/lib/types";
 import { Icon, type IconName } from "./Icon";
@@ -78,6 +78,17 @@ export function Shell({ children }: { children: React.ReactNode }) {
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-card focus:px-4 focus:py-2">
         Skip to main content
       </a>
+      {PREVIEW && (
+        <div role="note" className="border-b border-amber-soft/60 bg-amber-bg print:hidden">
+          <p className="mx-auto flex max-w-5xl items-start gap-2.5 px-4 py-2.5 text-[0.95rem] text-ink sm:px-6">
+            <Icon name="info" className="mt-0.5 h-5 w-5 text-amber" />
+            <span>
+              <strong className="font-semibold">Design preview.</strong> This site isn&apos;t connected to WISP&apos;s engine yet, so check-ins, history and
+              recommendations don&apos;t work here.
+            </span>
+          </p>
+        </div>
+      )}
       {hydrated && devMode && <DemoBar />}
       <header className="print:hidden">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 pb-2 pt-4 sm:px-6">

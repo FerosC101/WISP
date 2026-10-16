@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api } from "./api";
+import { PREVIEW, PREVIEW_MESSAGE, api } from "./api";
 import { useUserId } from "./prefs";
 import type { HistoryItem, Persona } from "./types";
 
@@ -18,14 +18,14 @@ export function useMe() {
     let current = true; // ignore responses for a persona that is no longer selected
     api<Persona[]>("/api/personas")
       .then((ps) => current && setMe(ps.find((p) => p.user_id === userId) ?? ps[0] ?? null))
-      .catch(() => current && setError("WISP can't reach its local service right now."));
+      .catch(() => current && setError(PREVIEW ? PREVIEW_MESSAGE : "WISP can't reach its local service right now."));
     api<HistoryItem[]>(`/api/history?user_id=${userId}`)
       .then((h) => current && setRecent(h.find((x) => x.tier) ?? null))
       .catch(() => {
         // Unknown is not the same as "no checks": report it so screens don't show an empty state.
         if (!current) return;
         setRecent(null);
-        setError("WISP can't reach its local service right now.");
+        setError(PREVIEW ? PREVIEW_MESSAGE : "WISP can't reach its local service right now.");
       })
       .finally(() => current && setLoaded(true));
     return () => {

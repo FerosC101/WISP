@@ -77,7 +77,7 @@ The image sets `WISP_PUBLIC_DEPLOYMENT=1`, `WISP_SENSOR_MODE=replay` and `WISP_D
 3. Under **Environment Variables**, add `NEXT_PUBLIC_API_URL` = `https://api.example.com` (your API from step 1, with no trailing slash). Add it for Production and Preview.
 4. Deploy.
 
-The build **fails on purpose** if `NEXT_PUBLIC_API_URL` is missing or isn't `https://`. Browsers block an HTTPS site from calling an `http` API, so the deployment would otherwise be broken.
+**Without `NEXT_PUBLIC_API_URL`**, the build succeeds as a **design preview**. Every page shows a "Design preview" notice, the app never calls a server, and check-ins, history and recommendations don't work. This is useful for showing the design before the API is up. Set the variable and redeploy to make it a full deployment. The build **fails on purpose** if the URL is set but isn't `https://`, because browsers block an HTTPS site from calling an `http` API.
 
 After the first deploy, put the Vercel URL into the API's `WISP_CORS_ORIGINS`, then restart the API:
 

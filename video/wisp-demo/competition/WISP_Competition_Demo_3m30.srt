@@ -1,0 +1,179 @@
+1
+00:00:01,600 --> 00:00:06,280
+Sometimes, the hardest part of seeking care is knowing where to begin.
+
+2
+00:00:06,320 --> 00:00:07,930
+You feel weak.
+
+3
+00:00:07,970 --> 00:00:09,910
+Unusually tired.
+
+4
+00:00:09,950 --> 00:00:11,560
+Something feels different.
+
+5
+00:00:11,600 --> 00:00:13,530
+But what should you do next?
+
+6
+00:00:16,800 --> 00:00:19,440
+Vague symptoms are hard to interpret.
+
+7
+00:00:19,480 --> 00:00:23,530
+Should you wait and see, call a doctor, or get urgent help?
+
+8
+00:00:23,570 --> 00:00:26,760
+WISP is designed to make that next decision clearer,
+
+9
+00:00:26,800 --> 00:00:29,710
+without pretending to replace a healthcare professional.
+
+10
+00:00:36,200 --> 00:00:40,090
+Built for the Intelligent Self-Triage and Care Navigation challenge,
+
+11
+00:00:40,130 --> 00:00:44,830
+WISP brings together conversational AI, structured assessment tools, and safety-governed decisions.
+
+12
+00:00:44,870 --> 00:00:48,420
+Its goal is not to diagnose a disease.
+
+13
+00:00:48,460 --> 00:00:53,090
+It's to help find the right next step in care.
+
+14
+00:00:56,000 --> 00:01:00,120
+WISP listens, then screens for warning signs first.
+
+15
+00:01:00,160 --> 00:01:03,990
+If any are present, urgent care comes first.
+
+16
+00:01:04,030 --> 00:01:08,150
+Otherwise, it decides whether a short movement check would add useful evidence,
+
+17
+00:01:08,190 --> 00:01:13,770
+and guides the person to a clear recommendation, or an honest decision not to guess.
+
+18
+00:01:15,400 --> 00:01:18,260
+WorkBuddy is the AI orchestration layer.
+
+19
+00:01:18,300 --> 00:01:26,230
+It interprets a vague complaint, spots what's missing, and judges whether more evidence could change the answer.
+
+20
+00:01:26,270 --> 00:01:32,390
+Through MCP, defined tool interfaces rather than chat alone, it calls WISP's screening and assessment tools.
+
+21
+00:01:32,430 --> 00:01:35,610
+But WorkBuddy proposes; it doesn't decide.
+
+22
+00:01:35,650 --> 00:01:40,420
+A deterministic safety engine authorises each check, applies the care rules,
+
+23
+00:01:40,460 --> 00:01:44,730
+and never lets a reassuring measurement override concerning symptoms.
+
+24
+00:01:45,400 --> 00:01:53,590
+WISP explores Wi-Fi Channel State Information, or CSI, as a way to sense movement without a camera or a wearable.
+
+25
+00:01:53,630 --> 00:01:56,990
+As a person moves, the wireless channel changes.
+
+26
+00:01:57,030 --> 00:02:05,830
+An ESP32 receiver can capture CSI, and signal processing looks for the pattern of a defined task: five sit-to-stands.
+
+27
+00:02:05,870 --> 00:02:10,250
+The timing is compared with the person's own baseline, when one exists.
+
+28
+00:02:10,290 --> 00:02:14,250
+CSI adds functional evidence, not a diagnosis.
+
+29
+00:02:15,600 --> 00:02:19,290
+Consider Mdm Tan. She reports new weakness.
+
+30
+00:02:19,330 --> 00:02:22,920
+WISP screens her first: no warning signs reported.
+
+31
+00:02:22,960 --> 00:02:29,320
+WorkBuddy proposes a movement check, and the safety engine allows it. Mdm Tan starts it herself.
+
+32
+00:02:29,360 --> 00:02:33,240
+In this demo, the signal is a recorded, synthetic session.
+
+33
+00:02:33,280 --> 00:02:40,330
+Her chair rises are clearly slower than her usual, so WISP recommends being seen today, and explains why.
+
+34
+00:02:40,370 --> 00:02:43,420
+A clear next step, not a diagnosis.
+
+35
+00:02:45,600 --> 00:02:47,770
+Safety comes first.
+
+36
+00:02:47,810 --> 00:02:51,880
+Emergency warning signs take priority: no movement test.
+
+37
+00:02:51,920 --> 00:02:55,800
+New symptoms override an earlier reassuring result.
+
+38
+00:02:55,840 --> 00:03:01,990
+And if a measurement is unreliable, WISP abstains rather than offer false reassurance.
+
+39
+00:03:02,030 --> 00:03:04,730
+It knows when it doesn't have enough evidence.
+
+40
+00:03:05,100 --> 00:03:11,090
+WISP pairs a wireless-sensing prototype with a modular AI workflow and explicit safety rules.
+
+41
+00:03:11,130 --> 00:03:16,000
+Raw CSI stays local; the conversation may reach the AI service.
+
+42
+00:03:16,040 --> 00:03:19,450
+Real-world and clinical validation come next.
+
+43
+00:03:19,750 --> 00:03:23,280
+WISP turns uncertainty into a clear next step,
+
+44
+00:03:23,320 --> 00:03:26,670
+helping people navigate care, not replace it.
+
+45
+00:03:26,710 --> 00:03:29,120
+WISP. Know what to do next.
