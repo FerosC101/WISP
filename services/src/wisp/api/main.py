@@ -57,6 +57,7 @@ def init_state(store: Store | None = None, provider=None) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    config.check_deployment()
     if "svc" not in state:
         init_state()
     svc().bus.loop = asyncio.get_running_loop()
@@ -67,6 +68,7 @@ app = FastAPI(title="WISP local API", version="0.1.0", lifespan=lifespan)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=config.CORS_ORIGINS,
+    allow_origin_regex=config.CORS_ORIGIN_REGEX,
     allow_methods=["*"],
     allow_headers=["*"],
 )

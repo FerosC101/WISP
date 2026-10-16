@@ -7,9 +7,17 @@ import "./globals.css";
 const lora = Lora({ variable: "--font-lora", subsets: ["latin"], weight: ["500", "600", "700"], style: ["normal", "italic"] });
 const inter = Inter({ variable: "--font-inter", subsets: ["latin"] });
 
+// Absolute URLs for link previews: Vercel provides the production domain at build time.
+const site = process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000";
+
 export const metadata: Metadata = {
-  title: "WISP — gentle guidance when something feels off",
-  description: "Wireless Intelligent Sensing for Personalized Self-Triage",
+  metadataBase: new URL(site),
+  applicationName: "WISP",
+  title: { default: "WISP — know what to do next", template: "%s · WISP" },
+  description:
+    "Gentle guidance when something feels off. WISP checks for warning signs first, asks for a short movement check only when it would help, and gives a clear next step. Healthcare prototype, not a diagnosis.",
+  appleWebApp: { title: "WISP", capable: true, statusBarStyle: "default" },
+  formatDetection: { telephone: false },
 };
 
 // Mobile-first: fill the screen edge to edge and pad for the iPhone home indicator.

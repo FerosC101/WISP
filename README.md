@@ -128,6 +128,8 @@ Safety questions can be asked in **English, 中文, Bahasa Melayu or தமி�
 
 Optional LLM extraction via any OpenAI-compatible endpoint (e.g. Tencent Hunyuan): `WISP_LLM_BASE_URL`, `WISP_LLM_API_KEY`, `WISP_LLM_MODEL`. Merged conservatively — it can add warning signs, never remove them.
 
+**Online deployment:** the web app deploys to Vercel and the API to any Docker host (for example Tencent Cloud Lighthouse, with automatic HTTPS). See [DEPLOY.md](DEPLOY.md).
+
 ## 11. Demo scenarios
 
 | # | Persona | Says | WISP does | Result |

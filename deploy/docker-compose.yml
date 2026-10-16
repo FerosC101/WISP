@@ -1,0 +1,39 @@
+# WISP API on a single cloud server (e.g. Tencent Cloud Lighthouse or CVM), with automatic HTTPS.
+#
+#   cd deploy && cp .env.example .env   # then fill it in
+#   docker compose up -d --build
+#
+# Caddy gets a Let's Encrypt certificate for WISP_API_DOMAIN and proxies HTTPS and WebSockets to the API.
+services:
+  api:
+    build: ../services
+    restart: unless-stopped
+    environment:
+      WISP_MCP_TOKEN: ${WISP_MCP_TOKEN:?Set WISP_MCP_TOKEN in deploy/.env (openssl rand -hex 24)}
+      WISP_CORS_ORIGINS: ${WISP_CORS_ORIGINS:?Set WISP_CORS_ORIGINS to your Vercel URL, e.g. https://wisp.vercel.app}
+      WISP_CORS_ORIGIN_REGEX: ${WISP_CORS_ORIGIN_REGEX:-}
+      WISP_REPLAY_SPEED: ${WISP_REPLAY_SPEED:-1.0}
+      WISP_LLM_BASE_URL: ${WISP_LLM_BASE_URL:-}
+      WISP_LLM_API_KEY: ${WISP_LLM_API_KEY:-}
+      WISP_LLM_MODEL: ${WISP_LLM_MODEL:-hunyuan-turbos-latest}
+    volumes:
+      - wisp-data:/data
+    expose:
+      - "8787"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [api]
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      WISP_API_DOMAIN: ${WISP_API_DOMAIN:?Set WISP_API_DOMAIN, e.g. api.example.com or 203-0-113-10.sslip.io}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data
+
+volumes:
+  wisp-data:
+  caddy-data:

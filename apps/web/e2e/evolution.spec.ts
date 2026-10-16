@@ -80,3 +80,13 @@ test("service unavailable: History and Care say so instead of showing an empty r
   await expect(page.getByText("No recommendation yet")).toHaveCount(0);
   await expect(page.locator("main").getByRole("alert").first()).toContainText("can't reach its local service");
 });
+
+test("unknown pages get a friendly 404 with a way home and 995", async ({ page }) => {
+  await asPersona(page, "mdm_tan");
+  const res = await page.goto("/no-such-page");
+  expect(res?.status()).toBe(404);
+  await expect(heading(page)).toHaveText("We couldn't find that page");
+  await expect(page.getByRole("link", { name: "995" })).toHaveAttribute("href", "tel:995");
+  await page.getByRole("link", { name: "Go to Today" }).click();
+  await expect(page).toHaveURL(/\/today$/);
+});
